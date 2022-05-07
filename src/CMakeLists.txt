@@ -3,7 +3,6 @@ project(arrow-thallium)
 
 find_package(mercury REQUIRED)
 find_package(thallium REQUIRED)
-find_package(bedrock REQUIRED)
 
 add_executable(client client.cc)
 target_link_libraries(client thallium)
