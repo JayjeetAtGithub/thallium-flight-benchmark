@@ -6,7 +6,7 @@ find_package(thallium REQUIRED)
 find_package(Arrow REQUIRED)
 
 add_executable(client client.cc)
-target_link_libraries(client thallium)
+target_link_libraries(client thallium arrow)
 
 add_executable(server server.cc)
-target_link_libraries(server thallium Arrow)
+target_link_libraries(server thallium arrow)
