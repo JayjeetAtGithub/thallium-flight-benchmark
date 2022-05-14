@@ -1,6 +1,14 @@
 #include <iostream>
 
-
+#include "arrow/compute/exec/expression.h"
+#include "arrow/dataset/dataset.h"
+#include "arrow/dataset/file_base.h"
+#include "arrow/filesystem/api.h"
+#include "arrow/io/api.h"
+#include "arrow/util/checked_cast.h"
+#include "arrow/util/iterator.h"
+#include "parquet/arrow/reader.h"
+#include "parquet/arrow/writer.h"
 #include <thallium.hpp>
 
 
