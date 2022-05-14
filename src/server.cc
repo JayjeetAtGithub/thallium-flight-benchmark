@@ -1,8 +1,8 @@
 #include <iostream>
 
+#include "arrow/api.h"
 #include "arrow/compute/exec/expression.h"
-#include "arrow/dataset/dataset.h"
-#include "arrow/dataset/file_base.h"
+#include "arrow/dataset/api.h"
 #include "arrow/filesystem/api.h"
 #include "arrow/io/api.h"
 #include "arrow/util/checked_cast.h"
