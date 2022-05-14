@@ -45,7 +45,7 @@ arrow::Result<std::shared_ptr<arrow::Table>> Scan() {
 
 void hello(const thallium::request& req) {
     std::shared_ptr<arrow::Table> table = Scan().ValueOrDie();
-    std::cout << table->num_rows << std::endl;
+    std::cout << table->num_rows() << std::endl;
 }
 
 int main(int argc, char** argv) {
