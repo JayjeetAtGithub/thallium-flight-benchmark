@@ -24,7 +24,7 @@ arrow::Result<arrow::Table> Scan() {
         fs->GetFileInfo(selector));
 
     std::shared_ptr<arrow::dataset::ParquetFileFormat> format =
-        td::make_shared<arrow::dataset::ParquetFileFormat>();
+        std::make_shared<arrow::dataset::ParquetFileFormat>();
 
     arrow::dataset::FileSystemFactoryOptions options;
     ARROW_ASSIGN_OR_RAISE(
