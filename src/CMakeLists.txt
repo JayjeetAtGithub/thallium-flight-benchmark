@@ -9,4 +9,4 @@ add_executable(client client.cc)
 target_link_libraries(client thallium)
 
 add_executable(server server.cc)
-target_link_libraries(server thallium)
+target_link_libraries(server thallium Arrow)
