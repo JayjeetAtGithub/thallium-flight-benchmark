@@ -1,8 +1,8 @@
 #include <iostream>
 
+#include "arrow/api.h"
 #include "arrow/compute/exec/expression.h"
-#include "arrow/dataset/dataset.h"
-#include "arrow/dataset/file_base.h"
+#include "arrow/dataset/api.h"
 #include "arrow/filesystem/api.h"
 #include "arrow/io/api.h"
 #include "arrow/util/checked_cast.h"
@@ -12,7 +12,7 @@
 #include <thallium.hpp>
 
 
-arrow::Result<arrow::Table> Scan() {
+arrow::Result<std::shared_ptr<arrow::Table>> Scan() {
     std::shared_ptr<arrow::fs::LocalFileSystem> fs =
         std::make_shared<arrow::fs::LocalFileSystem>();
 
@@ -24,7 +24,7 @@ arrow::Result<arrow::Table> Scan() {
         fs->GetFileInfo(selector));
 
     std::shared_ptr<arrow::dataset::ParquetFileFormat> format =
-        td::make_shared<arrow::dataset::ParquetFileFormat>();
+        std::make_shared<arrow::dataset::ParquetFileFormat>();
 
     arrow::dataset::FileSystemFactoryOptions options;
     ARROW_ASSIGN_OR_RAISE(
@@ -45,7 +45,7 @@ arrow::Result<arrow::Table> Scan() {
 
 void hello(const thallium::request& req) {
     std::shared_ptr<arrow::Table> table = Scan().ValueOrDie();
-    std::cout << table.num_rows << std::endl;
+    std::cout << table->num_rows() << std::endl;
 }
 
 int main(int argc, char** argv) {
