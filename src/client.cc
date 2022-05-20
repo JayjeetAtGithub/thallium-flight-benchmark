@@ -48,7 +48,9 @@ int main(int argc, char** argv) {
     engine.define("do_rdma", f).disable_response();
 
     // execute the RPC scan method on the server
-    scan.on(server_endpoint)();   
-        scan.on(server_endpoint)();   
-
+    for (int i = 0; i < 10; ++i) {
+        std::cout << "Doing RPC " << i << std::endl;
+        scan.on(server_endpoint)();
+        sleep(1);
+    }
 }
