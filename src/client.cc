@@ -24,7 +24,7 @@ namespace tl = thallium;
 
 int main(int argc, char** argv) {
 
-    tl::engine engine("tcp", THALLIUM_CLIENT_MODE);
+    tl::engine engine("tcp", THALLIUM_SERVER_MODE);
     tl::endpoint server_endpoint = engine.lookup(argv[1]);
     std::cout << "Client running at address " << engine.self() << std::endl;
 
@@ -44,15 +44,9 @@ int main(int argc, char** argv) {
             std::cout << "Server received bulk: ";
             for(auto c : v) std::cout << c;
             std::cout << std::endl;
-            req.respond(0);
         };
     engine.define("do_rdma", f);
 
     // execute the RPC scan method on the server
-    int ret = scan.on(server_endpoint)();   
-    if (ret != 0) {
-        std::cerr << "Error: " << ret << std::endl;
-        return ret;
-    }
-    return 0;
+    scan.on(server_endpoint)();   
 }
