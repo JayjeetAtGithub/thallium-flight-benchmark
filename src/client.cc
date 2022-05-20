@@ -44,6 +44,7 @@ int main(int argc, char** argv) {
             std::cout << "Server received bulk: ";
             for(auto c : v) std::cout << c;
             std::cout << std::endl;
+            req.respond(0);
         };
     engine.define("do_rdma", f).disable_response();
 
