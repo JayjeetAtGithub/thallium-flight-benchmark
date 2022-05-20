@@ -25,7 +25,7 @@ int main(int argc, char** argv) {
             segments[0].second = v.size();
             tl::bulk local = engine.expose(segments, tl::bulk_mode::write_only);
             b.on(ep) >> local;
-            std::cout << "Server received bulk: ";
+            std::cout << "Client received bulk: ";
             for(auto c : v) std::cout << c;
             std::cout << std::endl;
         };
