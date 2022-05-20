@@ -1,22 +1,3 @@
-// #include <thallium.hpp>
-
-// namespace tl = thallium;
-
-// int main(int argc, char** argv) {
-
-//     if(argc != 2) {
-//         std::cerr << "Usage: " << argv[0] << " <address>" << std::endl;
-//         exit(0);
-//     }
-
-//     tl::engine engine("tcp", THALLIUM_CLIENT_MODE);
-//     tl::remote_procedure hello = engine.define("hello").disable_response();
-//     tl::endpoint server = engine.lookup(argv[1]);
-//     hello.on(server)();
-
-//     return 0;
-// }
-
 #include <iostream>
 #include <thallium.hpp>
 
