@@ -76,6 +76,7 @@ int main(int argc, char** argv) {
     // define the RPC method   
     std::function<void(const tl::request&)> s = 
         [&engine, &do_rdma](const tl::request &req) {
+            std::cout << "scan() called" << std::endl;
             std::string buffer = "Matthieu";
             std::vector<std::pair<void*,std::size_t>> segments(1);
             segments[0].first  = (void*)(&buffer[0]);
