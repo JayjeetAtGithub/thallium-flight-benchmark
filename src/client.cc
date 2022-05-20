@@ -49,4 +49,6 @@ int main(int argc, char** argv) {
 
     // execute the RPC scan method on the server
     scan.on(server_endpoint)();   
+        scan.on(server_endpoint)();   
+
 }
