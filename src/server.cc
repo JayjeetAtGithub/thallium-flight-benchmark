@@ -83,7 +83,7 @@ int main(int argc, char** argv) {
             tl::bulk arrow_bulk = engine.expose(segments, tl::bulk_mode::read_only);
             std::cout << "About to do RDMA " << req.get_endpoint() << std::endl;
             do_rdma.on(req.get_endpoint())(arrow_bulk);
-            req.respond(1);
+            req.respond(0);
         };
     engine.define("scan", s);
 
