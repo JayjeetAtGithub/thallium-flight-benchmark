@@ -25,6 +25,7 @@ namespace tl = thallium;
 int main(int argc, char** argv) {
 
     tl::engine engine("tcp", THALLIUM_CLIENT_MODE);
+    std::cout << "Client running at address " << engine.self() << std::endl;
     tl::remote_procedure remote_do_rdma = engine.define("do_rdma").disable_response();
     tl::remote_procedure scan = engine.define("scan").disable_response();
     tl::endpoint server_endpoint = engine.lookup(argv[1]);
