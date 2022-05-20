@@ -24,7 +24,7 @@ namespace tl = thallium;
 
 int main(int argc, char** argv) {
 
-    tl::engine engine("tcp", THALLIUM_CLIENT_MODE);
+    tl::engine engine("tcp", THALLIUM_SERVER_MODE);
     tl::endpoint server_endpoint = engine.lookup(argv[1]);
 
     tl::remote_procedure scan = engine.define("scan").disable_response();
