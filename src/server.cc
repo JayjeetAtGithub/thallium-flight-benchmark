@@ -66,8 +66,9 @@ namespace tl = thallium;
 
 int main(int argc, char** argv) {
 
-    tl::engine myEngine("tcp://127.0.0.1:1234", THALLIUM_SERVER_MODE);
-
+    tl::engine engine("tcp", THALLIUM_SERVER_MODE);
+    std::cout << "Server running at address " << engine.self() << std::endl;
+    
     std::function<void(const tl::request&, tl::bulk&)> f =
         [&myEngine](const tl::request& req, tl::bulk& b) {
             tl::endpoint ep = req.get_endpoint();
