@@ -32,7 +32,7 @@ int main(int argc, char** argv) {
     engine.define("do_rdma", f).disable_response();
 
     // execute the RPC scan method on the server
-    for (int i = 0; i < 10; ++i) {
+    for (int i = 0; i < 5; ++i) {
         std::cout << "Doing RPC " << i << std::endl;
         scan.on(server_endpoint)();
         std::this_thread::sleep_for(std::chrono::milliseconds(1000)); // sleep for 1 second
