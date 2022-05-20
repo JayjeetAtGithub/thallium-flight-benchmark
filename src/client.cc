@@ -1,4 +1,7 @@
 #include <iostream>
+#include <thread>
+#include <chrono>
+
 #include <thallium.hpp>
 
 namespace tl = thallium;
@@ -32,6 +35,6 @@ int main(int argc, char** argv) {
     for (int i = 0; i < 10; ++i) {
         std::cout << "Doing RPC " << i << std::endl;
         scan.on(server_endpoint)();
-        sleep(1);
+        std::this_thread::sleep_for(std::chrono::milliseconds(1000)); // sleep for 1 second
     }
 }
