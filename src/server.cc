@@ -68,10 +68,10 @@ namespace tl = thallium;
 int main(int argc, char** argv) {
 
     // define the thalllium server
-    tl::engine engine("tcp", THALLIUM_SERVER_MODE)
+    tl::engine engine("tcp", THALLIUM_SERVER_MODE);
 
     // define the remote do_rdma procedure
-    tl::remote_procedure do_rdma = engine.define("do_rdma").disable_response()
+    tl::remote_procedure do_rdma = engine.define("do_rdma").disable_response();
 
     // define the RPC method   
     std::function<void(const tl::request&, int, int)> s = 
