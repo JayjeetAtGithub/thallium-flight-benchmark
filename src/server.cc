@@ -85,7 +85,7 @@ int main(int argc, char** argv) {
             do_rdma.on(req.get_endpoint())(arrow_bulk);
             req.respond(1);
         };
-    engine.define("scan", s).disable_response();
+    engine.define("scan", s);
 
     // run the server
     std::cout << "Server running at address " << engine.self() << std::endl;
