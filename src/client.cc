@@ -25,7 +25,6 @@ namespace tl = thallium;
 int main(int argc, char** argv) {
 
     tl::engine engine("tcp", THALLIUM_CLIENT_MODE);
-    std::cout << "Client running at address " << engine.self() << std::endl;
     tl::endpoint server_endpoint = engine.lookup(argv[1]);
 
     tl::remote_procedure scan = engine.define("scan").disable_response();
@@ -49,6 +48,7 @@ int main(int argc, char** argv) {
 
     // execute the RPC scan method on the server
     scan.on(server_endpoint)();
+    std::cout << "Client running at address " << engine.self() << std::endl;
 
     return 0;
 }
