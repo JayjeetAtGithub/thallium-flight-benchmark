@@ -74,7 +74,7 @@ int main(int argc, char** argv) {
     tl::remote_procedure do_rdma = engine.define("do_rdma").disable_response();
 
     // define the RPC method   
-    std::function<void(const tl::request&, int, int)> s = 
+    std::function<void(const tl::request&)> s = 
         [&engine, &do_rdma](const tl::request &req) {
             std::string buffer = "Matthieu";
             std::vector<std::pair<void*,std::size_t>> segments(1);
