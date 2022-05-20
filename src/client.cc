@@ -28,7 +28,7 @@ int main(int argc, char** argv) {
     tl::endpoint server_endpoint = engine.lookup(argv[1]);
     std::cout << "Client running at address " << engine.self() << std::endl;
 
-    tl::remote_procedure scan = engine.define("scan");
+    tl::remote_procedure scan = engine.define("scan").disable_response();
 
     // define the RDMA handler method
     std::function<void(const tl::request&, tl::bulk&)> f =
@@ -45,7 +45,7 @@ int main(int argc, char** argv) {
             for(auto c : v) std::cout << c;
             std::cout << std::endl;
         };
-    engine.define("do_rdma", f);
+    engine.define("do_rdma", f).disable_response();
 
     // execute the RPC scan method on the server
     scan.on(server_endpoint)();   
