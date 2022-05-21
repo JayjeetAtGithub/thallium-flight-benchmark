@@ -1,4 +1,5 @@
 #include <iostream>
+#include "request.h"
 #include <thallium.hpp>
 #include <thallium/serialization/stl/string.hpp>
 
@@ -14,8 +15,8 @@ int main(int argc, char** argv) {
     tl::remote_procedure do_rdma = engine.define("do_rdma").disable_response();
 
     // define the RPC method   
-    std::function<void(const tl::request&)> s = 
-        [&engine, &do_rdma](const tl::request &req) {
+    std::function<void(const tl::request&, const point&)> s = 
+        [&engine, &do_rdma](const tl::request &req const point& p) {
             std::string buffer = "Matthieu";
             std::vector<std::pair<void*,std::size_t>> segments(1);
             segments[0].first  = (void*)(&buffer[0]);
