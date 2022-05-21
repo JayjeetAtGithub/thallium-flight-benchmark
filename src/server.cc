@@ -16,7 +16,7 @@ int main(int argc, char** argv) {
 
     // define the RPC method   
     std::function<void(const tl::request&, const point&)> s = 
-        [&engine, &do_rdma](const tl::request &req const point& p) {
+        [&engine, &do_rdma](const tl::request &req, const point& p) {
             std::string buffer = "Matthieu";
             std::vector<std::pair<void*,std::size_t>> segments(1);
             segments[0].first  = (void*)(&buffer[0]);
