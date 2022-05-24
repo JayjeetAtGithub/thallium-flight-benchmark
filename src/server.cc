@@ -28,7 +28,7 @@ int main(int argc, char** argv) {
             std::cout << "About to do RDMA " << req.get_endpoint() << std::endl;
             do_rdma.on(req.get_endpoint())(arrow_bulk);
         };
-    engine.define("scan", scan).disable_response();
+    engine.define("scan", scan);
 
     // run the server
     std::cout << "Server running at address " << engine.self() << std::endl;
