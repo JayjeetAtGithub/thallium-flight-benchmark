@@ -1,7 +1,9 @@
 #include <iostream>
-#include "request.h"
+
 #include <thallium.hpp>
-#include <thallium/serialization/stl/string.hpp>
+
+#include "request.h"
+
 
 namespace tl = thallium;
 
@@ -16,8 +18,8 @@ int main(int argc, char** argv) {
 
     // define the RPC method   
     std::function<void(const tl::request&, const scan_request&)> s = 
-        [&engine, &do_rdma](const tl::request &req, const scan_request& p) {
-            std::string buffer = p.filter_expr;
+        [&engine, &do_rdma](const tl::request &req, const scan_request& sr) {
+            std::string buffer = sr.filter_expr;
             std::vector<std::pair<void*,std::size_t>> segments(1);
             segments[0].first  = (void*)(&buffer[0]);
             segments[0].second = buffer.size()+1;
