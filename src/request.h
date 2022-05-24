@@ -15,7 +15,6 @@ class scan_request {
 
         template<typename A>
         void serialize(A& ar) {
-            ar & proj_cols;
-            ar & filter_expr;
+            ar(proj_cols, filter_expr);
         }
 };
