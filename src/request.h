@@ -1,22 +1,20 @@
 #include <iostream>
+#include <vector>
 
-class point {
 
+class scan_req {
     private:
-
-        double x;
-        double y;
-        double z;
+        std::vector<string> proj_cols;
+        std::string filter_expr;
 
     public:
 
-        point(double a=0.0, double b=0.0, double c=0.0)
-        : x(a), y(b), z(c) {}
+        scan_req(std::vector<string> proj_cols, std::string filter_expr)
+        : proj_cols(proj_cols), filter_expr(filter_expr) {}
 
         template<typename A>
         void serialize(A& ar) {
-             ar & x;
-             ar & y;
-             ar & z;
+            ar & proj_cols;
+            ar & filter_expr;
         }
 };
