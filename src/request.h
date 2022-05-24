@@ -8,12 +8,13 @@
 
 class scan_request {
     public:
-        int val;
+        int _val;
 
-        scan_request(int val) : val(val) {}
-
-        template<typename A>
-        void serialize(A& ar) {
-            ar(val);
-        }
+        scan_request(int val) : _val(val) {}
+        template<typename A> friend void serialize(A& ar, scan_request& s);
 };
+
+template<typename A>
+void serialize(A& ar, scan_request& sr) {
+    ar(sr._val);
+}
