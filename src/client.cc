@@ -34,7 +34,7 @@ int main(int argc, char** argv) {
         };
     engine.define("do_rdma", f).disable_response();
 
-    scan_request req(std::vector<std::string>{"a", "b"}, "a > 1");
+    scan_request req(1011);
 
     // execute the RPC scan method on the server
     for (int i = 0; i < 5; ++i) {

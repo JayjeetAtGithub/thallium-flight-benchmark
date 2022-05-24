@@ -8,14 +8,12 @@
 
 class scan_request {
     public:
-        std::vector<std::string> proj_cols;
-        std::string filter_expr;
+        int val;
 
-        scan_request(std::vector<std::string> proj_cols, std::string filter_expr)
-        : proj_cols(proj_cols), filter_expr(filter_expr) {}
+        scan_request(int val) : val(val) {}
 
         template<typename A>
         void serialize(A& ar) {
-            ar(proj_cols, filter_expr);
+            ar(val);
         }
 };
