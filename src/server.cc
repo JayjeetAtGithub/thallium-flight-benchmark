@@ -17,7 +17,7 @@ int main(int argc, char** argv) {
     tl::remote_procedure do_rdma = engine.define("do_rdma").disable_response();
 
     // define the RPC method   
-    std::function<void(const tl::request&)> s = 
+    std::function<void(const tl::request&)> scan = 
         [&engine, &do_rdma](const tl::request &req) {
             std::string buffer = "mattieu";
             // std::cout << "Received request from " << sr.get_val() << std::endl;
@@ -28,7 +28,7 @@ int main(int argc, char** argv) {
             std::cout << "About to do RDMA " << req.get_endpoint() << std::endl;
             do_rdma.on(req.get_endpoint())(arrow_bulk);
         };
-    engine.define("scan", s).disable_response();
+    engine.define("scan", scan).disable_response();
 
     // run the server
     std::cout << "Server running at address " << engine.self() << std::endl;
