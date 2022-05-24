@@ -1,10 +1,11 @@
 #include <iostream>
 #include <vector>
+#include <string>
 
 
 class scan_req {
     private:
-        std::vector<string> proj_cols;
+        std::vector<std::string> proj_cols;
         std::string filter_expr;
 
     public:
