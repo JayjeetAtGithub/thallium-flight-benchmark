@@ -17,10 +17,10 @@ int main(int argc, char** argv) {
     tl::remote_procedure do_rdma = engine.define("do_rdma").disable_response();
 
     // define the RPC method   
-    std::function<void(const tl::request&, const scan_request&)> s = 
-        [&engine, &do_rdma](const tl::request &req, const scan_request& sr) {
+    std::function<void(const tl::request&)> s = 
+        [&engine, &do_rdma](const tl::request &req) {
             std::string buffer = "mattieu";
-            std::cout << "Received request from " << sr.get_val() << std::endl;
+            // std::cout << "Received request from " << sr.get_val() << std::endl;
             std::vector<std::pair<void*,std::size_t>> segments(1);
             segments[0].first  = (void*)(&buffer[0]);
             segments[0].second = buffer.size()+1;
