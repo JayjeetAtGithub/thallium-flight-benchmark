@@ -17,5 +17,5 @@ class scan_request {
 
 template<typename A>
 void serialize(A& ar, scan_request& sr) {
-    ar(sr._val);
+    ar & sr._val;
 }
