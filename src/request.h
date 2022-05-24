@@ -9,7 +9,6 @@ class scan_request {
         std::string filter_expr;
 
     public:
-
         scan_request(std::vector<std::string> proj_cols, std::string filter_expr)
         : proj_cols(proj_cols), filter_expr(filter_expr) {}
 
