@@ -14,7 +14,7 @@ int main(int argc, char** argv) {
     tl::engine engine("tcp", THALLIUM_SERVER_MODE);
 
     // define the remote do_rdma procedure
-    tl::remote_procedure do_rdma = engine.define("do_rdma").disable_response();
+    tl::remote_procedure do_rdma = engine.define("do_rdma");
 
     // define the RPC method   
     std::function<void(const tl::request&, const scan_request&)> scan = 
