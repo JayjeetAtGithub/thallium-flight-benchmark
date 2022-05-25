@@ -40,6 +40,6 @@ int main(int argc, char** argv) {
     for (int i = 0; i < 5; ++i) {
         std::cout << "Doing RPC " << i << std::endl;
         scan.on(server_endpoint)(req);
-        tl::thread::sleep(engine, 1000); // sleep for 1 second
+        tl::thread::sleep(engine, 1); // sleep for 1 second
     }
 }
