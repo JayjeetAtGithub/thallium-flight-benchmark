@@ -37,9 +37,9 @@ int main(int argc, char** argv) {
     scan_request req(1011);
 
     // execute the RPC scan method on the server
-    for (int i = 0; i < 5; ++i) {
+    // for (int i = 0; i < 5; ++i) {
         std::cout << "Doing RPC " << i << std::endl;
         scan.on(server_endpoint)(req);
-        tl::thread::sleep(engine, 1); // sleep for 1 second
-    }
+        // tl::thread::sleep(engine, 1); // sleep for 1 second
+    // }
 }
