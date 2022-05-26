@@ -16,7 +16,7 @@ class scan_request {
 
         scan_request() {}
         scan_request(
-            char* filter_buffer, size_t filter_buffer_size, char* projection_buffer, size_t projection_buffer_size) {}
+            char* filter_buffer, size_t filter_buffer_size, char* projection_buffer, size_t projection_buffer_size)
         : filter_buffer(filter_buffer), filter_buffer_size(filter_buffer_size), 
           projection_buffer(projection_buffer), projection_buffer_size(projection_buffer_size) {}
 
