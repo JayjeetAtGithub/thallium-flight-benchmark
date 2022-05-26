@@ -16,7 +16,7 @@ class scan_request {
         : filter_buffer(filter_buffer), filter_buffer_size(filter_buffer_size) {}
 
         template<typename A>
-        void save(A& ar) {
+        void save(A& ar) const {
             ar & filter_buffer_size;
             ar.write(filter_buffer, filter_buffer_size);
         }
