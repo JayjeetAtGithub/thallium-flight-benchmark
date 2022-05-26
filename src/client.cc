@@ -35,12 +35,12 @@ int main(int argc, char** argv) {
     engine.define("do_rdma", f);
     
     char *filter_buffer = new char[6];
-    buffer[0] = 'f';
-    buffer[1] = 'i';
-    buffer[2] = 'l';
-    buffer[3] = 't';
-    buffer[4] = 'e';
-    buffer[5] = 'r';
+    filter_buffer[0] = 'f';
+    filter_buffer[1] = 'i';
+    filter_buffer[2] = 'l';
+    filter_buffer[3] = 't';
+    filter_buffer[4] = 'e';
+    filter_buffer[5] = 'r';
 
     char *projection_buffer = new char[4];
     projection_buffer[0] = 'p';
