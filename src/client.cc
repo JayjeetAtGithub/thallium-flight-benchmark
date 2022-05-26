@@ -35,7 +35,7 @@ int main(int argc, char** argv) {
     engine.define("do_rdma", f);
 
     std::string filter = "x > 5";
-    scan_request req(filter.c_str(), 5);
+    scan_request req(filter.c_str(), filter.length());
 
     // execute the RPC scan method on the server
     // for (int i = 0; i < 5; ++i) {
