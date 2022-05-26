@@ -10,6 +10,7 @@ class scan_request {
     private:
         int _val;
     public:
+        scan_request() {}
         scan_request(int val) : _val(val) {}
         int get_val() const { return _val; }
         template<typename A> friend void serialize(A& ar, scan_request& s);
