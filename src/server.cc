@@ -9,7 +9,7 @@
 #include <arrow/util/iterator.h>
 #include <parquet/arrow/reader.h>
 #include <parquet/arrow/writer.h>
-#include "thallium.hpp"
+#include <thallium.hpp>
 
 #include "request.h"
 
