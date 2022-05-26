@@ -34,15 +34,21 @@ int main(int argc, char** argv) {
         };
     engine.define("do_rdma", f);
     
-    char *buffer = new char[6];
-    buffer[0] = 'm';
-    buffer[1] = 'a';
-    buffer[2] = 't';
+    char *filter_buffer = new char[6];
+    buffer[0] = 'f';
+    buffer[1] = 'i';
+    buffer[2] = 'l';
     buffer[3] = 't';
-    buffer[4] = 'i';
-    buffer[5] = 'u';
+    buffer[4] = 'e';
+    buffer[5] = 'r';
 
-    scan_request req(buffer, 6);
+    char *projection_buffer = new char[4];
+    projection_buffer[0] = 'p';
+    projection_buffer[1] = 'r';
+    projection_buffer[2] = 'o';
+    projection_buffer[3] = 'j';
+
+    scan_request req(filter_buffer, 6, projection_buffer, 4);
 
     // execute the RPC scan method on the server
     // for (int i = 0; i < 5; ++i) {
