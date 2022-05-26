@@ -20,7 +20,7 @@ int main(int argc, char** argv) {
     std::function<void(const tl::request&, const scan_request&)> scan = 
         [&engine, &do_rdma](const tl::request &req, const scan_request& sr) {
             std::string buffer = "mattieu";
-            std::cout << "Received request from " << sr.get_val() << std::endl;
+            // std::cout << "Received request from " << sr.get_val() << std::endl;
             std::vector<std::pair<void*,std::size_t>> segments(1);
             segments[0].first  = (void*)(&buffer[0]);
             segments[0].second = buffer.size()+1;

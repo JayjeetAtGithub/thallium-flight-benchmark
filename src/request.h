@@ -7,16 +7,24 @@
 
 
 class scan_request {
-    private:
-        int _val;
     public:
-        scan_request() {}
-        scan_request(int val) : _val(val) {}
-        int get_val() const { return _val; }
-        template<typename A> friend void serialize(A& ar, scan_request& s);
-};
+        char *filter_buffer;
+        size_t filter_buffer_size;
 
-template<typename A>
-void serialize(A& ar, scan_request& sr) {
-    ar & sr._val;
-}
+        scan_request() {}
+        scan_request(char *filter_buffer, size_t filter_buffer_size)
+        : filter_buffer(filter_buffer), filter_buffer_size(filter_buffer_size) {}
+
+        template<typename A>
+        void save(A& ar) {
+            ar & filter_buffer_size;
+            ar.write(filter_buffer, filter_buffer_size);
+        }
+
+        template<typename A>
+        void load(A& ar) {
+            ar & filter_buffer_size;
+            filter_buffer = new char[filter_buffer_size];
+            ar.read(filter_buffer, filter_buffer_size);
+        }
+};
