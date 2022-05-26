@@ -33,8 +33,16 @@ int main(int argc, char** argv) {
             std::cout << std::endl;
         };
     engine.define("do_rdma", f);
+    
+    char *buffer = new char[6];
+    buffer[0] = 'm';
+    buffer[1] = 'a';
+    buffer[2] = 't';
+    buffer[3] = 't';
+    buffer[4] = 'i';
+    buffer[5] = 'u';
 
-    scan_request req("x > 5", 5);
+    scan_request req(buffer, 6);
 
     // execute the RPC scan method on the server
     // for (int i = 0; i < 5; ++i) {
