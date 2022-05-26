@@ -1,6 +1,9 @@
 #include <iostream>
+
 #include <thallium.hpp>
-#include <thallium/serialization/stl/string.hpp>
+
+#include "request.h"
+
 
 namespace tl = thallium;
 
@@ -11,12 +14,16 @@ int main(int argc, char** argv) {
     tl::engine engine("tcp", THALLIUM_SERVER_MODE);
 
     // define the remote do_rdma procedure
-    tl::remote_procedure do_rdma = engine.define("do_rdma").disable_response();
+    tl::remote_procedure do_rdma = engine.define("do_rdma");
 
     // define the RPC method   
-    std::function<void(const tl::request&)> s = 
-        [&engine, &do_rdma](const tl::request &req) {
-            std::string buffer = "Matthieu";
+    std::function<void(const tl::request&, const scan_request&)> scan = 
+        [&engine, &do_rdma](const tl::request &req, const scan_request& sr) {
+            std::string buffer = "mattieu";
+            std::cout << "Filter: " << sr.filter_buffer << std::endl;
+            std::cout << "Projection: " << sr.projection_buffer << std::endl;
+
+
             std::vector<std::pair<void*,std::size_t>> segments(1);
             segments[0].first  = (void*)(&buffer[0]);
             segments[0].second = buffer.size()+1;
@@ -24,7 +31,7 @@ int main(int argc, char** argv) {
             std::cout << "About to do RDMA " << req.get_endpoint() << std::endl;
             do_rdma.on(req.get_endpoint())(arrow_bulk);
         };
-    engine.define("scan", s).disable_response();
+    engine.define("scan", scan);
 
     // run the server
     std::cout << "Server running at address " << engine.self() << std::endl;

@@ -4,6 +4,9 @@
 
 #include <thallium.hpp>
 
+#include "request.h"
+
+
 namespace tl = thallium;
 
 int main(int argc, char** argv) {
@@ -12,7 +15,7 @@ int main(int argc, char** argv) {
     tl::endpoint server_endpoint = engine.lookup(argv[1]);
     std::cout << "Client running at address " << engine.self() << std::endl;
 
-    tl::remote_procedure scan = engine.define("scan").disable_response();
+    tl::remote_procedure scan = engine.define("scan");
 
     // define the RDMA handler method
     std::function<void(const tl::request&, tl::bulk&)> f =
@@ -29,12 +32,28 @@ int main(int argc, char** argv) {
             for(auto c : v) std::cout << c;
             std::cout << std::endl;
         };
-    engine.define("do_rdma", f).disable_response();
+    engine.define("do_rdma", f);
+    
+    char *filter_buffer = new char[6];
+    filter_buffer[0] = 'f';
+    filter_buffer[1] = 'i';
+    filter_buffer[2] = 'l';
+    filter_buffer[3] = 't';
+    filter_buffer[4] = 'e';
+    filter_buffer[5] = 'r';
+
+    char *projection_buffer = new char[4];
+    projection_buffer[0] = 'p';
+    projection_buffer[1] = 'r';
+    projection_buffer[2] = 'o';
+    projection_buffer[3] = 'j';
+
+    scan_request req(filter_buffer, 6, projection_buffer, 4);
 
     // execute the RPC scan method on the server
-    for (int i = 0; i < 5; ++i) {
-        std::cout << "Doing RPC " << i << std::endl;
-        scan.on(server_endpoint)();
-        std::this_thread::sleep_for(std::chrono::milliseconds(1000)); // sleep for 1 second
-    }
+    // for (int i = 0; i < 5; ++i) {
+        // std::cout << "Doing RPC " << i << std::endl;
+        scan.on(server_endpoint)(req);
+        // tl::thread::sleep(engine, 1); // sleep for 1 second
+    // }
 }
