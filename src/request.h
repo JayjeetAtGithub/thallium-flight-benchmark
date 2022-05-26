@@ -12,8 +12,8 @@ class scan_request {
         size_t filter_buffer_size;
 
         scan_request() {}
-        scan_request(char const* filter_buffer, size_t filter_buffer_size)
-        : filter_buffer(std::move(filter_buffer)), filter_buffer_size(filter_buffer_size) {}
+        scan_request(char* filter_buffer, size_t filter_buffer_size)
+        : filter_buffer(filter_buffer), filter_buffer_size(filter_buffer_size) {}
 
         template<typename A>
         void save(A& ar) {
