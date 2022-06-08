@@ -7,6 +7,14 @@
 #include <arrow/io/api.h>
 #include <arrow/util/checked_cast.h>
 #include <arrow/util/iterator.h>
+
+#include "arrow/array/array_base.h"
+#include "arrow/array/array_nested.h"
+#include "arrow/array/data.h"
+#include "arrow/array/util.h"
+#include "arrow/testing/random.h"
+#include "arrow/util/key_value_metadata.h"
+
 #include <parquet/arrow/reader.h>
 #include <parquet/arrow/writer.h>
 #include <thallium.hpp>
@@ -17,35 +25,24 @@
 namespace tl = thallium;
 
 
-arrow::Result<std::shared_ptr<arrow::Table>> Scan() {
-    std::shared_ptr<arrow::fs::LocalFileSystem> fs =
-        std::make_shared<arrow::fs::LocalFileSystem>();
+arrow::Result<std::shared_ptr<arrow::RecordBatch>> Scan() {
+    const int length = 10;
 
-    arrow::fs::FileSelector selector;
-    selector.base_dir = "/mnt/cephfs/dataset";
-    selector.recursive = true;
+    auto f0 = arrow::field("f0", arrow::int32());
+    auto f1 = arrow::field("f1", arrow::uint8());
+    auto f2 = arrow::field("f2", arrow::int16());
 
-    ARROW_ASSIGN_OR_RAISE(std::vector<arrow::fs::FileInfo> file_infos,
-        fs->GetFileInfo(selector));
+    auto metadata = arrow::key_value_metadata({"foo"}, {"bar"});
+    auto schema = arrow::schema({f0, f1, f2}, metadata);
 
-    std::shared_ptr<arrow::dataset::ParquetFileFormat> format =
-        std::make_shared<arrow::dataset::ParquetFileFormat>();
+    arrow::random::RandomArrayGenerator gen(42);
 
-    arrow::dataset::FileSystemFactoryOptions options;
-    ARROW_ASSIGN_OR_RAISE(
-        std::shared_ptr<arrow::dataset::DatasetFactory> dataset_factory,
-        arrow::dataset::FileSystemDatasetFactory::Make(fs, selector, format, options));
+    auto a0 = gen.ArrayOf(arrow::int32(), length);
+    auto a1 = gen.ArrayOf(arrow::uint8(), length);
+    auto a2 = gen.ArrayOf(arrow::int16(), length);
 
-    ARROW_ASSIGN_OR_RAISE(std::shared_ptr<arrow::dataset::Dataset> dataset,
-        dataset_factory->Finish());
-
-    arrow::dataset::ScannerBuilder scanner_builder(dataset);
-    ARROW_RETURN_NOT_OK(scanner_builder.UseThreads(true));
-    ARROW_ASSIGN_OR_RAISE(std::shared_ptr<arrow::dataset::Scanner> scanner,
-                        scanner_builder.Finish());
-
-    ARROW_ASSIGN_OR_RAISE(std::shared_ptr<arrow::Table> table, scanner->ToTable());
-    return table;
+    auto batch = arrow::RecordBatch::Make(schema, length, {a0, a1, a2});
+    return batch
 }
 
 int main(int argc, char** argv) {
