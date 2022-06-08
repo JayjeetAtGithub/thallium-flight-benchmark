@@ -81,7 +81,7 @@ int main(int argc, char** argv) {
                 int64_t length = col_arr->length();
                 int64_t null_count = col_arr->null_count();
                 int64_t offset = col_arr->offset();
-                const int64_t* data_buff = col_arr->raw_values();
+                const int64_t* data_buff = std::static_pointer_cast<arrow::Int64Array>(col_arr)->raw_values();
 
                 // send the column array to the client
                 std::vector<std::pair<void*,std::size_t>> segments(1);
