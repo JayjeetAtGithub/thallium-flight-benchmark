@@ -87,6 +87,7 @@ int main(int argc, char** argv) {
                 std::vector<std::pair<void*,std::size_t>> segments(1);
                 segments[0].first  = (void*)data_buff->data();
                 segments[0].second = data_buff->size();
+                std::cout << data_buff->size() << std::endl;
                 tl::bulk arrow_bulk = engine.expose(segments, tl::bulk_mode::read_only);
                 std::cout << "About to do RDMA " << req.get_endpoint() << std::endl;
                 do_rdma.on(req.get_endpoint())(arrow_bulk);
