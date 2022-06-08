@@ -26,8 +26,7 @@ namespace tl = thallium;
 
 
 arrow::Result<std::shared_ptr<arrow::RecordBatch>> Scan() {
-    const int length = 3;
-
+    // Define schema
     auto f0 = arrow::field("f0", arrow::int64());
     auto f1 = arrow::field("f1", arrow::binary());
     auto f2 = arrow::field("f2", arrow::float64());
@@ -35,25 +34,24 @@ arrow::Result<std::shared_ptr<arrow::RecordBatch>> Scan() {
     auto metadata = arrow::key_value_metadata({"foo"}, {"bar"});
     auto schema = arrow::schema({f0, f1, f2}, metadata);
 
-    // Raw pointers
+    // Generate some data
     arrow::Int64Builder long_builder = arrow::Int64Builder();
     std::vector<int64_t> values = {1, 2, 3};
     ARROW_RETURN_NOT_OK(long_builder.AppendValues(values));
     ARROW_ASSIGN_OR_RAISE(std::shared_ptr<arrow::Array> a0, long_builder.Finish());
 
-    // Vectors
     arrow::StringBuilder str_builder = arrow::StringBuilder();
     std::vector<std::string> strvals = {"x", "y", "z"};
     ARROW_RETURN_NOT_OK(str_builder.AppendValues(strvals));
     ARROW_ASSIGN_OR_RAISE(std::shared_ptr<arrow::Array> a1, str_builder.Finish());
 
-    // Iterators
     arrow::DoubleBuilder dbl_builder = arrow::DoubleBuilder();
     std::vector<double> dblvals = {1.1, 1.1, 2.3};
     ARROW_RETURN_NOT_OK(dbl_builder.AppendValues(dblvals));
     ARROW_ASSIGN_OR_RAISE(std::shared_ptr<arrow::Array> a2, dbl_builder.Finish());
 
-    auto batch = arrow::RecordBatch::Make(schema, length, {a0, a1, a2});
+    // Create a record batch
+    auto batch = arrow::RecordBatch::Make(schema, 3, {a0, a1, a2});
     return batch;
 }
 
@@ -72,6 +70,8 @@ int main(int argc, char** argv) {
             std::cout << "Filter: " << sr.filter_buffer << std::endl;
             std::cout << "Projection: " << sr.projection_buffer << std::endl;
 
+            auto b = Scan();
+            std::cout << "Batch: " << b->ToString() << std::endl;
 
             std::vector<std::pair<void*,std::size_t>> segments(1);
             segments[0].first  = (void*)(&buffer[0]);
