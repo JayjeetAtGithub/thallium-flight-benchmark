@@ -7,6 +7,14 @@
 #include <arrow/io/api.h>
 #include <arrow/util/checked_cast.h>
 #include <arrow/util/iterator.h>
+
+#include "arrow/array/array_base.h"
+#include "arrow/array/array_nested.h"
+#include "arrow/array/data.h"
+#include "arrow/array/util.h"
+#include "arrow/testing/random.h"
+#include "arrow/util/key_value_metadata.h"
+
 #include <parquet/arrow/reader.h>
 #include <parquet/arrow/writer.h>
 #include <thallium.hpp>
@@ -17,35 +25,34 @@
 namespace tl = thallium;
 
 
-arrow::Result<std::shared_ptr<arrow::Table>> Scan() {
-    std::shared_ptr<arrow::fs::LocalFileSystem> fs =
-        std::make_shared<arrow::fs::LocalFileSystem>();
+arrow::Result<std::shared_ptr<arrow::RecordBatch>> Scan() {
+    // Define schema
+    auto f0 = arrow::field("f0", arrow::int64());
+    auto f1 = arrow::field("f1", arrow::binary());
+    auto f2 = arrow::field("f2", arrow::float64());
 
-    arrow::fs::FileSelector selector;
-    selector.base_dir = "/mnt/cephfs/dataset";
-    selector.recursive = true;
+    auto metadata = arrow::key_value_metadata({"foo"}, {"bar"});
+    auto schema = arrow::schema({f0, f1, f2}, metadata);
 
-    ARROW_ASSIGN_OR_RAISE(std::vector<arrow::fs::FileInfo> file_infos,
-        fs->GetFileInfo(selector));
+    // Generate some data
+    arrow::Int64Builder long_builder = arrow::Int64Builder();
+    std::vector<int64_t> values = {1, 2, 3};
+    ARROW_RETURN_NOT_OK(long_builder.AppendValues(values));
+    ARROW_ASSIGN_OR_RAISE(std::shared_ptr<arrow::Array> a0, long_builder.Finish());
 
-    std::shared_ptr<arrow::dataset::ParquetFileFormat> format =
-        std::make_shared<arrow::dataset::ParquetFileFormat>();
+    arrow::StringBuilder str_builder = arrow::StringBuilder();
+    std::vector<std::string> strvals = {"x", "y", "z"};
+    ARROW_RETURN_NOT_OK(str_builder.AppendValues(strvals));
+    ARROW_ASSIGN_OR_RAISE(std::shared_ptr<arrow::Array> a1, str_builder.Finish());
 
-    arrow::dataset::FileSystemFactoryOptions options;
-    ARROW_ASSIGN_OR_RAISE(
-        std::shared_ptr<arrow::dataset::DatasetFactory> dataset_factory,
-        arrow::dataset::FileSystemDatasetFactory::Make(fs, selector, format, options));
+    arrow::DoubleBuilder dbl_builder = arrow::DoubleBuilder();
+    std::vector<double> dblvals = {1.1, 1.1, 2.3};
+    ARROW_RETURN_NOT_OK(dbl_builder.AppendValues(dblvals));
+    ARROW_ASSIGN_OR_RAISE(std::shared_ptr<arrow::Array> a2, dbl_builder.Finish());
 
-    ARROW_ASSIGN_OR_RAISE(std::shared_ptr<arrow::dataset::Dataset> dataset,
-        dataset_factory->Finish());
-
-    arrow::dataset::ScannerBuilder scanner_builder(dataset);
-    ARROW_RETURN_NOT_OK(scanner_builder.UseThreads(true));
-    ARROW_ASSIGN_OR_RAISE(std::shared_ptr<arrow::dataset::Scanner> scanner,
-                        scanner_builder.Finish());
-
-    ARROW_ASSIGN_OR_RAISE(std::shared_ptr<arrow::Table> table, scanner->ToTable());
-    return table;
+    // Create a record batch
+    auto batch = arrow::RecordBatch::Make(schema, 3, {a0, a1, a2});
+    return batch;
 }
 
 int main(int argc, char** argv) {
@@ -63,6 +70,8 @@ int main(int argc, char** argv) {
             std::cout << "Filter: " << sr.filter_buffer << std::endl;
             std::cout << "Projection: " << sr.projection_buffer << std::endl;
 
+            auto b = Scan().ValueOrDie();
+            std::cout << "Batch: " << b->ToString() << std::endl;
 
             std::vector<std::pair<void*,std::size_t>> segments(1);
             segments[0].first  = (void*)(&buffer[0]);
