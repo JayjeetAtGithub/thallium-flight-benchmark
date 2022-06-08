@@ -26,20 +26,32 @@ namespace tl = thallium;
 
 
 arrow::Result<std::shared_ptr<arrow::RecordBatch>> Scan() {
-    const int length = 10;
+    const int length = 3;
 
-    auto f0 = arrow::field("f0", arrow::int32());
-    auto f1 = arrow::field("f1", arrow::uint8());
-    auto f2 = arrow::field("f2", arrow::int16());
+    auto f0 = arrow::field("f0", arrow::int64());
+    auto f1 = arrow::field("f1", arrow::binary());
+    auto f2 = arrow::field("f2", arrow::float64());
 
     auto metadata = arrow::key_value_metadata({"foo"}, {"bar"});
     auto schema = arrow::schema({f0, f1, f2}, metadata);
 
-    arrow::random::RandomArrayGenerator gen(42);
+    // Raw pointers
+    arrow::Int64Builder long_builder = arrow::Int64Builder();
+    std::array<int64_t, 4> values = {1, 2, 3};
+    ARROW_RETURN_NOT_OK(long_builder.AppendValues(values.data(), values.size()));
+    ARROW_ASSIGN_OR_RAISE(std::shared_ptr<arrow::Array> a0, long_builder.Finish());
 
-    auto a0 = gen.ArrayOf(arrow::int32(), length);
-    auto a1 = gen.ArrayOf(arrow::uint8(), length);
-    auto a2 = gen.ArrayOf(arrow::int16(), length);
+    // Vectors
+    arrow::StringBuilder str_builder = arrow::StringBuilder();
+    std::vector<std::string> strvals = {"x", "y", "z"};
+    ARROW_RETURN_NOT_OK(str_builder.AppendValues(strvals));
+    ARROW_ASSIGN_OR_RAISE(std::shared_ptr<arrow::Array> a1, str_builder.Finish());
+
+    // Iterators
+    arrow::DoubleBuilder dbl_builder = arrow::DoubleBuilder();
+    std::set<double> dblvals = {1.1, 1.1, 2.3};
+    ARROW_RETURN_NOT_OK(dbl_builder.AppendValues(dblvals.begin(), dblvals.end()));
+    ARROW_ASSIGN_OR_RAISE(std::shared_ptr<arrow::Array> a2, dbl_builder.Finish());
 
     auto batch = arrow::RecordBatch::Make(schema, length, {a0, a1, a2});
     return batch;
