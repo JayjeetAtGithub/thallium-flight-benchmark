@@ -37,8 +37,8 @@ arrow::Result<std::shared_ptr<arrow::RecordBatch>> Scan() {
 
     // Raw pointers
     arrow::Int64Builder long_builder = arrow::Int64Builder();
-    std::array<int64_t, 4> values = {1, 2, 3};
-    ARROW_RETURN_NOT_OK(long_builder.AppendValues(values.data(), values.size()));
+    std::vector<int64_t> values = {1, 2, 3};
+    ARROW_RETURN_NOT_OK(long_builder.AppendValues(values));
     ARROW_ASSIGN_OR_RAISE(std::shared_ptr<arrow::Array> a0, long_builder.Finish());
 
     // Vectors
