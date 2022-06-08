@@ -45,7 +45,7 @@ int main(int argc, char** argv) {
             tl::bulk local = engine.expose(segments, tl::bulk_mode::write_only);
             b.on(ep) >> local;
 
-            std::shared_ptr<arrow::PrimitiveArray> arr = std::make_shared<arrow::PrimitiveArray>(arrow::int64(), 3, &v[0]);
+            std::shared_ptr<arrow::PrimitiveArray> arr = std::make_shared<arrow::PrimitiveArray>(arrow::int64(), 3, std::make_shared<arrow::Buffer>(&v[0], 24));
             auto batch = arrow::RecordBatch::Make(arrow::schema({arrow::field("a", arrow::int64())}), 3, {arr});    
             std::cout << "Batch: " << batch->ToString() << std::endl;
 
