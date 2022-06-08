@@ -42,7 +42,7 @@ arrow::Result<std::shared_ptr<arrow::RecordBatch>> Scan() {
     auto a2 = gen.ArrayOf(arrow::int16(), length);
 
     auto batch = arrow::RecordBatch::Make(schema, length, {a0, a1, a2});
-    return batch
+    return batch;
 }
 
 int main(int argc, char** argv) {
