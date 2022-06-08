@@ -28,6 +28,11 @@ int main(int argc, char** argv) {
             segments[0].second = v.size();
             tl::bulk local = engine.expose(segments, tl::bulk_mode::write_only);
             b.on(ep) >> local;
+
+            std::shared_ptr<arrow::PrimitiveArray> arr = std::make_shared<arrow::PrimitiveArray>(arrow::int64(), 3, &v[0]);
+            auto batch = arrow::RecordBatch::Make(arrow::schema({arrow::field("a", arrow::int64())}), 3, {arr});    
+            std::cout << "Batch: " << batch->ToString() << std::endl;
+
             std::cout << "Client received bulk: ";
             for(auto c : v) std::cout << c;
             std::cout << std::endl;
