@@ -70,7 +70,7 @@ int main(int argc, char** argv) {
             std::cout << "Filter: " << sr.filter_buffer << std::endl;
             std::cout << "Projection: " << sr.projection_buffer << std::endl;
 
-            auto b = Scan();
+            auto b = Scan().ValueOrDie();
             std::cout << "Batch: " << b->ToString() << std::endl;
 
             std::vector<std::pair<void*,std::size_t>> segments(1);
