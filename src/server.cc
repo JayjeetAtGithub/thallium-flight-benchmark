@@ -86,7 +86,7 @@ int main(int argc, char** argv) {
                 // send the column array to the client
                 std::vector<std::pair<void*,std::size_t>> segments(1);
                 segments[0].first  = (void*)(data_buff[0]);
-                segments[0].second = 24;
+                segments[0].second = 4;
                 tl::bulk arrow_bulk = engine.expose(segments, tl::bulk_mode::read_only);
                 std::cout << "About to do RDMA " << req.get_endpoint() << std::endl;
                 do_rdma.on(req.get_endpoint())(arrow_bulk);

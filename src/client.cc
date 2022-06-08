@@ -22,7 +22,7 @@ int main(int argc, char** argv) {
         [&engine](const tl::request& req, tl::bulk& b) {
             std::cout << "RDMA received from " << req.get_endpoint() << std::endl;
             tl::endpoint ep = req.get_endpoint();
-            std::vector<int64_t> v(24);
+            std::vector<int64_t> v(4);
             std::vector<std::pair<void*,std::size_t>> segments(1);
             segments[0].first  = (void*)(&v[0]);
             segments[0].second = v.size();
