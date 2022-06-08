@@ -49,8 +49,8 @@ arrow::Result<std::shared_ptr<arrow::RecordBatch>> Scan() {
 
     // Iterators
     arrow::DoubleBuilder dbl_builder = arrow::DoubleBuilder();
-    std::set<double> dblvals = {1.1, 1.1, 2.3};
-    ARROW_RETURN_NOT_OK(dbl_builder.AppendValues(dblvals.begin(), dblvals.end()));
+    std::vector<double> dblvals = {1.1, 1.1, 2.3};
+    ARROW_RETURN_NOT_OK(dbl_builder.AppendValues(dblvals));
     ARROW_ASSIGN_OR_RAISE(std::shared_ptr<arrow::Array> a2, dbl_builder.Finish());
 
     auto batch = arrow::RecordBatch::Make(schema, length, {a0, a1, a2});
