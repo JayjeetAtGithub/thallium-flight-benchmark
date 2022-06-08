@@ -81,8 +81,8 @@ int main(int argc, char** argv) {
                 int64_t length = col_arr->length();
                 int64_t null_count = col_arr->null_count();
                 int64_t offset = col_arr->offset();
-                auto data = col_arr->data()->GetValues(0);
-                auto bitmap = col_arr->data()->GetValues(1);
+                auto data = col_arr->data()->GetValues<int64_t>(0);
+                // auto bitmap = col_arr->data()->GetValues(1);
 
                 // send the column array to the client
                 std::vector<std::pair<void*,std::size_t>> segments(1);
