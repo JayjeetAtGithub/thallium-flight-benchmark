@@ -81,12 +81,12 @@ int main(int argc, char** argv) {
                 int64_t length = col_arr->length();
                 int64_t null_count = col_arr->null_count();
                 int64_t offset = col_arr->offset();
-                const int64_t* data_buff = std::static_pointer_cast<arrow::Int64Array>(col_arr)->raw_values();
+                std::shared_ptr<arrow::Buffer> data_buff = std::static_pointer_cast<arrow::PrimitiveArray>(col_arr)->values();
 
                 // send the column array to the client
                 std::vector<std::pair<void*,std::size_t>> segments(1);
-                segments[0].first  = (void*)data_buff;
-                segments[0].second = 4;
+                segments[0].first  = (void*)data_buff->data();
+                segments[0].second = data_buff->size();
                 tl::bulk arrow_bulk = engine.expose(segments, tl::bulk_mode::read_only);
                 std::cout << "About to do RDMA " << req.get_endpoint() << std::endl;
                 do_rdma.on(req.get_endpoint())(arrow_bulk);
