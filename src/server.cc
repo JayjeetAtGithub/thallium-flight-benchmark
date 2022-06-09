@@ -58,7 +58,7 @@ arrow::Result<std::shared_ptr<arrow::RecordBatch>> Scan() {
 int main(int argc, char** argv) {
     tl::engine engine("tcp", THALLIUM_SERVER_MODE);
     
-    tl::remote_procedure do_rdma = engine.define("do_rdma").disable_response();
+    tl::remote_procedure do_rdma = engine.define("do_rdma");
     
     std::function<void(const tl::request&, const scan_request&)> scan = 
         [&engine, &do_rdma](const tl::request &req, const scan_request& sr) {
@@ -68,6 +68,9 @@ int main(int argc, char** argv) {
 
             auto b = Scan().ValueOrDie();
             std::cout << "Batch: " << b->ToString() << std::endl;
+
+            // send the control details
+
 
             // now we need to send by column array to the client
             int num_columns = b->num_columns();
@@ -87,7 +90,7 @@ int main(int argc, char** argv) {
                 segments[0].second = data_size;
 
                 tl::bulk arrow_bulk = engine.expose(segments, tl::bulk_mode::read_only);
-                do_rdma.on(req.get_endpoint())(data_size, arrow_bulk);
+                do_rdma.on(req.get_endpoint())(type, length, data_size, arrow_bulk);
             }
         };
     engine.define("scan", scan);

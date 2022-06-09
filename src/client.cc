@@ -33,29 +33,29 @@ int main(int argc, char** argv) {
 
     tl::remote_procedure scan = engine.define("scan");
 
-    // define the RDMA handler method
-    std::function<void(const tl::request&, int64_t&, tl::bulk&)> f =
-        [&engine](const tl::request& req, int64_t& data_size, tl::bulk& b) {
-            std::cout << "RDMA received from " << req.get_endpoint() << std::endl;
-            tl::endpoint ep = req.get_endpoint();
+    std::function<void(const tl::request&, int&, int64_t&, int64_t&, tl::bulk&)> f =
+        [&engine](const tl::request& req, int& type, int64_t& length, int64_t& data_size, tl::bulk& b) {
 
             std::unique_ptr<arrow::Buffer> buffer = arrow::AllocateBuffer(data_size).ValueOrDie();
-
             std::vector<std::pair<void*,std::size_t>> segments(1);
             segments[0].first  = (void*)buffer->mutable_data();
             segments[0].second = buffer->size();
             tl::bulk local = engine.expose(segments, tl::bulk_mode::write_only);
-            b.on(ep) >> local;
+            b.on(req.get_endpoint()) >> local;
 
-            std::shared_ptr<arrow::PrimitiveArray> arr = std::make_shared<arrow::PrimitiveArray>(arrow::int64(), 3, std::make_shared<arrow::Buffer>(buffer->data(), buffer->size()));
-            auto batch = arrow::RecordBatch::Make(arrow::schema({arrow::field("a", arrow::int64())}), 3, {arr});    
-            std::cout << "Batch: " << batch->ToString() << std::endl;
+            std::shared_ptr<arrow::PrimitiveArray> arr = 
+                std::make_shared<arrow::PrimitiveArray>(
+                    std::make_shared<arrow::DataType>((arrow::Type::type)type), length, std::make_shared<arrow::Buffer>(buffer->data(), buffer->size())
+                );
+            
+            // auto batch = arrow::RecordBatch::Make(arrow::schema({arrow::field("a", arrow::int64())}), length, {arr});    
+            std::cout << "Col: " << arr->ToString() << std::endl;
 
             // std::cout << "Client received bulk: ";
             // for(auto c : v) std::cout << c;
             // std::cout << std::endl;
         };
-    engine.define("do_rdma", f).disable_response();
+    engine.define("do_rdma", f);
     
     char *filter_buffer = new char[6];
     filter_buffer[0] = 'f';
