@@ -38,7 +38,6 @@ int main(int argc, char** argv) {
         [&engine](const tl::request& req, int64_t& data_size, tl::bulk& b) {
             std::cout << "RDMA received from " << req.get_endpoint() << std::endl;
             tl::endpoint ep = req.get_endpoint();
-            // std::vector<int64_t> v(24);
 
             std::unique_ptr<arrow::Buffer> buffer = arrow::AllocateBuffer(data_size).ValueOrDie();
 
@@ -56,7 +55,7 @@ int main(int argc, char** argv) {
             // for(auto c : v) std::cout << c;
             // std::cout << std::endl;
         };
-    engine.define("do_rdma", f);
+    engine.define("do_rdma", f).disable_respnose();
     
     char *filter_buffer = new char[6];
     filter_buffer[0] = 'f';

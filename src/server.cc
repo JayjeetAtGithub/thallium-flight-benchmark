@@ -56,17 +56,13 @@ arrow::Result<std::shared_ptr<arrow::RecordBatch>> Scan() {
 }
 
 int main(int argc, char** argv) {
-
-    // define the thalllium server
     tl::engine engine("tcp", THALLIUM_SERVER_MODE);
-
-    // define the remote do_rdma procedure
+    
     tl::remote_procedure do_rdma = engine.define("do_rdma");
-
-    // define the RPC method   
+    
     std::function<void(const tl::request&, const scan_request&)> scan = 
         [&engine, &do_rdma](const tl::request &req, const scan_request& sr) {
-            std::string buffer = "mattieu";
+
             std::cout << "Filter: " << sr.filter_buffer << std::endl;
             std::cout << "Projection: " << sr.projection_buffer << std::endl;
 
@@ -91,7 +87,6 @@ int main(int argc, char** argv) {
                 segments[0].second = data_size;
 
                 tl::bulk arrow_bulk = engine.expose(segments, tl::bulk_mode::read_only);
-                std::cout << "About to do RDMA " << req.get_endpoint() << std::endl;
                 do_rdma.on(req.get_endpoint())(data_size, arrow_bulk);
             }
         };
