@@ -34,9 +34,9 @@ int main(int argc, char** argv) {
     tl::remote_procedure scan = engine.define("scan");
 
     std::function<void(const tl::request&, int&, int64_t&, int64_t&, tl::bulk&)> f =
-        [&engine](const tl::request& req, int& type_id, int64_t& length, int64_t& data_size, tl::bulk& b) {
+        [&engine](const tl::request& req, int& type_id, int64_t& length, int64_t& total_bytes, tl::bulk& b) {
 
-            std::unique_ptr<arrow::Buffer> buffer = arrow::AllocateBuffer(data_size).ValueOrDie();
+            std::unique_ptr<arrow::Buffer> buffer = arrow::AllocateBuffer(total_bytes).ValueOrDie();
             std::vector<std::pair<void*,std::size_t>> segments(1);
             segments[0].first  = (void*)buffer->mutable_data();
             segments[0].second = buffer->size();
