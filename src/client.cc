@@ -50,7 +50,7 @@ int main(int argc, char** argv) {
 
             // buffer->Resize(1024);
 
-            std::shared_ptr<arrow::PrimitiveArray> arr = std::make_shared<arrow::PrimitiveArray>(arrow::int64(), 3, buffer);
+            std::shared_ptr<arrow::PrimitiveArray> arr = std::make_shared<arrow::PrimitiveArray>(arrow::int64(), 3, std::make_shared<arrow::Buffer>(buffer->data(), buffer->size()));
             auto batch = arrow::RecordBatch::Make(arrow::schema({arrow::field("a", arrow::int64())}), 3, {arr});    
             std::cout << "Batch: " << batch->ToString() << std::endl;
 
