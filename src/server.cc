@@ -79,6 +79,7 @@ int main(int argc, char** argv) {
                 std::vector<std::pair<void*,std::size_t>> segments;
                 int64_t total_bytes = 0;
                 if (is_binary_like(type)) {
+                    std::cout << "Binary-like" << std::endl;
                     std::shared_ptr<arrow::Buffer> data_buff = 
                         std::static_pointer_cast<arrow::BinaryArray>(col_arr)->value_data();
                     std::shared_ptr<arrow::Buffer> offset_buff = 
