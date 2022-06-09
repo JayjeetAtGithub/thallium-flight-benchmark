@@ -44,11 +44,10 @@ int main(int argc, char** argv) {
 
             std::vector<std::pair<void*,std::size_t>> segments(1);
             segments[0].first  = (void*)buffer->mutable_data();
-            segments[0].second = buffer->size();
+            segments[0].second = buffer->capacity();
             tl::bulk local = engine.expose(segments, tl::bulk_mode::write_only);
             b.on(ep) >> local;
-
-            // buffer->Resize(1024);
+            buffer->Resize(buffer->size());
 
             std::shared_ptr<arrow::PrimitiveArray> arr = std::make_shared<arrow::PrimitiveArray>(arrow::int64(), 3, std::make_shared<arrow::Buffer>(buffer->data(), buffer->size()));
             auto batch = arrow::RecordBatch::Make(arrow::schema({arrow::field("a", arrow::int64())}), 3, {arr});    
