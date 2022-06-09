@@ -93,7 +93,7 @@ int main(int argc, char** argv) {
         std::cout << "Error: " << e << std::endl;
         return 1;
     } else {
-        std::cout << columns.size() << std::endl;
         std::cout << "Scan success" << std::endl;
+        std::cout << columns.size() << std::endl;
     }
 }
