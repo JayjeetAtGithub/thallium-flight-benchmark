@@ -25,7 +25,9 @@
 namespace tl = thallium;
 
 
-arrow::Result<std::shared_ptr<arrow::RecordBatch>> Scan() {
+arrow::Result<std::shared_ptr<arrow::RecordBatch>> Scan(scan_request& req) {
+    std::cout << "Filter: " << req.filter_buffer << std::endl;
+    std::cout << "Projection: " << req.projection_buffer << std::endl;
     // define schema
     auto f0 = arrow::field("f0", arrow::int64());
     auto f1 = arrow::field("f1", arrow::binary());
@@ -61,40 +63,45 @@ int main(int argc, char** argv) {
     tl::remote_procedure do_rdma = engine.define("do_rdma").disable_response();
     
     std::function<void(const tl::request&, const scan_request&)> scan = 
-        [&engine, &do_rdma](const tl::request &req, const scan_request& sr) {
+        [&engine, &do_rdma](const tl::request &req, const scan_request& scan_req) {
 
-            std::cout << "Filter: " << sr.filter_buffer << std::endl;
-            std::cout << "Projection: " << sr.projection_buffer << std::endl;
-
-            auto b = Scan().ValueOrDie();
+            auto b = Scan(scan_req).ValueOrDie();
             std::cout << "Batch: " << b->ToString() << std::endl;
 
-            // send the control details
-
-
-            // now we need to send by column array to the client
             int num_columns = b->num_columns();
             for (int i = 0; i < num_columns; i++) {
-                auto col_arr = b->column(i);
-                int type = (int)col_arr->type_id();
+                std::shared_ptr<arrow::Array> col_arr = b->column(i);
+                arrow::Type::type type = col_arr->type_id();
                 int64_t length = col_arr->length();
                 int64_t null_count = col_arr->null_count();
                 int64_t offset = col_arr->offset();
-                std::shared_ptr<arrow::Buffer> data_buff = 
-                    std::static_pointer_cast<arrow::PrimitiveArray>(col_arr)->values();
-                int64_t data_size = data_buff->size();
 
-                std::cout << "send the column array to the client\n";
-                std::vector<std::pair<void*,std::size_t>> segments(1);
-                segments[0].first  = (void*)data_buff->data();
-                segments[0].second = data_size;
+                std::vector<std::pair<void*,std::size_t>> segments;
+                if (is_binary_like(type)) {
+                    std::shared_ptr<arrow::Buffer> data_buff = 
+                        std::static_pointer_cast<arrow::BaseBinaryArray>(col_arr)->value_data();
+                    std::shared_ptr<arrow::Buffer> offset_buff = 
+                        std::static_pointer_cast<arrow::BaseBinaryArray>(col_arr)->value_offsets();
+                    int64_t data_size = data_buff->size();
+                    int64_t offset_size = offset_buff->size();
+                    segments.resize(2);
+                    segments[0].first = data_buff->data();
+                    segments[0].second = data_size;
+                    segments[1].first = offset_buff->data();
+                    segments[1].second = offset_size;
+
+                } else {
+                    std::shared_ptr<arrow::Buffer> data_buff = 
+                        std::static_pointer_cast<arrow::PrimitiveArray>(col_arr)->values();
+                    int64_t data_size = data_buff->size();
+                    segments[0].first  = (void*)data_buff->data();
+                    segments[0].second = data_size;
+                }
 
                 tl::bulk arrow_bulk = engine.expose(segments, tl::bulk_mode::read_only);
-                do_rdma.on(req.get_endpoint())(type, length, data_size, arrow_bulk);
+                do_rdma.on(req.get_endpoint())((int)type, length, data_size, arrow_bulk);
             }
         };
     engine.define("scan", scan);
-
-    // run the server
     std::cout << "Server running at address " << engine.self() << std::endl;
 }

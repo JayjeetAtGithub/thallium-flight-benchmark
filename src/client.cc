@@ -64,7 +64,6 @@ int main(int argc, char** argv) {
                     type, length, std::make_shared<arrow::Buffer>(buffer->data(), buffer->size())
                 );
             
-            // auto batch = arrow::RecordBatch::Make(arrow::schema({arrow::field("a", arrow::int64())}), length, {arr});    
             std::cout << "Col: " << arr->ToString() << std::endl;
         };
     engine.define("do_rdma", f).disable_response();
