@@ -46,7 +46,7 @@ arrow::Result<std::shared_ptr<arrow::RecordBatch>> Scan() {
     ARROW_ASSIGN_OR_RAISE(std::shared_ptr<arrow::Array> a1, str_builder.Finish());
 
     arrow::DoubleBuilder dbl_builder = arrow::DoubleBuilder();
-    std::vector<double> dblvals = {1.1, 1.1, 2.3};
+    std::vector<double> dblvals = {1.1, 1.2, 2.3};
     ARROW_RETURN_NOT_OK(dbl_builder.AppendValues(dblvals));
     ARROW_ASSIGN_OR_RAISE(std::shared_ptr<arrow::Array> a2, dbl_builder.Finish());
 
