@@ -32,7 +32,7 @@ arrow::Result<std::shared_ptr<arrow::RecordBatch>> Scan() {
     auto f2 = arrow::field("f2", arrow::float64());
 
     auto metadata = arrow::key_value_metadata({"foo"}, {"bar"});
-    auto schema = arrow::schema({f0}, metadata);
+    auto schema = arrow::schema({f0, f1, f2}, metadata);
 
     // generate some data
     arrow::Int64Builder long_builder = arrow::Int64Builder();
