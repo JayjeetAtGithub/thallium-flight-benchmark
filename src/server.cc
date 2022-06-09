@@ -81,7 +81,7 @@ int main(int argc, char** argv) {
                     std::static_pointer_cast<arrow::PrimitiveArray>(col_arr)->values();
                 int64_t data_size = data_buff->size();
 
-                // send the column array to the client
+                std::cout << "send the column array to the client\n";
                 std::vector<std::pair<void*,std::size_t>> segments(1);
                 segments[0].first  = (void*)data_buff->data();
                 segments[0].second = data_size;
