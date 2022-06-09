@@ -85,9 +85,9 @@ int main(int argc, char** argv) {
                     int64_t data_size = data_buff->size();
                     int64_t offset_size = offset_buff->size();
                     segments.resize(2);
-                    segments[0].first = data_buff->data();
+                    segments[0].first = (void*)data_buff->data();
                     segments[0].second = data_size;
-                    segments[1].first = offset_buff->data();
+                    segments[1].first = (void*)offset_buff->data();
                     segments[1].second = offset_size;
 
                 } else {
