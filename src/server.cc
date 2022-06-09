@@ -58,7 +58,7 @@ arrow::Result<std::shared_ptr<arrow::RecordBatch>> Scan() {
 int main(int argc, char** argv) {
     tl::engine engine("tcp", THALLIUM_SERVER_MODE);
     
-    tl::remote_procedure do_rdma = engine.define("do_rdma");
+    tl::remote_procedure do_rdma = engine.define("do_rdma").disable_response();
     
     std::function<void(const tl::request&, const scan_request&)> scan = 
         [&engine, &do_rdma](const tl::request &req, const scan_request& sr) {
