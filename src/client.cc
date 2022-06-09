@@ -34,7 +34,7 @@ int main(int argc, char** argv) {
 
     tl::remote_procedure scan = engine.define("scan");
     
-    std::vector<std::shared_ptr<Array>> columns;
+    std::vector<std::shared_ptr<arrow::Array>> columns;
 
     std::function<void(const tl::request&, int&, int64_t&, int64_t&, int64_t&, tl::bulk&)> f =
         [&engine](const tl::request& req, int& type_id, int64_t& length, int64_t& data_size, int64_t& offset_size, tl::bulk& b) {
