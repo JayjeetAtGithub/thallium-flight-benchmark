@@ -25,7 +25,7 @@
 namespace tl = thallium;
 
 
-arrow::Result<std::shared_ptr<arrow::RecordBatch>> Scan(scan_request& req) {
+arrow::Result<std::shared_ptr<arrow::RecordBatch>> Scan(const scan_request& req) {
     std::cout << "Filter: " << req.filter_buffer << std::endl;
     std::cout << "Projection: " << req.projection_buffer << std::endl;
     // define schema
