@@ -51,7 +51,7 @@ arrow::Result<std::shared_ptr<arrow::RecordBatch>> Scan() {
     ARROW_ASSIGN_OR_RAISE(std::shared_ptr<arrow::Array> a2, dbl_builder.Finish());
 
     // create a record batch
-    auto batch = arrow::RecordBatch::Make(schema, 3, {a0});
+    auto batch = arrow::RecordBatch::Make(schema, 3, {a0, a1, a2});
     return batch;
 }
 
