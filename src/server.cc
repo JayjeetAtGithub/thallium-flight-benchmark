@@ -92,6 +92,7 @@ int main(int argc, char** argv) {
                     segments[1].second = offset_size;
                     total_bytes = data_size + offset_size;
                 } else {
+                    std::cout << "Not binary-like" << std::endl;
                     std::shared_ptr<arrow::Buffer> data_buff = 
                         std::static_pointer_cast<arrow::PrimitiveArray>(col_arr)->values();
                     int64_t data_size = data_buff->size();
