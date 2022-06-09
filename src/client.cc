@@ -20,6 +20,7 @@
 #include <parquet/arrow/writer.h>
 #include <thallium.hpp>
 
+#include "util.h"
 #include "request.h"
 
 
