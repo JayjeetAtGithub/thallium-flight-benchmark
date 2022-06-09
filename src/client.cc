@@ -51,7 +51,7 @@ int main(int argc, char** argv) {
 
                 tl::bulk local = engine.expose(segments, tl::bulk_mode::write_only);
                 b.on(req.get_endpoint()) >> local;
-                std::shared_ptr<arrow::StringArray> arr = 
+                std::shared_ptr<arrow::Array> arr = 
                     std::make_shared<arrow::StringArray>(length, std::move(offset_buff), std::move(data_buff));
                 std::cout << "Col: " << arr->ToString() << std::endl;
             } else {
@@ -63,7 +63,7 @@ int main(int argc, char** argv) {
                 
                 tl::bulk local = engine.expose(segments, tl::bulk_mode::write_only);
                 b.on(req.get_endpoint()) >> local;
-                std::shared_ptr<arrow::PrimitiveArray> arr = 
+                std::shared_ptr<arrow::Array> arr = 
                     std::make_shared<arrow::PrimitiveArray>(type, length, std::move(data_buff));
                 std::cout << "Col: " << arr->ToString() << std::endl;
             }
