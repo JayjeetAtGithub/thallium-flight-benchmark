@@ -1,6 +1,6 @@
 #include <arrow/api.h>
 
-std::shared_ptr<arrow::DataType> type_from_id(int id) {
+std::shared_ptr<arrow::DataType> type_from_id(int type_id) {
     std::shared_ptr<arrow::DataType> type;
     switch(type_id) {
         case 9:
