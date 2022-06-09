@@ -36,21 +36,7 @@ int main(int argc, char** argv) {
     std::function<void(const tl::request&, int&, int64_t&, int64_t&, int64_t&, tl::bulk&)> f =
         [&engine](const tl::request& req, int& type_id, int64_t& length, int64_t& data_size, int64_t& offset_size, tl::bulk& b) {
 
-            std::shared_ptr<arrow::DataType> type;
-            switch(type_id) {
-                case 9:
-                    type = arrow::int64();
-                    break;
-                case 12:
-                    type = arrow::float64();
-                    break;
-                case 13:
-                    type = arrow::binary();
-                    break;
-                default:
-                    std::cout << "Unknown type" << std::endl;
-                    exit(1);
-            }        
+            std::shared_ptr<arrow::DataType> type = type_from_id(type_id);        
 
             if (is_binary_like(type->id())) {
                 std::unique_ptr<arrow::Buffer> data_buff = arrow::AllocateBuffer(data_size).ValueOrDie();
