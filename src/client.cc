@@ -34,7 +34,7 @@ int main(int argc, char** argv) {
     tl::remote_procedure scan = engine.define("scan");
 
     std::function<void(const tl::request&, int&, int64_t&, int64_t&, tl::bulk&)> f =
-        [&engine](const tl::request& req, int& type, int64_t& length, int64_t& data_size, tl::bulk& b) {
+        [&engine](const tl::request& req, int& type_id, int64_t& length, int64_t& data_size, tl::bulk& b) {
 
             std::unique_ptr<arrow::Buffer> buffer = arrow::AllocateBuffer(data_size).ValueOrDie();
             std::vector<std::pair<void*,std::size_t>> segments(1);
@@ -45,7 +45,7 @@ int main(int argc, char** argv) {
 
             std::shared_ptr<arrow::PrimitiveArray> arr = 
                 std::make_shared<arrow::PrimitiveArray>(
-                    std::make_shared<arrow::DataType>((arrow::Type::type)type), length, std::make_shared<arrow::Buffer>(buffer->data(), buffer->size())
+                    std::make_shared<arrow::DataType>((arrow::Type::type)type_id), length, std::make_shared<arrow::Buffer>(buffer->data(), buffer->size())
                 );
             
             // auto batch = arrow::RecordBatch::Make(arrow::schema({arrow::field("a", arrow::int64())}), length, {arr});    
