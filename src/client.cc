@@ -43,17 +43,29 @@ int main(int argc, char** argv) {
             tl::bulk local = engine.expose(segments, tl::bulk_mode::write_only);
             b.on(req.get_endpoint()) >> local;
 
+            std::shared_ptr<arrow::DataType> type;
+            switch(type_id) {
+                case 9:
+                    type = arrow::int64();
+                    break;
+                case 12:
+                    type = arrow::float64();
+                    break;
+                case 13:
+                    type = arrow::binary();
+                    break;
+                default:
+                    std::cout << "Unknown type" << std::endl;
+                    exit(1);
+            }        
+
             std::shared_ptr<arrow::PrimitiveArray> arr = 
                 std::make_shared<arrow::PrimitiveArray>(
-                    arrow::int64(), length, std::make_shared<arrow::Buffer>(buffer->data(), buffer->size())
+                    type, length, std::make_shared<arrow::Buffer>(buffer->data(), buffer->size())
                 );
-            std::cout << "Type: " << type_id << std::endl;
+            
             // auto batch = arrow::RecordBatch::Make(arrow::schema({arrow::field("a", arrow::int64())}), length, {arr});    
             std::cout << "Col: " << arr->ToString() << std::endl;
-
-            // std::cout << "Client received bulk: ";
-            // for(auto c : v) std::cout << c;
-            // std::cout << std::endl;
         };
     engine.define("do_rdma", f).disable_response();
     
