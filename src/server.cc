@@ -104,7 +104,7 @@ int main(int argc, char** argv) {
                 tl::bulk arrow_bulk = engine.expose(segments, tl::bulk_mode::read_only);
                 do_rdma.on(req.get_endpoint())((int)type, length, data_size, offset_size, arrow_bulk);
             }
-            return req.respone(200);
+            return req.respond(200);
         };
     engine.define("scan", scan);
     std::cout << "Server running at address " << engine.self() << std::endl;
