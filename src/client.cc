@@ -55,7 +55,7 @@ int main(int argc, char** argv) {
             // for(auto c : v) std::cout << c;
             // std::cout << std::endl;
         };
-    engine.define("do_rdma", f);
+    engine.define("do_rdma", f).disable_response();
     
     char *filter_buffer = new char[6];
     filter_buffer[0] = 'f';
