@@ -38,20 +38,25 @@ int main(int argc, char** argv) {
         [&engine](const tl::request& req, tl::bulk& b) {
             std::cout << "RDMA received from " << req.get_endpoint() << std::endl;
             tl::endpoint ep = req.get_endpoint();
-            std::vector<int64_t> v(24);
+            // std::vector<int64_t> v(24);
+
+            std::unique_ptr<arrow::ResizableBuffer> buffer = AllocateResizableBuffer(1024).ValueOrDie();
+
             std::vector<std::pair<void*,std::size_t>> segments(1);
-            segments[0].first  = (void*)(&v[0]);
-            segments[0].second = v.size();
+            segments[0].first  = (void*)buffer->mutable_data();
+            segments[0].second = buffer->size();
             tl::bulk local = engine.expose(segments, tl::bulk_mode::write_only);
             b.on(ep) >> local;
 
-            std::shared_ptr<arrow::PrimitiveArray> arr = std::make_shared<arrow::PrimitiveArray>(arrow::int64(), 3, std::make_shared<arrow::Buffer>((uint8_t*)&v[0], 24));
+            // buffer->Resize(1024);
+
+            std::shared_ptr<arrow::PrimitiveArray> arr = std::make_shared<arrow::PrimitiveArray>(arrow::int64(), 3, buffer);
             auto batch = arrow::RecordBatch::Make(arrow::schema({arrow::field("a", arrow::int64())}), 3, {arr});    
             std::cout << "Batch: " << batch->ToString() << std::endl;
 
-            std::cout << "Client received bulk: ";
-            for(auto c : v) std::cout << c;
-            std::cout << std::endl;
+            // std::cout << "Client received bulk: ";
+            // for(auto c : v) std::cout << c;
+            // std::cout << std::endl;
         };
     engine.define("do_rdma", f);
     
