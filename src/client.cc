@@ -41,6 +41,8 @@ int main(int argc, char** argv) {
             // std::vector<int64_t> v(24);
 
             std::unique_ptr<arrow::ResizableBuffer> buffer = arrow::AllocateResizableBuffer(1024).ValueOrDie();
+            std::cout << "Buffer size: " << buffer->size() << std::endl;
+            std::cout << "Buffer capacity: " << buffer->capacity() << std::endl;
 
             std::vector<std::pair<void*,std::size_t>> segments(1);
             segments[0].first  = (void*)buffer->mutable_data();
@@ -48,6 +50,7 @@ int main(int argc, char** argv) {
             tl::bulk local = engine.expose(segments, tl::bulk_mode::write_only);
             b.on(ep) >> local;
             buffer->Resize(buffer->size());
+            std::cout << "Buffer size: " << buffer->size() << std::endl;
 
             std::shared_ptr<arrow::PrimitiveArray> arr = std::make_shared<arrow::PrimitiveArray>(arrow::int64(), 3, std::make_shared<arrow::Buffer>(buffer->data(), buffer->size()));
             auto batch = arrow::RecordBatch::Make(arrow::schema({arrow::field("a", arrow::int64())}), 3, {arr});    
