@@ -97,6 +97,7 @@ int main(int argc, char** argv) {
                     std::shared_ptr<arrow::Buffer> data_buff = 
                         std::static_pointer_cast<arrow::PrimitiveArray>(col_arr)->values();
                     int64_t data_size = data_buff->size();
+                    segments.resize(1);
                     segments[0].first  = (void*)data_buff->data();
                     segments[0].second = data_size;
                     total_bytes = data_size;
