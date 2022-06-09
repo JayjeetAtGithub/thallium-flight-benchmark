@@ -89,10 +89,11 @@ int main(int argc, char** argv) {
     scan_request req(filter_buffer, 6, projection_buffer, 4);
 
     int e = scan.on(server_endpoint)(req);
-    if (e != 0) {
+    if (e != 200) {
         std::cout << "Error: " << e << std::endl;
         return 1;
     } else {
+        std::cout << columns.size() << std::endl;
         std::cout << "Scan success" << std::endl;
     }
 }
