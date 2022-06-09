@@ -40,7 +40,7 @@ int main(int argc, char** argv) {
             tl::endpoint ep = req.get_endpoint();
             // std::vector<int64_t> v(24);
 
-            std::unique_ptr<arrow::ResizableBuffer> buffer = AllocateResizableBuffer(1024).ValueOrDie();
+            std::unique_ptr<arrow::ResizableBuffer> buffer = arrow::AllocateResizableBuffer(1024).ValueOrDie();
 
             std::vector<std::pair<void*,std::size_t>> segments(1);
             segments[0].first  = (void*)buffer->mutable_data();
