@@ -69,13 +69,15 @@ int main(int argc, char** argv) {
                 std::cout << "Col: " << arr->ToString() << std::endl;
             } else {
                 std::unique_ptr<arrow::Buffer> data_buff = arrow::AllocateBuffer(data_size).ValueOrDie();
+                
                 std::vector<std::pair<void*,std::size_t>> segments(1);
                 segments[0].first  = (void*)data_buff->mutable_data();
                 segments[0].second = data_buff->size();
+                
                 tl::bulk local = engine.expose(segments, tl::bulk_mode::write_only);
                 b.on(req.get_endpoint()) >> local;
                 std::shared_ptr<arrow::PrimitiveArray> arr = 
-                    std::make_shared<arrow::PrimitiveArray>(type, length, std::move(buffer));
+                    std::make_shared<arrow::PrimitiveArray>(type, length, std::move(data_buff));
                 std::cout << "Col: " << arr->ToString() << std::endl;
             }
         };
