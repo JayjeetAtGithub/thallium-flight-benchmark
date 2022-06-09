@@ -77,34 +77,32 @@ int main(int argc, char** argv) {
                 int64_t offset = col_arr->offset();
 
                 std::vector<std::pair<void*,std::size_t>> segments;
-                int64_t total_bytes = 0;
+                int64_t data_size = 0;
+                int64_t offset_size = 0;
+
                 if (is_binary_like(type)) {
-                    std::cout << "Binary-like" << std::endl;
                     std::shared_ptr<arrow::Buffer> data_buff = 
                         std::static_pointer_cast<arrow::BinaryArray>(col_arr)->value_data();
                     std::shared_ptr<arrow::Buffer> offset_buff = 
                         std::static_pointer_cast<arrow::BinaryArray>(col_arr)->value_offsets();
-                    int64_t data_size = data_buff->size();
-                    int64_t offset_size = offset_buff->size();
+                    data_size = data_buff->size();
+                    offset_size = offset_buff->size();
                     segments.resize(2);
                     segments[0].first = (void*)data_buff->data();
                     segments[0].second = data_size;
                     segments[1].first = (void*)offset_buff->data();
                     segments[1].second = offset_size;
-                    total_bytes = data_size + offset_size;
                 } else {
-                    std::cout << "Not binary-like" << std::endl;
                     std::shared_ptr<arrow::Buffer> data_buff = 
                         std::static_pointer_cast<arrow::PrimitiveArray>(col_arr)->values();
-                    int64_t data_size = data_buff->size();
+                    data_size = data_buff->size();
                     segments.resize(1);
                     segments[0].first  = (void*)data_buff->data();
                     segments[0].second = data_size;
-                    total_bytes = data_size;
                 }
 
                 tl::bulk arrow_bulk = engine.expose(segments, tl::bulk_mode::read_only);
-                do_rdma.on(req.get_endpoint())((int)type, length, total_bytes, arrow_bulk);
+                do_rdma.on(req.get_endpoint())((int)type, length, data_size, offset_size, arrow_bulk);
             }
         };
     engine.define("scan", scan);
