@@ -33,6 +33,8 @@ int main(int argc, char** argv) {
     std::cout << "Client running at address " << engine.self() << std::endl;
 
     tl::remote_procedure scan = engine.define("scan");
+    
+    std::vector<std::shared_ptr<Array>> columns;
 
     std::function<void(const tl::request&, int&, int64_t&, int64_t&, int64_t&, tl::bulk&)> f =
         [&engine](const tl::request& req, int& type_id, int64_t& length, int64_t& data_size, int64_t& offset_size, tl::bulk& b) {
@@ -51,9 +53,9 @@ int main(int argc, char** argv) {
 
                 tl::bulk local = engine.expose(segments, tl::bulk_mode::write_only);
                 b.on(req.get_endpoint()) >> local;
-                std::shared_ptr<arrow::Array> arr = 
+                std::shared_ptr<arrow::Array> col = 
                     std::make_shared<arrow::StringArray>(length, std::move(offset_buff), std::move(data_buff));
-                std::cout << "Col: " << arr->ToString() << std::endl;
+                columns.push_back(col);
             } else {
                 std::unique_ptr<arrow::Buffer> data_buff = arrow::AllocateBuffer(data_size).ValueOrDie();
                 
@@ -63,9 +65,9 @@ int main(int argc, char** argv) {
                 
                 tl::bulk local = engine.expose(segments, tl::bulk_mode::write_only);
                 b.on(req.get_endpoint()) >> local;
-                std::shared_ptr<arrow::Array> arr = 
+                std::shared_ptr<arrow::Array> col = 
                     std::make_shared<arrow::PrimitiveArray>(type, length, std::move(data_buff));
-                std::cout << "Col: " << arr->ToString() << std::endl;
+                columns.push_back(col);
             }
         };
     engine.define("do_rdma", f).disable_response();
@@ -86,10 +88,11 @@ int main(int argc, char** argv) {
 
     scan_request req(filter_buffer, 6, projection_buffer, 4);
 
-    // execute the RPC scan method on the server
-    // for (int i = 0; i < 5; ++i) {
-        // std::cout << "Doing RPC " << i << std::endl;
-        scan.on(server_endpoint)(req);
-        // tl::thread::sleep(engine, 1); // sleep for 1 second
-    // }
+    int e = scan.on(server_endpoint)(req);
+    if (e != 0) {
+        std::cout << "Error: " << e << std::endl;
+        return 1;
+    } else {
+        std::cout << "Scan success" << std::endl;
+    }
 }
