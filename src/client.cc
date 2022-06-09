@@ -64,8 +64,8 @@ int main(int argc, char** argv) {
 
                 tl::bulk local = engine.expose(segments, tl::bulk_mode::write_only);
                 b.on(req.get_endpoint()) >> local;
-                std::shared_ptr<arrow::BinaryArray> arr = 
-                    std::make_shared<arrow::BinaryArray>(length, std::move(offset_buff), std::move(data_buff));
+                std::shared_ptr<arrow::StringArray> arr = 
+                    std::make_shared<arrow::StringArray>(length, std::move(offset_buff), std::move(data_buff));
                 std::cout << "Col: " << arr->ToString() << std::endl;
             } else {
                 std::unique_ptr<arrow::Buffer> data_buff = arrow::AllocateBuffer(data_size).ValueOrDie();
