@@ -26,31 +26,31 @@ namespace tl = thallium;
 
 
 arrow::Result<std::shared_ptr<arrow::RecordBatch>> Scan() {
-    // Define schema
+    // define schema
     auto f0 = arrow::field("f0", arrow::int64());
-    // auto f1 = arrow::field("f1", arrow::binary());
-    // auto f2 = arrow::field("f2", arrow::float64());
+    auto f1 = arrow::field("f1", arrow::binary());
+    auto f2 = arrow::field("f2", arrow::float64());
 
     auto metadata = arrow::key_value_metadata({"foo"}, {"bar"});
     auto schema = arrow::schema({f0}, metadata);
 
-    // Generate some data
+    // generate some data
     arrow::Int64Builder long_builder = arrow::Int64Builder();
     std::vector<int64_t> values = {1, 2, 3};
     ARROW_RETURN_NOT_OK(long_builder.AppendValues(values));
     ARROW_ASSIGN_OR_RAISE(std::shared_ptr<arrow::Array> a0, long_builder.Finish());
 
-    // arrow::StringBuilder str_builder = arrow::StringBuilder();
-    // std::vector<std::string> strvals = {"x", "y", "z"};
-    // ARROW_RETURN_NOT_OK(str_builder.AppendValues(strvals));
-    // ARROW_ASSIGN_OR_RAISE(std::shared_ptr<arrow::Array> a1, str_builder.Finish());
+    arrow::StringBuilder str_builder = arrow::StringBuilder();
+    std::vector<std::string> strvals = {"x", "y", "z"};
+    ARROW_RETURN_NOT_OK(str_builder.AppendValues(strvals));
+    ARROW_ASSIGN_OR_RAISE(std::shared_ptr<arrow::Array> a1, str_builder.Finish());
 
-    // arrow::DoubleBuilder dbl_builder = arrow::DoubleBuilder();
-    // std::vector<double> dblvals = {1.1, 1.1, 2.3};
-    // ARROW_RETURN_NOT_OK(dbl_builder.AppendValues(dblvals));
-    // ARROW_ASSIGN_OR_RAISE(std::shared_ptr<arrow::Array> a2, dbl_builder.Finish());
+    arrow::DoubleBuilder dbl_builder = arrow::DoubleBuilder();
+    std::vector<double> dblvals = {1.1, 1.1, 2.3};
+    ARROW_RETURN_NOT_OK(dbl_builder.AppendValues(dblvals));
+    ARROW_ASSIGN_OR_RAISE(std::shared_ptr<arrow::Array> a2, dbl_builder.Finish());
 
-    // Create a record batch
+    // create a record batch
     auto batch = arrow::RecordBatch::Make(schema, 3, {a0});
     return batch;
 }
