@@ -45,7 +45,7 @@ int main(int argc, char** argv) {
 
             std::shared_ptr<arrow::PrimitiveArray> arr = 
                 std::make_shared<arrow::PrimitiveArray>(
-                    std::make_shared<arrow::DataType>((arrow::Type::type)type_id), length, std::make_shared<arrow::Buffer>(buffer->data(), buffer->size())
+                    arrow::int64(), length, std::make_shared<arrow::Buffer>(buffer->data(), buffer->size())
                 );
             
             // auto batch = arrow::RecordBatch::Make(arrow::schema({arrow::field("a", arrow::int64())}), length, {arr});    
