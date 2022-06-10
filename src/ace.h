@@ -2,9 +2,13 @@
 
 namespace cp = arrow::compute;
 
-struct ScanResultConsumer {
-    std::shared_ptr<arrow::RecordBatchReader> reader;
-    std::shared_ptr<cp::ExecPlan> plan;
+class ScanResultConsumer {
+    public:
+        ScanResultConsumer(
+            std::shared_ptr<arrow::RecordBatchReader> reader, std::shared_ptr<cp::ExecPlan> plan)
+            : reader(reader), plan(plan) {}
+        std::shared_ptr<arrow::RecordBatchReader> reader;
+        std::shared_ptr<cp::ExecPlan> plan;
 };
 
 arrow::Result<std::shared_ptr<ScanResultConsumer>> Scan(cp::ExecContext& exec_context) {
