@@ -25,76 +25,87 @@
 namespace tl = thallium;
 
 
-arrow::Result<std::shared_ptr<arrow::RecordBatch>> Scan() {
-    // Define schema
+arrow::Result<std::shared_ptr<arrow::RecordBatch>> Scan(const scan_request& req) {
+    std::cout << "Filter: " << req.filter_buffer << std::endl;
+    std::cout << "Projection: " << req.projection_buffer << std::endl;
+    // define schema
     auto f0 = arrow::field("f0", arrow::int64());
-    // auto f1 = arrow::field("f1", arrow::binary());
-    // auto f2 = arrow::field("f2", arrow::float64());
+    auto f1 = arrow::field("f1", arrow::binary());
+    auto f2 = arrow::field("f2", arrow::float64());
 
     auto metadata = arrow::key_value_metadata({"foo"}, {"bar"});
-    auto schema = arrow::schema({f0}, metadata);
+    auto schema = arrow::schema({f0, f1, f2}, metadata);
 
-    // Generate some data
+    // generate some data
     arrow::Int64Builder long_builder = arrow::Int64Builder();
     std::vector<int64_t> values = {1, 2, 3};
     ARROW_RETURN_NOT_OK(long_builder.AppendValues(values));
     ARROW_ASSIGN_OR_RAISE(std::shared_ptr<arrow::Array> a0, long_builder.Finish());
 
-    // arrow::StringBuilder str_builder = arrow::StringBuilder();
-    // std::vector<std::string> strvals = {"x", "y", "z"};
-    // ARROW_RETURN_NOT_OK(str_builder.AppendValues(strvals));
-    // ARROW_ASSIGN_OR_RAISE(std::shared_ptr<arrow::Array> a1, str_builder.Finish());
+    arrow::StringBuilder str_builder = arrow::StringBuilder();
+    std::vector<std::string> strvals = {"x", "y", "z"};
+    ARROW_RETURN_NOT_OK(str_builder.AppendValues(strvals));
+    ARROW_ASSIGN_OR_RAISE(std::shared_ptr<arrow::Array> a1, str_builder.Finish());
 
-    // arrow::DoubleBuilder dbl_builder = arrow::DoubleBuilder();
-    // std::vector<double> dblvals = {1.1, 1.1, 2.3};
-    // ARROW_RETURN_NOT_OK(dbl_builder.AppendValues(dblvals));
-    // ARROW_ASSIGN_OR_RAISE(std::shared_ptr<arrow::Array> a2, dbl_builder.Finish());
+    arrow::DoubleBuilder dbl_builder = arrow::DoubleBuilder();
+    std::vector<double> dblvals = {1.1, 1.2, 2.3};
+    ARROW_RETURN_NOT_OK(dbl_builder.AppendValues(dblvals));
+    ARROW_ASSIGN_OR_RAISE(std::shared_ptr<arrow::Array> a2, dbl_builder.Finish());
 
-    // Create a record batch
-    auto batch = arrow::RecordBatch::Make(schema, 3, {a0});
+    // create a record batch
+    auto batch = arrow::RecordBatch::Make(schema, 3, {a0, a1, a2});
     return batch;
 }
 
 int main(int argc, char** argv) {
-
-    // define the thalllium server
     tl::engine engine("tcp", THALLIUM_SERVER_MODE);
-
-    // define the remote do_rdma procedure
-    tl::remote_procedure do_rdma = engine.define("do_rdma");
-
-    // define the RPC method   
+    
+    tl::remote_procedure do_rdma = engine.define("do_rdma").disable_response();
+    
     std::function<void(const tl::request&, const scan_request&)> scan = 
-        [&engine, &do_rdma](const tl::request &req, const scan_request& sr) {
-            std::string buffer = "mattieu";
-            std::cout << "Filter: " << sr.filter_buffer << std::endl;
-            std::cout << "Projection: " << sr.projection_buffer << std::endl;
+        [&engine, &do_rdma](const tl::request &req, const scan_request& scan_req) {
 
-            auto b = Scan().ValueOrDie();
+            auto b = Scan(scan_req).ValueOrDie();
             std::cout << "Batch: " << b->ToString() << std::endl;
 
-            // now we need to send by column array to the client
             int num_columns = b->num_columns();
             for (int i = 0; i < num_columns; i++) {
-                auto col_arr = b->column(i);
-                int type = (int)col_arr->type_id();
+                std::shared_ptr<arrow::Array> col_arr = b->column(i);
+                arrow::Type::type type = col_arr->type_id();
                 int64_t length = col_arr->length();
                 int64_t null_count = col_arr->null_count();
                 int64_t offset = col_arr->offset();
-                std::shared_ptr<arrow::Buffer> data_buff = std::static_pointer_cast<arrow::PrimitiveArray>(col_arr)->values();
 
-                // send the column array to the client
-                std::vector<std::pair<void*,std::size_t>> segments(1);
-                segments[0].first  = (void*)data_buff->data();
-                segments[0].second = data_buff->size();
-                std::cout << data_buff->size() << std::endl;
+                std::vector<std::pair<void*,std::size_t>> segments;
+                int64_t data_size = 0;
+                int64_t offset_size = 0;
+
+                if (is_binary_like(type)) {
+                    std::shared_ptr<arrow::Buffer> data_buff = 
+                        std::static_pointer_cast<arrow::BinaryArray>(col_arr)->value_data();
+                    std::shared_ptr<arrow::Buffer> offset_buff = 
+                        std::static_pointer_cast<arrow::BinaryArray>(col_arr)->value_offsets();
+                    data_size = data_buff->size();
+                    offset_size = offset_buff->size();
+                    segments.resize(2);
+                    segments[0].first = (void*)data_buff->data();
+                    segments[0].second = data_size;
+                    segments[1].first = (void*)offset_buff->data();
+                    segments[1].second = offset_size;
+                } else {
+                    std::shared_ptr<arrow::Buffer> data_buff = 
+                        std::static_pointer_cast<arrow::PrimitiveArray>(col_arr)->values();
+                    data_size = data_buff->size();
+                    segments.resize(1);
+                    segments[0].first  = (void*)data_buff->data();
+                    segments[0].second = data_size;
+                }
+
                 tl::bulk arrow_bulk = engine.expose(segments, tl::bulk_mode::read_only);
-                std::cout << "About to do RDMA " << req.get_endpoint() << std::endl;
-                do_rdma.on(req.get_endpoint())(arrow_bulk);
+                do_rdma.on(req.get_endpoint())((int)type, length, data_size, offset_size, arrow_bulk);
             }
+            return req.respond(200);
         };
     engine.define("scan", scan);
-
-    // run the server
     std::cout << "Server running at address " << engine.self() << std::endl;
 }

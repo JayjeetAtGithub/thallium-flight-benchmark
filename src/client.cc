@@ -20,6 +20,7 @@
 #include <parquet/arrow/writer.h>
 #include <thallium.hpp>
 
+#include "util.h"
 #include "request.h"
 
 
@@ -32,35 +33,44 @@ int main(int argc, char** argv) {
     std::cout << "Client running at address " << engine.self() << std::endl;
 
     tl::remote_procedure scan = engine.define("scan");
+    
+    std::vector<std::shared_ptr<arrow::Array>> columns;
 
-    // define the RDMA handler method
-    std::function<void(const tl::request&, tl::bulk&)> f =
-        [&engine](const tl::request& req, tl::bulk& b) {
-            std::cout << "RDMA received from " << req.get_endpoint() << std::endl;
-            tl::endpoint ep = req.get_endpoint();
-            // std::vector<int64_t> v(24);
+    std::function<void(const tl::request&, int&, int64_t&, int64_t&, int64_t&, tl::bulk&)> f =
+        [&engine, &columns](const tl::request& req, int& type_id, int64_t& length, int64_t& data_size, int64_t& offset_size, tl::bulk& b) {
 
-            std::unique_ptr<arrow::ResizableBuffer> buffer = arrow::AllocateResizableBuffer(1024).ValueOrDie();
-            std::cout << "Buffer size: " << buffer->size() << std::endl;
-            std::cout << "Buffer capacity: " << buffer->capacity() << std::endl;
+            std::shared_ptr<arrow::DataType> type = type_from_id(type_id);        
 
-            std::vector<std::pair<void*,std::size_t>> segments(1);
-            segments[0].first  = (void*)buffer->mutable_data();
-            segments[0].second = buffer->capacity();
-            tl::bulk local = engine.expose(segments, tl::bulk_mode::write_only);
-            b.on(ep) >> local;
-            buffer->Resize(buffer->size());
-            std::cout << "Buffer size: " << buffer->size() << std::endl;
+            if (is_binary_like(type->id())) {
+                std::unique_ptr<arrow::Buffer> data_buff = arrow::AllocateBuffer(data_size).ValueOrDie();
+                std::unique_ptr<arrow::Buffer> offset_buff = arrow::AllocateBuffer(offset_size).ValueOrDie();
 
-            std::shared_ptr<arrow::PrimitiveArray> arr = std::make_shared<arrow::PrimitiveArray>(arrow::int64(), 3, std::make_shared<arrow::Buffer>(buffer->data(), buffer->size()));
-            auto batch = arrow::RecordBatch::Make(arrow::schema({arrow::field("a", arrow::int64())}), 3, {arr});    
-            std::cout << "Batch: " << batch->ToString() << std::endl;
+                std::vector<std::pair<void*,std::size_t>> segments(2);
+                segments[0].first  = (void*)data_buff->mutable_data();
+                segments[0].second = data_buff->size();
+                segments[1].first  = (void*)offset_buff->mutable_data();
+                segments[1].second = offset_buff->size();
 
-            // std::cout << "Client received bulk: ";
-            // for(auto c : v) std::cout << c;
-            // std::cout << std::endl;
+                tl::bulk local = engine.expose(segments, tl::bulk_mode::write_only);
+                b.on(req.get_endpoint()) >> local;
+                std::shared_ptr<arrow::Array> col = 
+                    std::make_shared<arrow::StringArray>(length, std::move(offset_buff), std::move(data_buff));
+                columns.push_back(col);
+            } else {
+                std::unique_ptr<arrow::Buffer> data_buff = arrow::AllocateBuffer(data_size).ValueOrDie();
+                
+                std::vector<std::pair<void*,std::size_t>> segments(1);
+                segments[0].first  = (void*)data_buff->mutable_data();
+                segments[0].second = data_buff->size();
+                
+                tl::bulk local = engine.expose(segments, tl::bulk_mode::write_only);
+                b.on(req.get_endpoint()) >> local;
+                std::shared_ptr<arrow::Array> col = 
+                    std::make_shared<arrow::PrimitiveArray>(type, length, std::move(data_buff));
+                columns.push_back(col);
+            }
         };
-    engine.define("do_rdma", f);
+    engine.define("do_rdma", f).disable_response();
     
     char *filter_buffer = new char[6];
     filter_buffer[0] = 'f';
@@ -78,10 +88,12 @@ int main(int argc, char** argv) {
 
     scan_request req(filter_buffer, 6, projection_buffer, 4);
 
-    // execute the RPC scan method on the server
-    // for (int i = 0; i < 5; ++i) {
-        // std::cout << "Doing RPC " << i << std::endl;
-        scan.on(server_endpoint)(req);
-        // tl::thread::sleep(engine, 1); // sleep for 1 second
-    // }
+    int e = scan.on(server_endpoint)(req);
+    if (e != 200) {
+        std::cout << "Error: " << e << std::endl;
+        return 1;
+    } else {
+        std::cout << "Scan success" << std::endl;
+        std::cout << columns.size() << std::endl;
+    }
 }
