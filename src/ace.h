@@ -7,7 +7,7 @@ struct ScanResultConsumer {
     std::shared_ptr<cp::ExecPlan> plan;
 };
 
-std::shared_ptr<ScanResultConsumer> Scan(cp::ExecContext& exec_context) {
+Result<std::shared_ptr<ScanResultConsumer>> Scan(cp::ExecContext& exec_context) {
     // instantiate an exec plan
     ARROW_ASSIGN_OR_RAISE(std::shared_ptr<cp::ExecPlan> plan,
                             cp::ExecPlan::Make(&exec_context));
