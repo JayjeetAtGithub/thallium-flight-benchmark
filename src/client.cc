@@ -38,7 +38,7 @@ int main(int argc, char** argv) {
     
     std::vector<std::shared_ptr<arrow::Array>> columns;
 
-    std::function<void(const tl::request&, rdma_req&, tl::bulk&)> f =
+    std::function<void(const tl::request&, rdma_request&, tl::bulk&)> f =
         [&engine, &columns](const tl::request& req, rdma_request& rdma_req, tl::bulk& b) {
 
             // std::shared_ptr<arrow::DataType> type = type_from_id(type_id);        
@@ -92,16 +92,5 @@ int main(int argc, char** argv) {
 
     // all for a particular storage server
     std::string uuid = scan.on(server_endpoint)(req);
-
-
-    if (e != 200) {
-        std::cout << "Error: " << e << std::endl;
-        return 1;
-    } else {
-        std::cout << "Scan success" << std::endl;
-
-        int e = get_next_batch.on(server_endpoint)(uuid);
-    }
-
-
+    int e = get_next_batch.on(server_endpoint)(uuid);
 }
