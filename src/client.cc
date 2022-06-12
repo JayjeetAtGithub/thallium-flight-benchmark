@@ -59,9 +59,9 @@ int main(int argc, char** argv) {
                 segments[(i*2)+1].second = rdma_req.offset_buff_sizes[i];
             }
 
+            tl::bulk local = engine.expose(segments, tl::bulk_mode::write_only);
             std::cout << "Allocated segments" << std::endl;
 
-            tl::bulk local = engine.expose(segments, tl::bulk_mode::write_only);
             b.on(req.get_endpoint()) >> local;
 
             std::cout << "Read segments" << std::endl;
