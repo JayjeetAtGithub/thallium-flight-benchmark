@@ -57,22 +57,27 @@ int main(int argc, char** argv) {
             if (reader->ReadNext(&batch).ok()) {
                 std::cout << "Batch: " << batch->ToString() << std::endl;
 
-                int num_cols = batch->num_columns();
+                int64_t num_rows;
+                int64_t num_cols;
+                std::vector<int> types;
+                std::vector<int64_t> data_buff_sizes;
+                std::vector<int64_t> offset_buff_sizes;
+
+                num_rows = batch->num_rows();
+                num_cols = batch->num_columns();
                 std::vector<std::pair<void*,std::size_t>> segments(num_cols*2);
 
-                rdma_request rdma_req(num_cols);
+                // rdma_request rdma_req(num_cols);
                 std::string null_buff = "xx";
 
 
                 for (int64_t i = 0; i < num_cols; i++) {
                     std::shared_ptr<arrow::Array> col_arr = batch->column(i);
                     arrow::Type::type type = col_arr->type_id();
-                    int64_t num_rows = col_arr->length();
                     int64_t null_count = col_arr->null_count();
                     int64_t offset = col_arr->offset();
 
-                    rdma_req.num_rows = num_rows;
-                    rdma_req.types.push_back((int)type);
+                    types.push_back((int)type);
 
                     int64_t data_size = 0;
                     int64_t offset_size = 0;
@@ -98,12 +103,12 @@ int main(int argc, char** argv) {
                         segments[(i*2)+1].first = (void*)(&null_buff[0]);
                         segments[(i*2)+1].second = offset_size;
                     }
-                    rdma_req.data_buff_sizes.push_back(data_size);
-                    rdma_req.offset_buff_sizes.push_back(offset_size);
+                    data_buff_sizes.push_back(data_size);
+                    offset_buff_sizes.push_back(offset_size);
                 }
 
                 tl::bulk arrow_bulk = engine.expose(segments, tl::bulk_mode::read_only);
-                do_rdma.on(req.get_endpoint())(rdma_req, arrow_bulk);
+                do_rdma.on(req.get_endpoint())(num_rows, num_cols, types, data_buff_sizes, offset_buff_sizes, arrow_bulk);
                 return req.respond(0);
             } else {
                 return req.respond(1);

@@ -38,28 +38,25 @@ int main(int argc, char** argv) {
     
     std::vector<std::shared_ptr<arrow::Array>> columns;
 
-    std::function<void(const tl::request&, rdma_request&, tl::bulk&)> f =
-        [&engine, &columns](const tl::request& req, rdma_request& rdma_req, tl::bulk& b) {
-
-            int64_t num_cols = rdma_req.num_cols;
-            int64_t num_rows = rdma_req.num_rows;
+    std::function<void(const tl::request&, int64_t&, int64_t&, std::vector<int>&, std::vector<int64_t>&, std::vector<int64_t>&, tl::bulk&)> f =
+        [&engine, &columns](const tl::request& req, int64_t& num_rows, int64_t& num_cols, std::vector<int>& types, std::vector<int64_t>& data_buff_sizes, std::vector<int64_t>& offset_buff_sizes, tl::bulk& b) {
 
             std::vector<std::unique_ptr<arrow::Buffer>> data_buffs(num_cols);
             std::vector<std::unique_ptr<arrow::Buffer>> offset_buffs(num_cols);
             std::vector<std::pair<void*,std::size_t>> segments(num_cols*2);
             
             for (int64_t i = 0; i < num_cols; i++) {
-                data_buffs[i] = arrow::AllocateBuffer(rdma_req.data_buff_sizes[i]).ValueOrDie();
-                offset_buffs[i] = arrow::AllocateBuffer(rdma_req.offset_buff_sizes[i]).ValueOrDie();
+                data_buffs[i] = arrow::AllocateBuffer(data_buff_sizes[i]).ValueOrDie();
+                offset_buffs[i] = arrow::AllocateBuffer(offset_buff_sizes[i]).ValueOrDie();
 
-                std::cout << "data_buff_sizes[" << i << "] = " << rdma_req.data_buff_sizes[i] << std::endl;
-                std::cout << "offset_buff_sizes[" << i << "] = " << rdma_req.offset_buff_sizes[i] << std::endl;
+                std::cout << "data_buff_sizes[" << i << "] = " << data_buff_sizes[i] << std::endl;
+                std::cout << "offset_buff_sizes[" << i << "] = " << offset_buff_sizes[i] << std::endl;
 
                 segments[i*2].first = (void*)data_buffs[i]->mutable_data();
-                segments[i*2].second = rdma_req.data_buff_sizes[i];
+                segments[i*2].second = data_buff_sizes[i];
 
                 segments[(i*2)+1].first = (void*)offset_buffs[i]->mutable_data();
-                segments[(i*2)+1].second = rdma_req.offset_buff_sizes[i];
+                segments[(i*2)+1].second = offset_buff_sizes[i];
             }
 
             tl::bulk local = engine.expose(segments, tl::bulk_mode::write_only);
@@ -70,13 +67,13 @@ int main(int argc, char** argv) {
             std::cout << "Read segments" << std::endl;
 
             for (int64_t i = 0; i < num_cols; i++) {
-                std::shared_ptr<arrow::DataType> type = type_from_id(rdma_req.types[i]);  
+                std::shared_ptr<arrow::DataType> type = type_from_id(types[i]);  
                 if (is_binary_like(type->id())) {
-                    std::shared_ptr<arrow::Array> col_arr = std::make_shared<arrow::StringArray>(rdma_req.num_rows, std::move(offset_buffs[i]), std::move(data_buffs[i]));
+                    std::shared_ptr<arrow::Array> col_arr = std::make_shared<arrow::StringArray>(num_rows, std::move(offset_buffs[i]), std::move(data_buffs[i]));
                     columns.push_back(col_arr);
                     std::cout << col_arr->ToString() << std::endl;
                 } else {
-                    std::shared_ptr<arrow::Array> col_arr = std::make_shared<arrow::PrimitiveArray>(type, rdma_req.num_rows, std::move(data_buffs[i]));
+                    std::shared_ptr<arrow::Array> col_arr = std::make_shared<arrow::PrimitiveArray>(type, num_rows, std::move(data_buffs[i]));
                     columns.push_back(col_arr);
                     std::cout << col_arr->ToString() << std::endl;
                 }
