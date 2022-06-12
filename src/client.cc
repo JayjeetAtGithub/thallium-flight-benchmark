@@ -55,8 +55,8 @@ int main(int argc, char** argv) {
                 segments[i*2].first = (void*)data_buffs[i]->mutable_data();
                 segments[i*2].second = rdma_req.data_buff_sizes[i];
 
-                segments[i*2+1].first = (void*)offset_buffs[i]->mutable_data();
-                segments[i*2+1].second = rdma_req.offset_buff_sizes[i];
+                segments[(i*2)+1].first = (void*)offset_buffs[i]->mutable_data();
+                segments[(i*2)+1].second = rdma_req.offset_buff_sizes[i];
             }
 
             std::cout << "Allocated segments" << std::endl;
