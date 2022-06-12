@@ -76,9 +76,9 @@ std::shared_ptr<ds::Dataset> GetDatasetFromDirectory(
 
   ds::FileSystemFactoryOptions options;
   auto factory = ds::FileSystemDatasetFactory::Make(fs, s, format, options).ValueOrDie();
-  auto schema = factory->Inspect(conf.inspect_options).ValueOrDie();
-  auto child = factory->Finish(conf.finish_options).ValueOrDie();
-  ds::DatasetVector children{conf.repeat, child};
+  auto schema = factory->Inspect().ValueOrDie();
+  auto child = factory->Finish().ValueOrDie();
+  ds::DatasetVector children{1, child};
   auto dataset = ds::UnionDataset::Make(std::move(schema), std::move(children));
   return dataset.ValueOrDie();
 }
@@ -98,10 +98,10 @@ std::shared_ptr<ds::Dataset> GetDatasetFromFile(
   ds::FileSystemFactoryOptions options;
   auto factory =
       ds::FileSystemDatasetFactory::Make(fs, {file}, format, options).ValueOrDie();
-  auto schema = factory->Inspect(conf.inspect_options).ValueOrDie();
-  auto child = factory->Finish(conf.finish_options).ValueOrDie();
+  auto schema = factory->Inspect().ValueOrDie();
+  auto child = factory->Finish().ValueOrDie();
   ds::DatasetVector children;
-  children.resize(conf.repeat, child);
+  children.resize(1, child);
   auto dataset = ds::UnionDataset::Make(std::move(schema), std::move(children));
   return dataset.ValueOrDie();
 }
