@@ -88,6 +88,8 @@ int main(int argc, char** argv) {
                         segments[i*2].second = data_size;
                         segments[(i*2)+1].first = (void*)offset_buff->data();
                         segments[(i*2)+1].second = offset_size;
+
+                        std::cout << "Binary: " << data_size << " " << offset_size << std::endl;
                     } else {
                         std::shared_ptr<arrow::Buffer> data_buff = 
                             std::static_pointer_cast<arrow::PrimitiveArray>(col_arr)->values();
@@ -97,6 +99,8 @@ int main(int argc, char** argv) {
                         segments[i*2].second = data_size;
                         segments[(i*2)+1].first = (void*)(&null_buff[0]);
                         segments[(i*2)+1].second = offset_size;
+                        std::cout << "Binary: " << data_size << " " << offset_size << std::endl;
+
                     }
                     rdma_req.data_buff_sizes.push_back(data_size);
                     rdma_req.offset_buff_sizes.push_back(offset_size);
