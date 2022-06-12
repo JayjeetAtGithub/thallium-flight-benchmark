@@ -102,4 +102,10 @@ int main(int argc, char** argv) {
 
     e = get_next_batch.on(server_endpoint)(uuid);
     std::cout << "Got next batch: " << e << std::endl;
+
+    e = get_next_batch.on(server_endpoint)(uuid);
+    std::cout << "Got next batch: " << e << std::endl;
+
+    e = get_next_batch.on(server_endpoint)(uuid);
+    std::cout << "Got next batch: " << e << std::endl;
 }
