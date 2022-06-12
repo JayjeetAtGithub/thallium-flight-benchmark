@@ -102,7 +102,7 @@ int main(int argc, char** argv) {
                         segments[(i*2)+1].second = offset_size;
                     }
 
-                    std::cout << data_buff_sizes[i] << std::endl;
+                    std::cout << data_size << std::endl;
 
                     data_buff_sizes.push_back(data_size);
                     offset_buff_sizes.push_back(offset_size);
