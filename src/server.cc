@@ -49,14 +49,16 @@ int main(int argc, char** argv) {
             return req.respond(uuid);
         };
 
+    int64_t total_rows_written = 0;
     std::function<void(const tl::request&, const std::string&)> get_next_batch = 
         [&engine, &do_rdma, &reader_map](const tl::request &req, const std::string& uuid) {
             
             std::shared_ptr<arrow::RecordBatchReader> reader = reader_map[uuid];
             std::shared_ptr<arrow::RecordBatch> batch;
             if (reader->ReadNext(&batch).ok() && batch != nullptr) {
-                std::cout << "Batch: " << batch->ToString() << std::endl;
-                std::cout << "Batch Size: " << batch->num_rows() << std::endl;
+                // std::cout << "Batch: " << batch->ToString() << std::endl;
+                // std::cout << "Batch Size: " << batch->num_rows() << std::endl;
+                total_rows_written += batch->num_rows();
 
                 int64_t num_rows;
                 int64_t num_cols;
@@ -108,6 +110,7 @@ int main(int argc, char** argv) {
 
                 tl::bulk arrow_bulk = engine.expose(segments, tl::bulk_mode::read_only);
                 do_rdma.on(req.get_endpoint())(num_rows, num_cols, types, data_buff_sizes, offset_buff_sizes, arrow_bulk);
+                std::cout << "Total rows written: " << total_rows_written << std::endl;
                 return req.respond(0);
             } else {
                 return req.respond(1);
