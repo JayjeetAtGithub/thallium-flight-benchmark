@@ -49,8 +49,8 @@ int main(int argc, char** argv) {
             std::vector<std::pair<void*,std::size_t>> segments(num_cols*2);
             
             for (int64_t i = 0; i < num_cols; i++) {
-                data_buffs[i] = arrow::AllocateBuffer(rdma_req.data_buff_sizes[i]);
-                offset_buffs[i] = arrow::AllocateBuffer(rdma_req.offset_buff_sizes[i]);
+                data_buffs[i] = arrow::AllocateBuffer(rdma_req.data_buff_sizes[i]).ValueOrDie();
+                offset_buffs[i] = arrow::AllocateBuffer(rdma_req.offset_buff_sizes[i]).ValueOrDie();
 
                 segments[i*2].first = (void*)data_buffs[i]->mutable_data();
                 segments[i*2].second = rdma_req.data_buff_sizes[i];
@@ -65,11 +65,11 @@ int main(int argc, char** argv) {
             for (int64_t i = 0; i < num_cols; i++) {
                 std::shared_ptr<arrow::DataType> type = type_from_id(rdma_req.types[i]);  
                 if (is_binary_like(type->id())) {
-                    std::shared_ptr<arrow::Array> arr = arrow::Array::Make(rdma_req.num_rows, std::move(offset_buffs[i]), std::move(data_buffs[i]));
-                    columns.push_back(arr);
+                    std::shared_ptr<arrow::Array> col_arr = std::make_shared<arrow::StringArray>(rdma_req.num_rows, std::move(offset_buffs[i]), std::move(data_buffs[i]));
+                    columns.push_back(col_arr);
                 } else {
-                    std::shared_ptr<arrow::Array> arr = arrow::Array::Make(type, rdma_req.num_rows, std::move(data_buffs[i]));
-                    columns.push_back(arr);
+                    std::shared_ptr<arrow::Array> col_arr = std::make_shared<arrow::PrimitiveArray>(type, rdma_req.num_rows, std::move(data_buffs[i]));
+                    columns.push_back(col_arr);
                 }
             }
             
