@@ -61,6 +61,17 @@ int main(int argc, char** argv) {
 
             tl::bulk local = engine.expose(segments, tl::bulk_mode::write_only);
             b.on(req.get_endpoint()) >> local;
+
+            for (int64_t i = 0; i < num_cols; i++) {
+                std::shared_ptr<arrow::DataType> type = type_from_id(rdma_req.types[i]);  
+                if (is_binary_like(type->id())) {
+                    std::shared_ptr<arrow::Array> arr = arrow::Array::Make(rdma_req.num_rows, std::move(offset_buffs[i]), std::move(data_buffs[i]));
+                    columns.push_back(arr);
+                } else {
+                    std::shared_ptr<arrow::Array> arr = arrow::Array::Make(type, rdma_req.num_rows, std::move(data_buffs[i]));
+                    columns.push_back(arr);
+                }
+            }
             
             // std::shared_ptr<arrow::DataType> type = type_from_id(type_id);        
 
