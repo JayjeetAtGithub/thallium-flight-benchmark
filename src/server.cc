@@ -55,9 +55,8 @@ int main(int argc, char** argv) {
             std::shared_ptr<arrow::RecordBatchReader> reader = reader_map[uuid];
             std::shared_ptr<arrow::RecordBatch> batch;
             if (reader->ReadNext(&batch).ok() && batch != nullptr) {
-                /// this iterator already has the data there, so the issue of 
-                /// offsetting the buffers before sending
                 std::cout << "Batch: " << batch->ToString() << std::endl;
+                std::cout << "Batch Size: " << batch->num_rows() << std::endl;
 
                 int64_t num_rows;
                 int64_t num_cols;
