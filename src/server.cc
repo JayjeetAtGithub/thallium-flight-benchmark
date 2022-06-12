@@ -55,6 +55,8 @@ int main(int argc, char** argv) {
             std::shared_ptr<arrow::RecordBatchReader> reader = reader_map[uuid];
             std::shared_ptr<arrow::RecordBatch> batch;
             if (reader->ReadNext(&batch).ok() && batch != nullptr) {
+                /// this iterator already has the data there, so the issue of 
+                /// offsetting the buffers before sending
                 std::cout << "Batch: " << batch->ToString() << std::endl;
 
                 int64_t num_rows;
@@ -75,7 +77,7 @@ int main(int argc, char** argv) {
                     int64_t null_count = col_arr->null_count();
                     int64_t offset = col_arr->offset();
 
-                    std::cout << offset << std::endl;
+                    // std::cout << offset << std::endl;
 
                     types.push_back((int)type);
 
@@ -96,6 +98,7 @@ int main(int argc, char** argv) {
                     } else {
                         std::shared_ptr<arrow::Buffer> data_buff = 
                             std::static_pointer_cast<arrow::PrimitiveArray>(col_arr)->values();
+                        data_buff = arrow::SliceBuffer(data_buff, offset, num_rows);
                         data_size = data_buff->size();
                         offset_size = null_buff.size() + 1; 
                         segments[i*2].first  = (void*)data_buff->data();
@@ -104,7 +107,7 @@ int main(int argc, char** argv) {
                         segments[(i*2)+1].second = offset_size;
                     }
 
-                    std::cout << data_size << std::endl;
+                    // std::cout << data_size << std::endl;
 
                     data_buff_sizes.push_back(data_size);
                     offset_buff_sizes.push_back(offset_size);
