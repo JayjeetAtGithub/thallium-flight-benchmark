@@ -88,9 +88,8 @@ int main(int argc, char** argv) {
                         segments[i*2].second = data_size;
                         segments[(i*2)+1].first = (void*)offset_buff->data();
                         segments[(i*2)+1].second = offset_size;
-
-                        std::cout << "Binary: " << data_size << " " << offset_size << std::endl;
                     } else {
+                        std::cout << "Not binary like" << std::endl;
                         std::shared_ptr<arrow::Buffer> data_buff = 
                             std::static_pointer_cast<arrow::PrimitiveArray>(col_arr)->values();
                         data_size = data_buff->size();
