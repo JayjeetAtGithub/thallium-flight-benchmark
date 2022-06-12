@@ -75,7 +75,7 @@ int main(int argc, char** argv) {
             auto batch = arrow::RecordBatch::Make(schema, num_rows, columns);
             std::cout << batch->ToString() << std::endl;
         };
-    engine.define("do_rdma", f).disable_response();
+    engine.define("do_rdma", f);
     
     char *filter_buffer = new char[6];
     filter_buffer[0] = 'f';
