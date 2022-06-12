@@ -127,7 +127,7 @@ std::shared_ptr<ds::Dataset> GetDatasetFromPath(
 arrow::Result<std::shared_ptr<ds::Dataset>> GetDataset() {
   auto format = std::make_shared<ds::ParquetFileFormat>();
   std::string path;
-  auto fs = GetFileSystemFromUri("/mnt/cephfs/dataset", &path);
+  auto fs = GetFileSystemFromUri("file:///mnt/cephfs/dataset", &path);
   auto dataset = GetDatasetFromPath(fs, format, path); 
   return dataset;
 }
