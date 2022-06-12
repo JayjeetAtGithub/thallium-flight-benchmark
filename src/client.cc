@@ -64,8 +64,6 @@ int main(int argc, char** argv) {
             b.on(req.get_endpoint()) >> local;
 
             for (int64_t i = 0; i < num_cols; i++) {
-                std::cout << data_buff_sizes[i] << std::endl;
-
                 std::shared_ptr<arrow::DataType> type = type_from_id(types[i]);  
                 if (is_binary_like(type->id())) {
                     std::shared_ptr<arrow::Array> col_arr = std::make_shared<arrow::StringArray>(num_rows, std::move(offset_buffs[i]), std::move(data_buffs[i]));
