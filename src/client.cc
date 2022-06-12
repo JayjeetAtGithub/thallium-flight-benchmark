@@ -21,10 +21,11 @@
 #include <thallium.hpp>
 
 #include "util.h"
-#include "request.h"
+#include "payload.h"
 
 
 namespace tl = thallium;
+
 
 int main(int argc, char** argv) {
 
@@ -33,44 +34,52 @@ int main(int argc, char** argv) {
     std::cout << "Client running at address " << engine.self() << std::endl;
 
     tl::remote_procedure scan = engine.define("scan");
+    tl::remote_procedure get_next_batch = engine.define("get_next_batch");
     
-    std::vector<std::shared_ptr<arrow::Array>> columns;
+    auto schema = arrow::schema({arrow::field("a", arrow::int64()),
+                                 arrow::field("b", arrow::boolean())});
+    
+    int64_t total_rows_read = 0;
 
-    std::function<void(const tl::request&, int&, int64_t&, int64_t&, int64_t&, tl::bulk&)> f =
-        [&engine, &columns](const tl::request& req, int& type_id, int64_t& length, int64_t& data_size, int64_t& offset_size, tl::bulk& b) {
+    std::function<void(const tl::request&, int64_t&, int64_t&, std::vector<int>&, std::vector<int64_t>&, std::vector<int64_t>&, tl::bulk&)> f =
+        [&engine, &schema, &total_rows_read](const tl::request& req, int64_t& num_rows, int64_t& num_cols, std::vector<int>& types, std::vector<int64_t>& data_buff_sizes, std::vector<int64_t>& offset_buff_sizes, tl::bulk& b) {
 
-            std::shared_ptr<arrow::DataType> type = type_from_id(type_id);        
+            std::vector<std::shared_ptr<arrow::Array>> columns;
+            std::vector<std::unique_ptr<arrow::Buffer>> data_buffs(num_cols);
+            std::vector<std::unique_ptr<arrow::Buffer>> offset_buffs(num_cols);
+            std::vector<std::pair<void*,std::size_t>> segments(num_cols*2);
+            
+            for (int64_t i = 0; i < num_cols; i++) {
+                data_buffs[i] = arrow::AllocateBuffer(data_buff_sizes[i]).ValueOrDie();
+                offset_buffs[i] = arrow::AllocateBuffer(offset_buff_sizes[i]).ValueOrDie();
 
-            if (is_binary_like(type->id())) {
-                std::unique_ptr<arrow::Buffer> data_buff = arrow::AllocateBuffer(data_size).ValueOrDie();
-                std::unique_ptr<arrow::Buffer> offset_buff = arrow::AllocateBuffer(offset_size).ValueOrDie();
+                segments[i*2].first = (void*)data_buffs[i]->mutable_data();
+                segments[i*2].second = data_buff_sizes[i];
 
-                std::vector<std::pair<void*,std::size_t>> segments(2);
-                segments[0].first  = (void*)data_buff->mutable_data();
-                segments[0].second = data_buff->size();
-                segments[1].first  = (void*)offset_buff->mutable_data();
-                segments[1].second = offset_buff->size();
-
-                tl::bulk local = engine.expose(segments, tl::bulk_mode::write_only);
-                b.on(req.get_endpoint()) >> local;
-                std::shared_ptr<arrow::Array> col = 
-                    std::make_shared<arrow::StringArray>(length, std::move(offset_buff), std::move(data_buff));
-                columns.push_back(col);
-            } else {
-                std::unique_ptr<arrow::Buffer> data_buff = arrow::AllocateBuffer(data_size).ValueOrDie();
-                
-                std::vector<std::pair<void*,std::size_t>> segments(1);
-                segments[0].first  = (void*)data_buff->mutable_data();
-                segments[0].second = data_buff->size();
-                
-                tl::bulk local = engine.expose(segments, tl::bulk_mode::write_only);
-                b.on(req.get_endpoint()) >> local;
-                std::shared_ptr<arrow::Array> col = 
-                    std::make_shared<arrow::PrimitiveArray>(type, length, std::move(data_buff));
-                columns.push_back(col);
+                segments[(i*2)+1].first = (void*)offset_buffs[i]->mutable_data();
+                segments[(i*2)+1].second = offset_buff_sizes[i];
             }
+
+            tl::bulk local = engine.expose(segments, tl::bulk_mode::write_only);
+            b.on(req.get_endpoint()) >> local;
+
+            for (int64_t i = 0; i < num_cols; i++) {
+                std::shared_ptr<arrow::DataType> type = type_from_id(types[i]);  
+                if (is_binary_like(type->id())) {
+                    std::shared_ptr<arrow::Array> col_arr = std::make_shared<arrow::StringArray>(num_rows, std::move(offset_buffs[i]), std::move(data_buffs[i]));
+                    columns.push_back(col_arr);
+                } else {
+                    std::shared_ptr<arrow::Array> col_arr = std::make_shared<arrow::PrimitiveArray>(type, num_rows, std::move(data_buffs[i]));
+                    columns.push_back(col_arr);
+                }
+            }
+
+            auto batch = arrow::RecordBatch::Make(schema, num_rows, columns);
+            // std::cout << batch->ToString() << std::endl;
+            total_rows_read += batch->num_rows();
+            return req.respond(0);
         };
-    engine.define("do_rdma", f).disable_response();
+    engine.define("do_rdma", f);
     
     char *filter_buffer = new char[6];
     filter_buffer[0] = 'f';
@@ -88,12 +97,11 @@ int main(int argc, char** argv) {
 
     scan_request req(filter_buffer, 6, projection_buffer, 4);
 
-    int e = scan.on(server_endpoint)(req);
-    if (e != 200) {
-        std::cout << "Error: " << e << std::endl;
-        return 1;
-    } else {
-        std::cout << "Scan success" << std::endl;
-        std::cout << columns.size() << std::endl;
-    }
+    // all for a particular storage server
+    std::string uuid = scan.on(server_endpoint)(req);
+    std::cout << "Scan success: Got an UUID: " << uuid << std::endl;
+
+    int e;
+    while ((e = get_next_batch.on(server_endpoint)(uuid)) == 0);
+    std::cout << "Scan success: Got " << total_rows_read << " rows" << std::endl;
 }

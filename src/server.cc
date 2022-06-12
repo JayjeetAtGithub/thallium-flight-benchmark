@@ -1,8 +1,10 @@
 #include <iostream>
+#include <unordered_map>
 
 #include <arrow/api.h>
 #include <arrow/compute/exec/expression.h>
 #include <arrow/dataset/api.h>
+#include <arrow/dataset/plan.h>
 #include <arrow/filesystem/api.h>
 #include <arrow/io/api.h>
 #include <arrow/util/checked_cast.h>
@@ -20,93 +22,103 @@
 #include <thallium.hpp>
 
 #include "ace.h"
-#include "request.h"
+#include "payload.h"
 
 
 namespace tl = thallium;
+namespace cp = arrow::compute;
 
-
-arrow::Result<std::shared_ptr<arrow::RecordBatch>> Scan(const scan_request& req) {
-    std::cout << "Filter: " << req.filter_buffer << std::endl;
-    std::cout << "Projection: " << req.projection_buffer << std::endl;
-    // define schema
-    auto f0 = arrow::field("f0", arrow::int64());
-    auto f1 = arrow::field("f1", arrow::binary());
-    auto f2 = arrow::field("f2", arrow::float64());
-
-    auto metadata = arrow::key_value_metadata({"foo"}, {"bar"});
-    auto schema = arrow::schema({f0, f1, f2}, metadata);
-
-    // generate some data
-    arrow::Int64Builder long_builder = arrow::Int64Builder();
-    std::vector<int64_t> values = {1, 2, 3};
-    ARROW_RETURN_NOT_OK(long_builder.AppendValues(values));
-    ARROW_ASSIGN_OR_RAISE(std::shared_ptr<arrow::Array> a0, long_builder.Finish());
-
-    arrow::StringBuilder str_builder = arrow::StringBuilder();
-    std::vector<std::string> strvals = {"x", "y", "z"};
-    ARROW_RETURN_NOT_OK(str_builder.AppendValues(strvals));
-    ARROW_ASSIGN_OR_RAISE(std::shared_ptr<arrow::Array> a1, str_builder.Finish());
-
-    arrow::DoubleBuilder dbl_builder = arrow::DoubleBuilder();
-    std::vector<double> dblvals = {1.1, 1.2, 2.3};
-    ARROW_RETURN_NOT_OK(dbl_builder.AppendValues(dblvals));
-    ARROW_ASSIGN_OR_RAISE(std::shared_ptr<arrow::Array> a2, dbl_builder.Finish());
-
-    // create a record batch
-    auto batch = arrow::RecordBatch::Make(schema, 3, {a0, a1, a2});
-    return batch;
-}
 
 int main(int argc, char** argv) {
     tl::engine engine("tcp", THALLIUM_SERVER_MODE);
     
-    tl::remote_procedure do_rdma = engine.define("do_rdma").disable_response();
+    tl::remote_procedure do_rdma = engine.define("do_rdma");
+
+    std::unordered_map<std::string, std::shared_ptr<arrow::RecordBatchReader>> reader_map;
     
     std::function<void(const tl::request&, const scan_request&)> scan = 
-        [&engine, &do_rdma](const tl::request &req, const scan_request& scan_req) {
+        [&reader_map](const tl::request &req, const scan_request& scan_req) {
+            
+            arrow::dataset::internal::Initialize();
+            cp::ExecContext exec_context;
+            std::shared_ptr<ScanResultConsumer> consumer = Scan(exec_context).ValueOrDie();
+            std::shared_ptr<arrow::RecordBatchReader> reader = consumer->reader;
 
-            auto b = Scan(scan_req).ValueOrDie();
-            std::cout << "Batch: " << b->ToString() << std::endl;
+            std::string uuid = generate_uuid();
+            reader_map[uuid] = reader;
+            return req.respond(uuid);
+        };
 
-            int num_columns = b->num_columns();
-            for (int i = 0; i < num_columns; i++) {
-                std::shared_ptr<arrow::Array> col_arr = b->column(i);
-                arrow::Type::type type = col_arr->type_id();
-                int64_t length = col_arr->length();
-                int64_t null_count = col_arr->null_count();
-                int64_t offset = col_arr->offset();
+    int64_t total_rows_written = 0;
+    std::function<void(const tl::request&, const std::string&)> get_next_batch = 
+        [&engine, &do_rdma, &reader_map, &total_rows_written](const tl::request &req, const std::string& uuid) {
+            
+            std::shared_ptr<arrow::RecordBatchReader> reader = reader_map[uuid];
+            std::shared_ptr<arrow::RecordBatch> batch;
+            if (reader->ReadNext(&batch).ok() && batch != nullptr) {
+                // std::cout << "Batch: " << batch->ToString() << std::endl;
+                // std::cout << "Batch Size: " << batch->num_rows() << std::endl;
+                total_rows_written += batch->num_rows();
 
-                std::vector<std::pair<void*,std::size_t>> segments;
-                int64_t data_size = 0;
-                int64_t offset_size = 0;
+                int64_t num_rows;
+                int64_t num_cols;
+                std::vector<int> types;
+                std::vector<int64_t> data_buff_sizes;
+                std::vector<int64_t> offset_buff_sizes;
 
-                if (is_binary_like(type)) {
-                    std::shared_ptr<arrow::Buffer> data_buff = 
-                        std::static_pointer_cast<arrow::BinaryArray>(col_arr)->value_data();
-                    std::shared_ptr<arrow::Buffer> offset_buff = 
-                        std::static_pointer_cast<arrow::BinaryArray>(col_arr)->value_offsets();
-                    data_size = data_buff->size();
-                    offset_size = offset_buff->size();
-                    segments.resize(2);
-                    segments[0].first = (void*)data_buff->data();
-                    segments[0].second = data_size;
-                    segments[1].first = (void*)offset_buff->data();
-                    segments[1].second = offset_size;
-                } else {
-                    std::shared_ptr<arrow::Buffer> data_buff = 
-                        std::static_pointer_cast<arrow::PrimitiveArray>(col_arr)->values();
-                    data_size = data_buff->size();
-                    segments.resize(1);
-                    segments[0].first  = (void*)data_buff->data();
-                    segments[0].second = data_size;
+                num_rows = batch->num_rows();
+                num_cols = batch->num_columns();
+                std::vector<std::pair<void*,std::size_t>> segments(num_cols*2);
+
+                std::string null_buff = "xx";
+
+                for (int64_t i = 0; i < num_cols; i++) {
+                    std::shared_ptr<arrow::Array> col_arr = batch->column(i);
+                    arrow::Type::type type = col_arr->type_id();
+                    int64_t null_count = col_arr->null_count();
+
+                    types.push_back((int)type);
+
+                    int64_t data_size = 0;
+                    int64_t offset_size = 0;
+
+                    if (is_binary_like(type)) {
+                        std::shared_ptr<arrow::Buffer> data_buff = 
+                            std::static_pointer_cast<arrow::BinaryArray>(col_arr)->value_data();
+                        std::shared_ptr<arrow::Buffer> offset_buff = 
+                            std::static_pointer_cast<arrow::BinaryArray>(col_arr)->value_offsets();
+                        data_size = data_buff->size();
+                        offset_size = offset_buff->size();
+                        segments[i*2].first = (void*)data_buff->data();
+                        segments[i*2].second = data_size;
+                        segments[(i*2)+1].first = (void*)offset_buff->data();
+                        segments[(i*2)+1].second = offset_size;
+                    } else {
+                        std::shared_ptr<arrow::Buffer> data_buff = 
+                            std::static_pointer_cast<arrow::PrimitiveArray>(col_arr)->values();
+                        data_size = data_buff->size();
+                        offset_size = null_buff.size() + 1; 
+                        segments[i*2].first  = (void*)data_buff->data();
+                        segments[i*2].second = data_size;
+                        segments[(i*2)+1].first = (void*)(&null_buff[0]);
+                        segments[(i*2)+1].second = offset_size;
+                    }
+
+                    data_buff_sizes.push_back(data_size);
+                    offset_buff_sizes.push_back(offset_size);
                 }
 
                 tl::bulk arrow_bulk = engine.expose(segments, tl::bulk_mode::read_only);
-                do_rdma.on(req.get_endpoint())((int)type, length, data_size, offset_size, arrow_bulk);
+                do_rdma.on(req.get_endpoint())(num_rows, num_cols, types, data_buff_sizes, offset_buff_sizes, arrow_bulk);
+                std::cout << "Total rows written: " << total_rows_written << std::endl;
+                return req.respond(0);
+            } else {
+                return req.respond(1);
             }
-            return req.respond(200);
         };
+    
     engine.define("scan", scan);
-    std::cout << "Server running at address " << engine.self() << std::endl;
-}
+    engine.define("get_next_batch", get_next_batch);
+
+    std::cout << "Server running at address " << engine.self() << std::endl;            
+};

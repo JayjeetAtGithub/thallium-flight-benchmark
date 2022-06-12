@@ -4,6 +4,7 @@ project(arrow-thallium)
 find_package(mercury REQUIRED)
 find_package(thallium REQUIRED)
 find_package(Arrow REQUIRED)
+find_package(Boost REQUIRED)
 
 add_executable(client client.cc)
 target_link_libraries(client thallium arrow arrow_dataset)
