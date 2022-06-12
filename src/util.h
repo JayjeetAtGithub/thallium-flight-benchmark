@@ -76,15 +76,15 @@ arrow::Result<std::shared_ptr<arrow::Table>> GetTable() {
   auto null_long = std::numeric_limits<int64_t>::quiet_NaN();
   ARROW_ASSIGN_OR_RAISE(auto int64_array,
                         GetArrayDataSample<arrow::Int64Type>(
-                            {1, 2, null_long, 3, null_long, 4, 5, 6, 7, 8}));
+                            {1, 2, 5, 3, 3, 4, 5, 6, 7, 8}));
 
   arrow::BooleanBuilder boolean_builder;
   std::shared_ptr<arrow::BooleanArray> bool_array;
 
   std::vector<uint8_t> bool_values = {false, true,  true,  false, true,
                                       false, false, false, false, true};
-  std::vector<bool> is_valid = {false, true,  true, true, true,
-                                true,  false, true, true, true};
+  std::vector<bool> is_valid = {true, true,  true, true, true,
+                                true,  true, true, true, true};
 
   ARROW_RETURN_NOT_OK(boolean_builder.Reserve(10));
 
