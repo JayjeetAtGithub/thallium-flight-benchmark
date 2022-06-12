@@ -99,4 +99,7 @@ int main(int argc, char** argv) {
     std::cout << "Scan success: Got an UUID: " << uuid << std::endl;
     int e = get_next_batch.on(server_endpoint)(uuid);
     std::cout << "Got next batch: " << e << std::endl;
+
+    e = get_next_batch.on(server_endpoint)(uuid);
+    std::cout << "Got next batch: " << e << std::endl;
 }
