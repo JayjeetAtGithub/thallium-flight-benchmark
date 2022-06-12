@@ -49,14 +49,14 @@ int main(int argc, char** argv) {
             std::vector<std::pair<void*,std::size_t>> segments(num_cols*2);
             
             for (int64_t i = 0; i < num_cols; i++) {
-                data_buffs[i] = arrow::AllocateBuffer(rdma_req.data_buff_sizez[i]);
-                offset_buffs[i] = arrow::AllocateBuffer(rdma_req.offset_buff_sizez[i]);
+                data_buffs[i] = arrow::AllocateBuffer(rdma_req.data_buff_sizes[i]);
+                offset_buffs[i] = arrow::AllocateBuffer(rdma_req.offset_buff_sizes[i]);
 
                 segments[i*2].first = (void*)data_buffs[i]->mutable_data();
-                segments[i*2].second = rdma_req.data_buff_sizez[i];
+                segments[i*2].second = rdma_req.data_buff_sizes[i];
 
                 segments[i*2+1].first = (void*)offset_buffs[i]->mutable_data();
-                segments[i*2+1].second = rdma_req.offset_buff_sizez[i];
+                segments[i*2+1].second = rdma_req.offset_buff_sizes[i];
             }
 
             tl::bulk local = engine.expose(segments, tl::bulk_mode::write_only);
