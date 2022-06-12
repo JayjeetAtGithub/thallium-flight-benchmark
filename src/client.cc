@@ -74,7 +74,6 @@ int main(int argc, char** argv) {
 
             auto batch = arrow::RecordBatch::Make(schema, num_rows, columns);
             std::cout << batch->ToString() << std::endl;
-            columns.clear();
             return req.respond(0);
         };
     engine.define("do_rdma", f);
