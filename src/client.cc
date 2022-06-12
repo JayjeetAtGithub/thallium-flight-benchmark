@@ -97,18 +97,7 @@ int main(int argc, char** argv) {
     // all for a particular storage server
     std::string uuid = scan.on(server_endpoint)(req);
     std::cout << "Scan success: Got an UUID: " << uuid << std::endl;
-    int e = get_next_batch.on(server_endpoint)(uuid);
-    std::cout << "Got next batch: " << e << std::endl;
 
-    e = get_next_batch.on(server_endpoint)(uuid);
-    std::cout << "Got next batch: " << e << std::endl;
-
-    e = get_next_batch.on(server_endpoint)(uuid);
-    std::cout << "Got next batch: " << e << std::endl;
-
-    e = get_next_batch.on(server_endpoint)(uuid);
-    std::cout << "Got next batch: " << e << std::endl;
-
-    e = get_next_batch.on(server_endpoint)(uuid);
-    std::cout << "Got next batch: " << e << std::endl;
+    int e;
+    while ((e = get_next_batch.on(server_endpoint)(uuid)) == 0);
 }
