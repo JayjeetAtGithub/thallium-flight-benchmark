@@ -68,7 +68,7 @@ int main(int argc, char** argv) {
     std::unordered_map<std::string, std::shared_ptr<arrow::RecordBatchReader>> reader_map;
     
     std::function<void(const tl::request&, const scan_request&)> scan = 
-        [&](const tl::request &req, const scan_request& scan_req) {
+        [&reader_map](const tl::request &req, const scan_request& scan_req) {
 
             cp::ExecContext exec_context;
             std::shared_ptr<ScanResultConsumer> consumer = Scan(exec_context).ValueOrDie();
