@@ -25,6 +25,9 @@
 std::shared_ptr<arrow::DataType> type_from_id(int type_id) {
     std::shared_ptr<arrow::DataType> type;
     switch(type_id) {
+        case 1:
+            type = arrow::boolean();
+            break;
         case 9:
             type = arrow::int64();
             break;

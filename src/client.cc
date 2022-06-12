@@ -49,9 +49,6 @@ int main(int argc, char** argv) {
                 data_buffs[i] = arrow::AllocateBuffer(data_buff_sizes[i]).ValueOrDie();
                 offset_buffs[i] = arrow::AllocateBuffer(offset_buff_sizes[i]).ValueOrDie();
 
-                std::cout << "data_buff_sizes[" << i << "] = " << data_buff_sizes[i] << std::endl;
-                std::cout << "offset_buff_sizes[" << i << "] = " << offset_buff_sizes[i] << std::endl;
-
                 segments[i*2].first = (void*)data_buffs[i]->mutable_data();
                 segments[i*2].second = data_buff_sizes[i];
 
@@ -60,11 +57,7 @@ int main(int argc, char** argv) {
             }
 
             tl::bulk local = engine.expose(segments, tl::bulk_mode::write_only);
-            std::cout << "Allocated segments" << std::endl;
-
             b.on(req.get_endpoint()) >> local;
-
-            std::cout << "Read segments" << std::endl;
 
             for (int64_t i = 0; i < num_cols; i++) {
                 std::shared_ptr<arrow::DataType> type = type_from_id(types[i]);  
