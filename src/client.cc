@@ -36,6 +36,8 @@ int main(int argc, char** argv) {
     tl::remote_procedure scan = engine.define("scan");
     tl::remote_procedure get_next_batch = engine.define("get_next_batch");
     
+    auto schema = arrow::schema({arrow::field("a", arrow::int64()),
+                                 arrow::field("b", arrow::boolean())});
     std::vector<std::shared_ptr<arrow::Array>> columns;
 
     std::function<void(const tl::request&, int64_t&, int64_t&, std::vector<int>&, std::vector<int64_t>&, std::vector<int64_t>&, tl::bulk&)> f =
@@ -64,44 +66,14 @@ int main(int argc, char** argv) {
                 if (is_binary_like(type->id())) {
                     std::shared_ptr<arrow::Array> col_arr = std::make_shared<arrow::StringArray>(num_rows, std::move(offset_buffs[i]), std::move(data_buffs[i]));
                     columns.push_back(col_arr);
-                    std::cout << col_arr->ToString() << std::endl;
                 } else {
                     std::shared_ptr<arrow::Array> col_arr = std::make_shared<arrow::PrimitiveArray>(type, num_rows, std::move(data_buffs[i]));
                     columns.push_back(col_arr);
-                    std::cout << col_arr->ToString() << std::endl;
                 }
             }
-            
-            // std::shared_ptr<arrow::DataType> type = type_from_id(type_id);        
 
-            // if (is_binary_like(type->id())) {
-            //     std::unique_ptr<arrow::Buffer> data_buff = arrow::AllocateBuffer(data_size).ValueOrDie();
-            //     std::unique_ptr<arrow::Buffer> offset_buff = arrow::AllocateBuffer(offset_size).ValueOrDie();
-
-            //     std::vector<std::pair<void*,std::size_t>> segments(2);
-            //     segments[0].first  = (void*)data_buff->mutable_data();
-            //     segments[0].second = data_buff->size();
-            //     segments[1].first  = (void*)offset_buff->mutable_data();
-            //     segments[1].second = offset_buff->size();
-
-            //     tl::bulk local = engine.expose(segments, tl::bulk_mode::write_only);
-            //     b.on(req.get_endpoint()) >> local;
-            //     std::shared_ptr<arrow::Array> col = 
-            //         std::make_shared<arrow::StringArray>(length, std::move(offset_buff), std::move(data_buff));
-            //     columns.push_back(col);
-            // } else {
-            //     std::unique_ptr<arrow::Buffer> data_buff = arrow::AllocateBuffer(data_size).ValueOrDie();
-                
-            //     std::vector<std::pair<void*,std::size_t>> segments(1);
-            //     segments[0].first  = (void*)data_buff->mutable_data();
-            //     segments[0].second = data_buff->size();
-                
-            //     tl::bulk local = engine.expose(segments, tl::bulk_mode::write_only);
-            //     b.on(req.get_endpoint()) >> local;
-            //     std::shared_ptr<arrow::Array> col = 
-            //         std::make_shared<arrow::PrimitiveArray>(type, length, std::move(data_buff));
-            //     columns.push_back(col);
-            // }
+            auto batch = arrow::RecordBatch::Make(schema, num_rows, columns);
+            std::cout << batch->ToString() << std::endl;
         };
     engine.define("do_rdma", f).disable_response();
     
