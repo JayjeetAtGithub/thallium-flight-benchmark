@@ -67,9 +67,11 @@ int main(int argc, char** argv) {
                 if (is_binary_like(type->id())) {
                     std::shared_ptr<arrow::Array> col_arr = std::make_shared<arrow::StringArray>(rdma_req.num_rows, std::move(offset_buffs[i]), std::move(data_buffs[i]));
                     columns.push_back(col_arr);
+                    std::cout << col_arr->ToString() << std::endl;
                 } else {
                     std::shared_ptr<arrow::Array> col_arr = std::make_shared<arrow::PrimitiveArray>(type, rdma_req.num_rows, std::move(data_buffs[i]));
                     columns.push_back(col_arr);
+                    std::cout << col_arr->ToString() << std::endl;
                 }
             }
             
