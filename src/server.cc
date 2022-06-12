@@ -75,6 +75,8 @@ int main(int argc, char** argv) {
                     int64_t null_count = col_arr->null_count();
                     int64_t offset = col_arr->offset();
 
+                    std::cout << offset << std::endl;
+
                     types.push_back((int)type);
 
                     int64_t data_size = 0;
