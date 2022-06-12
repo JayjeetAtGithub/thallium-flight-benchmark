@@ -38,9 +38,11 @@ int main(int argc, char** argv) {
     
     auto schema = arrow::schema({arrow::field("a", arrow::int64()),
                                  arrow::field("b", arrow::boolean())});
+    
+    int64_t total_rows_read = 0;
 
     std::function<void(const tl::request&, int64_t&, int64_t&, std::vector<int>&, std::vector<int64_t>&, std::vector<int64_t>&, tl::bulk&)> f =
-        [&engine, &schema](const tl::request& req, int64_t& num_rows, int64_t& num_cols, std::vector<int>& types, std::vector<int64_t>& data_buff_sizes, std::vector<int64_t>& offset_buff_sizes, tl::bulk& b) {
+        [&engine, &schema, &total_rows_read](const tl::request& req, int64_t& num_rows, int64_t& num_cols, std::vector<int>& types, std::vector<int64_t>& data_buff_sizes, std::vector<int64_t>& offset_buff_sizes, tl::bulk& b) {
 
             std::vector<std::shared_ptr<arrow::Array>> columns;
             std::vector<std::unique_ptr<arrow::Buffer>> data_buffs(num_cols);
@@ -76,6 +78,7 @@ int main(int argc, char** argv) {
 
             auto batch = arrow::RecordBatch::Make(schema, num_rows, columns);
             std::cout << batch->ToString() << std::endl;
+            total_rows_read += batch->num_rows();
             return req.respond(0);
         };
     engine.define("do_rdma", f);
@@ -102,4 +105,5 @@ int main(int argc, char** argv) {
 
     int e;
     while ((e = get_next_batch.on(server_endpoint)(uuid)) == 0);
+    std::cout << "Scan success: Got " << total_rows_read << " rows" << std::endl;
 }
