@@ -76,6 +76,7 @@ int main(int argc, char** argv) {
                     arrow::Type::type type = col_arr->type_id();
                     int64_t null_count = col_arr->null_count();
                     int64_t offset = col_arr->offset();
+                    int64_t length = col_arr->length();
 
                     // std::cout << offset << std::endl;
 
@@ -98,7 +99,7 @@ int main(int argc, char** argv) {
                     } else {
                         std::shared_ptr<arrow::Buffer> data_buff = 
                             std::static_pointer_cast<arrow::PrimitiveArray>(col_arr)->values();
-                        data_buff = arrow::SliceBuffer(data_buff, offset, num_rows);
+                        data_buff = arrow::SliceBuffer(data_buff, offset, length);
                         data_size = data_buff->size();
                         offset_size = null_buff.size() + 1; 
                         segments[i*2].first  = (void*)data_buff->data();
