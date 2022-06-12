@@ -69,7 +69,8 @@ int main(int argc, char** argv) {
     
     std::function<void(const tl::request&, const scan_request&)> scan = 
         [&reader_map](const tl::request &req, const scan_request& scan_req) {
-
+            
+            arrow::dataset::internal::Initialize();
             cp::ExecContext exec_context;
             std::shared_ptr<ScanResultConsumer> consumer = Scan(exec_context).ValueOrDie();
             std::shared_ptr<arrow::RecordBatchReader> reader = consumer->reader;
