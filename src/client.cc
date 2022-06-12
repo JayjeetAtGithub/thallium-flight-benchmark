@@ -76,7 +76,7 @@ int main(int argc, char** argv) {
 
             auto batch = arrow::RecordBatch::Make(schema, num_rows, columns);
             std::cout << batch->ToString() << std::endl;
-            return req.respond(0);
+            return req.respond(batch->num_rows());
         };
     engine.define("do_rdma", f);
     
@@ -101,5 +101,5 @@ int main(int argc, char** argv) {
     std::cout << "Scan success: Got an UUID: " << uuid << std::endl;
 
     int e;
-    while ((e = get_next_batch.on(server_endpoint)(uuid)) == 0);
+    while ((e = get_next_batch.on(server_endpoint)(uuid)) != -1);
 }
