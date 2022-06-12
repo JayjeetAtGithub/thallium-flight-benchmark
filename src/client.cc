@@ -38,39 +38,39 @@ int main(int argc, char** argv) {
     
     std::vector<std::shared_ptr<arrow::Array>> columns;
 
-    std::function<void(const tl::request&, int&, int64_t&, int64_t&, int64_t&, tl::bulk&)> f =
-        [&engine, &columns](const tl::request& req, int& type_id, int64_t& length, int64_t& data_size, int64_t& offset_size, tl::bulk& b) {
+    std::function<void(const tl::request&, rdma_req&, tl::bulk&)> f =
+        [&engine, &columns](const tl::request& req, rdma_req&, tl::bulk& b) {
 
-            std::shared_ptr<arrow::DataType> type = type_from_id(type_id);        
+            // std::shared_ptr<arrow::DataType> type = type_from_id(type_id);        
 
-            if (is_binary_like(type->id())) {
-                std::unique_ptr<arrow::Buffer> data_buff = arrow::AllocateBuffer(data_size).ValueOrDie();
-                std::unique_ptr<arrow::Buffer> offset_buff = arrow::AllocateBuffer(offset_size).ValueOrDie();
+            // if (is_binary_like(type->id())) {
+            //     std::unique_ptr<arrow::Buffer> data_buff = arrow::AllocateBuffer(data_size).ValueOrDie();
+            //     std::unique_ptr<arrow::Buffer> offset_buff = arrow::AllocateBuffer(offset_size).ValueOrDie();
 
-                std::vector<std::pair<void*,std::size_t>> segments(2);
-                segments[0].first  = (void*)data_buff->mutable_data();
-                segments[0].second = data_buff->size();
-                segments[1].first  = (void*)offset_buff->mutable_data();
-                segments[1].second = offset_buff->size();
+            //     std::vector<std::pair<void*,std::size_t>> segments(2);
+            //     segments[0].first  = (void*)data_buff->mutable_data();
+            //     segments[0].second = data_buff->size();
+            //     segments[1].first  = (void*)offset_buff->mutable_data();
+            //     segments[1].second = offset_buff->size();
 
-                tl::bulk local = engine.expose(segments, tl::bulk_mode::write_only);
-                b.on(req.get_endpoint()) >> local;
-                std::shared_ptr<arrow::Array> col = 
-                    std::make_shared<arrow::StringArray>(length, std::move(offset_buff), std::move(data_buff));
-                columns.push_back(col);
-            } else {
-                std::unique_ptr<arrow::Buffer> data_buff = arrow::AllocateBuffer(data_size).ValueOrDie();
+            //     tl::bulk local = engine.expose(segments, tl::bulk_mode::write_only);
+            //     b.on(req.get_endpoint()) >> local;
+            //     std::shared_ptr<arrow::Array> col = 
+            //         std::make_shared<arrow::StringArray>(length, std::move(offset_buff), std::move(data_buff));
+            //     columns.push_back(col);
+            // } else {
+            //     std::unique_ptr<arrow::Buffer> data_buff = arrow::AllocateBuffer(data_size).ValueOrDie();
                 
-                std::vector<std::pair<void*,std::size_t>> segments(1);
-                segments[0].first  = (void*)data_buff->mutable_data();
-                segments[0].second = data_buff->size();
+            //     std::vector<std::pair<void*,std::size_t>> segments(1);
+            //     segments[0].first  = (void*)data_buff->mutable_data();
+            //     segments[0].second = data_buff->size();
                 
-                tl::bulk local = engine.expose(segments, tl::bulk_mode::write_only);
-                b.on(req.get_endpoint()) >> local;
-                std::shared_ptr<arrow::Array> col = 
-                    std::make_shared<arrow::PrimitiveArray>(type, length, std::move(data_buff));
-                columns.push_back(col);
-            }
+            //     tl::bulk local = engine.expose(segments, tl::bulk_mode::write_only);
+            //     b.on(req.get_endpoint()) >> local;
+            //     std::shared_ptr<arrow::Array> col = 
+            //         std::make_shared<arrow::PrimitiveArray>(type, length, std::move(data_buff));
+            //     columns.push_back(col);
+            // }
         };
     engine.define("do_rdma", f).disable_response();
     
