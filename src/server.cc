@@ -97,7 +97,7 @@ int main(int argc, char** argv) {
                     } else {
                         std::shared_ptr<arrow::Buffer> data_buff = 
                             std::static_pointer_cast<arrow::PrimitiveArray>(col_arr)->values();
-                        data_buff = arrow::SliceBuffer(data_buff, offset, length*sizeof(col_arr[0]));
+                        data_buff = arrow::SliceBuffer(data_buff, offset, length * col_arr->type()->bit_width());
                         data_size = data_buff->size();
                         offset_size = null_buff.size() + 1; 
                         segments[i*2].first  = (void*)data_buff->data();
