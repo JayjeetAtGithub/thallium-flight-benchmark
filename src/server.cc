@@ -65,6 +65,7 @@ int main(int argc, char** argv) {
 
 
                 for (int64_t i = 0; i < num_cols; i++) {
+                    std::cout << "Column: " << i << std::endl;
                     std::shared_ptr<arrow::Array> col_arr = batch->column(i);
                     arrow::Type::type type = col_arr->type_id();
                     int64_t num_rows = col_arr->length();
