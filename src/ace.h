@@ -19,7 +19,7 @@ arrow::Result<std::shared_ptr<ScanResultConsumer>> Scan(cp::ExecContext& exec_co
 
     ARROW_ASSIGN_OR_RAISE(auto scanner_builder, dataset->NewScan());
     scanner_builder->Project({"total_amount", "tips_amount"});
-    scanner_builder->BatchSize(3);
+    // scanner_builder->BatchSize(3);
 
     ARROW_ASSIGN_OR_RAISE(auto scanner, scanner_builder->Finish());
 
