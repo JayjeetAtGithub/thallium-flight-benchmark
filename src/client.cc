@@ -38,10 +38,11 @@ int main(int argc, char** argv) {
     
     auto schema = arrow::schema({arrow::field("a", arrow::int64()),
                                  arrow::field("b", arrow::boolean())});
+    std::vector<std::shared_ptr<arrow::Array>> columns;
 
     std::function<void(const tl::request&, int64_t&, int64_t&, std::vector<int>&, std::vector<int64_t>&, std::vector<int64_t>&, tl::bulk&)> f =
         [&engine, &schema, &columns](const tl::request& req, int64_t& num_rows, int64_t& num_cols, std::vector<int>& types, std::vector<int64_t>& data_buff_sizes, std::vector<int64_t>& offset_buff_sizes, tl::bulk& b) {
-            std::vector<std::shared_ptr<arrow::Array>> columns;
+
             std::vector<std::unique_ptr<arrow::Buffer>> data_buffs(num_cols);
             std::vector<std::unique_ptr<arrow::Buffer>> offset_buffs(num_cols);
             std::vector<std::pair<void*,std::size_t>> segments(num_cols*2);
@@ -73,6 +74,7 @@ int main(int argc, char** argv) {
 
             auto batch = arrow::RecordBatch::Make(schema, num_rows, columns);
             std::cout << batch->ToString() << std::endl;
+            columns.clear();
             return req.respond(0);
         };
     engine.define("do_rdma", f);
