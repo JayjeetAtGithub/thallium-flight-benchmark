@@ -7,11 +7,13 @@
 #include <arrow/compute/api_vector.h>
 #include <arrow/compute/cast.h>
 #include <arrow/compute/exec/exec_plan.h>
+#include <arrow/compute/exec/expression.h>
+#include <arrow/filesystem/filesystem.h>
+#include <arrow/filesystem/path_util.h>
 #include <arrow/util/future.h>
 #include <arrow/util/range.h>
 #include <arrow/util/thread_pool.h>
 #include <arrow/util/vector.h>
-
 #include <boost/uuid/uuid.hpp>
 #include <boost/uuid/uuid_generators.hpp>
 #include <boost/uuid/uuid_io.hpp>     
@@ -20,6 +22,17 @@
 #include <memory>
 #include <utility>
 #include <vector>
+
+
+namespace fs = arrow::fs;
+namespace ds = arrow::dataset;
+namespace cp = arrow::compute;
+
+
+using arrow::field;
+using arrow::int16;
+using arrow::Schema;
+using arrow::Table;
 
 
 std::shared_ptr<arrow::DataType> type_from_id(int type_id) {
@@ -44,72 +57,77 @@ std::shared_ptr<arrow::DataType> type_from_id(int type_id) {
     return type;     
 }
 
-template <typename TYPE,
-          typename = typename std::enable_if<arrow::is_number_type<TYPE>::value |
-                                             arrow::is_boolean_type<TYPE>::value |
-                                             arrow::is_temporal_type<TYPE>::value>::type>
-arrow::Result<std::shared_ptr<arrow::Array>> GetArrayDataSample(
-    const std::vector<typename TYPE::c_type>& values) {
-  using ArrowBuilderType = typename arrow::TypeTraits<TYPE>::BuilderType;
-  ArrowBuilderType builder;
-  ARROW_RETURN_NOT_OK(builder.Reserve(values.size()));
-  ARROW_RETURN_NOT_OK(builder.AppendValues(values));
-  return builder.Finish();
-}
-
-template <class TYPE>
-arrow::Result<std::shared_ptr<arrow::Array>> GetBinaryArrayDataSample(
-    const std::vector<std::string>& values) {
-  using ArrowBuilderType = typename arrow::TypeTraits<TYPE>::BuilderType;
-  ArrowBuilderType builder;
-  ARROW_RETURN_NOT_OK(builder.Reserve(values.size()));
-  ARROW_RETURN_NOT_OK(builder.AppendValues(values));
-  return builder.Finish();
-}
-
-arrow::Result<std::shared_ptr<arrow::RecordBatch>> GetSampleRecordBatch(
-    const arrow::ArrayVector array_vector, const arrow::FieldVector& field_vector) {
-  std::shared_ptr<arrow::RecordBatch> record_batch;
-  ARROW_ASSIGN_OR_RAISE(auto struct_result,
-                        arrow::StructArray::Make(array_vector, field_vector));
-  return record_batch->FromStructArray(struct_result);
-}
-
-arrow::Result<std::shared_ptr<arrow::Table>> GetTable() {
-  auto null_long = std::numeric_limits<int64_t>::quiet_NaN();
-  ARROW_ASSIGN_OR_RAISE(auto int64_array,
-                        GetArrayDataSample<arrow::Int64Type>(
-                            {1, 2, 5, 3, 3, 4, 5, 6, 7, 8}));
-
-  arrow::BooleanBuilder boolean_builder;
-  std::shared_ptr<arrow::BooleanArray> bool_array;
-
-  std::vector<uint8_t> bool_values = {false, true,  true,  false, true,
-                                      false, false, false, false, true};
-  std::vector<bool> is_valid = {true, true,  true, true, true,
-                                true,  true, true, true, true};
-
-  ARROW_RETURN_NOT_OK(boolean_builder.Reserve(10));
-
-  ARROW_RETURN_NOT_OK(boolean_builder.AppendValues(bool_values, is_valid));
-
-  ARROW_RETURN_NOT_OK(boolean_builder.Finish(&bool_array));
-
-  auto record_batch =
-      arrow::RecordBatch::Make(arrow::schema({arrow::field("a", arrow::int64()),
-                                              arrow::field("b", arrow::boolean())}),
-                               10, {int64_array, bool_array});
-  ARROW_ASSIGN_OR_RAISE(auto table, arrow::Table::FromRecordBatches({record_batch}));
-  return table;
-}
-
-arrow::Result<std::shared_ptr<arrow::dataset::Dataset>> GetDataset() {
-  ARROW_ASSIGN_OR_RAISE(auto table, GetTable());
-  auto ds = std::make_shared<arrow::dataset::InMemoryDataset>(table);
-  return ds;
-}
-
 std::string generate_uuid() {
     boost::uuids::uuid uuid = boost::uuids::random_generator()();
     return boost::uuids::to_string(uuid);
+}
+
+std::shared_ptr<fs::FileSystem> GetFileSystemFromUri(const std::string& uri,
+                                                     std::string* path) {
+  return fs::FileSystemFromUri(uri, path).ValueOrDie();
+}
+
+std::shared_ptr<ds::Dataset> GetDatasetFromDirectory(
+    std::shared_ptr<fs::FileSystem> fs, std::shared_ptr<ds::ParquetFileFormat> format,
+    std::string dir) {
+  fs::FileSelector s;
+  s.base_dir = dir;
+  s.recursive = true;
+
+  ds::FileSystemFactoryOptions options;
+  auto factory = ds::FileSystemDatasetFactory::Make(fs, s, format, options).ValueOrDie();
+  auto schema = factory->Inspect(conf.inspect_options).ValueOrDie();
+  auto child = factory->Finish(conf.finish_options).ValueOrDie();
+  ds::DatasetVector children{conf.repeat, child};
+  auto dataset = ds::UnionDataset::Make(std::move(schema), std::move(children));
+  return dataset.ValueOrDie();
+}
+
+std::shared_ptr<ds::Dataset> GetParquetDatasetFromMetadata(
+    std::shared_ptr<fs::FileSystem> fs, std::shared_ptr<ds::ParquetFileFormat> format,
+    std::string metadata_path) {
+  ds::ParquetFactoryOptions options;
+  auto factory =
+      ds::ParquetDatasetFactory::Make(metadata_path, fs, format, options).ValueOrDie();
+  return factory->Finish().ValueOrDie();
+}
+
+std::shared_ptr<ds::Dataset> GetDatasetFromFile(
+    std::shared_ptr<fs::FileSystem> fs, std::shared_ptr<ds::ParquetFileFormat> format,
+    std::string file) {
+  ds::FileSystemFactoryOptions options;
+  auto factory =
+      ds::FileSystemDatasetFactory::Make(fs, {file}, format, options).ValueOrDie();
+  auto schema = factory->Inspect(conf.inspect_options).ValueOrDie();
+  auto child = factory->Finish(conf.finish_options).ValueOrDie();
+  ds::DatasetVector children;
+  children.resize(conf.repeat, child);
+  auto dataset = ds::UnionDataset::Make(std::move(schema), std::move(children));
+  return dataset.ValueOrDie();
+}
+
+std::shared_ptr<ds::Dataset> GetDatasetFromPath(
+    std::shared_ptr<fs::FileSystem> fs, std::shared_ptr<ds::ParquetFileFormat> format,
+    std::string path) {
+  auto info = fs->GetFileInfo(path).ValueOrDie();
+  if (info.IsDirectory()) {
+    return GetDatasetFromDirectory(fs, format, path);
+  }
+
+  auto dirname_basename = arrow::fs::internal::GetAbstractPathParent(path);
+  auto basename = dirname_basename.second;
+
+  if (basename == "_metadata") {
+    return GetParquetDatasetFromMetadata(fs, format, path);
+  }
+
+  return GetDatasetFromFile(fs, format, path);
+}
+
+arrow::Result<std::shared_ptr<ds::Dataset>> GetDataset() {
+  auto format = std::make_shared<ds::ParquetFileFormat>();
+  std::string path;
+  auto fs = GetFileSystemFromUri(argv[1], &path);
+  auto dataset = GetDatasetFromPath(fs, format, path); 
+  return dataset;
 }

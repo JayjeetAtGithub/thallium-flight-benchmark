@@ -61,10 +61,8 @@ int main(int argc, char** argv) {
             tl::bulk local = engine.expose(segments, tl::bulk_mode::write_only);
             b.on(req.get_endpoint()) >> local;
 
-
             for (int64_t i = 0; i < num_cols; i++) {
                 std::cout << data_buff_sizes[i] << std::endl;
-
 
                 std::shared_ptr<arrow::DataType> type = type_from_id(types[i]);  
                 if (is_binary_like(type->id())) {
