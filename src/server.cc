@@ -1,4 +1,5 @@
 #include <iostream>
+#include <unordered_map>
 
 #include <arrow/api.h>
 #include <arrow/compute/exec/expression.h>
@@ -73,8 +74,8 @@ int main(int argc, char** argv) {
             std::shared_ptr<ScanResultConsumer> consumer = Scan(exec_context).ValueOrDie();
             std::shared_ptr<arrow::RecordBatchReader> reader = consumer->reader;
 
-            std::string uuid = generate_uuid()
-            map_reader[uuid] = reader;
+            std::string uuid = generate_uuid();
+            reader_map[uuid] = reader;
             return req.respond(uuid);
         };
 

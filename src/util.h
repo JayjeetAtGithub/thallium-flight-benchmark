@@ -19,6 +19,7 @@
 #include <iostream>
 #include <memory>
 #include <utility>
+#include <vector>
 
 
 std::shared_ptr<arrow::DataType> type_from_id(int type_id) {
