@@ -52,6 +52,9 @@ int main(int argc, char** argv) {
                 data_buffs[i] = arrow::AllocateBuffer(rdma_req.data_buff_sizes[i]).ValueOrDie();
                 offset_buffs[i] = arrow::AllocateBuffer(rdma_req.offset_buff_sizes[i]).ValueOrDie();
 
+                std::cout << "data_buff_sizes[" << i << "] = " << rdma_req.data_buff_sizes[i] << std::endl;
+                std::cout << "offset_buff_sizes[" << i << "] = " << rdma_req.offset_buff_sizes[i] << std::endl;
+
                 segments[i*2].first = (void*)data_buffs[i]->mutable_data();
                 segments[i*2].second = rdma_req.data_buff_sizes[i];
 
