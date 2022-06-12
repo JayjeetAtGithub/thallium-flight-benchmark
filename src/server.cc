@@ -78,8 +78,6 @@ int main(int argc, char** argv) {
                     int64_t offset = col_arr->offset();
                     int64_t length = col_arr->length();
 
-                    // std::cout << offset << std::endl;
-
                     types.push_back((int)type);
 
                     int64_t data_size = 0;
@@ -97,9 +95,10 @@ int main(int argc, char** argv) {
                         segments[(i*2)+1].first = (void*)offset_buff->data();
                         segments[(i*2)+1].second = offset_size;
                     } else {
+                        col_arr = col_arr->Slice(offset, length);
                         std::shared_ptr<arrow::Buffer> data_buff = 
                             std::static_pointer_cast<arrow::PrimitiveArray>(col_arr)->values();
-                        data_buff = arrow::SliceBuffer(data_buff, offset, length);
+                        // data_buff = arrow::SliceBuffer(data_buff, offset, length*sizeof(col));
                         data_size = data_buff->size();
                         offset_size = null_buff.size() + 1; 
                         segments[i*2].first  = (void*)data_buff->data();
@@ -107,8 +106,6 @@ int main(int argc, char** argv) {
                         segments[(i*2)+1].first = (void*)(&null_buff[0]);
                         segments[(i*2)+1].second = offset_size;
                     }
-
-                    // std::cout << data_size << std::endl;
 
                     data_buff_sizes.push_back(data_size);
                     offset_buff_sizes.push_back(offset_size);
