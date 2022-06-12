@@ -98,6 +98,5 @@ int main(int argc, char** argv) {
     std::string uuid = scan.on(server_endpoint)(req);
     std::cout << "Scan success: Got an UUID: " << uuid << std::endl;
 
-    int e;
-    while ((e = get_next_batch.on(server_endpoint)(uuid)) == 0);
+    while ((int e = get_next_batch.on(server_endpoint)(uuid)) == 0);
 }
