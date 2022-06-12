@@ -77,7 +77,7 @@ int main(int argc, char** argv) {
             }
 
             auto batch = arrow::RecordBatch::Make(schema, num_rows, columns);
-            std::cout << batch->ToString() << std::endl;
+            // std::cout << batch->ToString() << std::endl;
             total_rows_read += batch->num_rows();
             return req.respond(0);
         };
