@@ -104,10 +104,9 @@ int main(int argc, char** argv) {
                     }
                     rdma_req.data_buff_sizes.push_back(data_size);
                     rdma_req.offset_buff_sizes.push_back(offset_size);
-
-                    tl::bulk arrow_bulk = engine.expose(segments, tl::bulk_mode::read_only);
-                    do_rdma.on(req.get_endpoint())(rdma_req, arrow_bulk);
                 }
+                tl::bulk arrow_bulk = engine.expose(segments, tl::bulk_mode::read_only);
+                do_rdma.on(req.get_endpoint())(rdma_req, arrow_bulk);
                 return req.respond(0);
             } else {
                 return req.respond(1);
