@@ -45,9 +45,9 @@ class rdma_request {
     public:
         int64_t num_rows;
         int64_t num_cols;
-        vector<int> types;
-        vector<int64_t> data_buff_sizes;
-        vector<int64_t> offset_buff_sizes;
+        std::vector<int> types;
+        std::vector<int64_t> data_buff_sizes;
+        std::vector<int64_t> offset_buff_sizes;
 
         rdma_request() {}
 

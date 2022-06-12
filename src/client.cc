@@ -39,7 +39,7 @@ int main(int argc, char** argv) {
     std::vector<std::shared_ptr<arrow::Array>> columns;
 
     std::function<void(const tl::request&, rdma_req&, tl::bulk&)> f =
-        [&engine, &columns](const tl::request& req, rdma_req&, tl::bulk& b) {
+        [&engine, &columns](const tl::request& req, rdma_request& rdma_req, tl::bulk& b) {
 
             // std::shared_ptr<arrow::DataType> type = type_from_id(type_id);        
 
