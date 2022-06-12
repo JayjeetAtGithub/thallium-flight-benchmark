@@ -21,7 +21,6 @@ arrow::Result<std::shared_ptr<ScanResultConsumer>> Scan(cp::ExecContext& exec_co
 
     // create an empty projection
     auto options = std::make_shared<arrow::dataset::ScanOptions>();
-    options->projection = cp::project({}, {}); 
 
     // construct the scan node
     cp::ExecNode* scan;
