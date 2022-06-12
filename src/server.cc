@@ -108,7 +108,6 @@ int main(int argc, char** argv) {
 
                 tl::bulk arrow_bulk = engine.expose(segments, tl::bulk_mode::read_only);
                 int64_t e = do_rdma.on(req.get_endpoint())(num_rows, num_cols, types, data_buff_sizes, offset_buff_sizes, arrow_bulk);
-                assert(e == num_rows);
                 return req.respond(e);
             } else {
                 return req.respond(-1);
