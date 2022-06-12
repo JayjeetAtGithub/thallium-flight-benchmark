@@ -75,6 +75,8 @@ int main(int argc, char** argv) {
             cp::ExecContext exec_context;
             std::shared_ptr<ScanResultConsumer> consumer = Scan(exec_context).ValueOrDie();
             std::shared_ptr<arrow::RecordBatchReader> reader = consumer->reader;
+            auto t = reader->ToTable().ValueOrDie();
+            std::cout << "Table: " << t->ToString() << std::endl;
 
             std::string uuid = generate_uuid();
             reader_map[uuid] = reader;
