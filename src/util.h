@@ -12,6 +12,10 @@
 #include <arrow/util/thread_pool.h>
 #include <arrow/util/vector.h>
 
+#include <boost/uuid/uuid.hpp>
+#include <boost/uuid/uuid_generators.hpp>
+#include <boost/uuid/uuid_io.hpp>     
+
 #include <iostream>
 #include <memory>
 #include <utility>
@@ -99,4 +103,9 @@ arrow::Result<std::shared_ptr<arrow::dataset::Dataset>> GetDataset() {
   ARROW_ASSIGN_OR_RAISE(auto table, GetTable());
   auto ds = std::make_shared<arrow::dataset::InMemoryDataset>(table);
   return ds;
+}
+
+std::string generate_uuid() {
+    boost::uuids::uuid uuid = boost::uuids::random_generator()();
+    return boost::uuids::to_string(uuid);
 }

@@ -40,3 +40,38 @@ class scan_request {
             ar.read(projection_buffer, projection_buffer_size);
         }
 };
+
+class rdma_request {
+    public:
+        int64_t num_rows;
+        int64_t num_cols;
+        vector<int> types;
+        vector<int64_t> data_buff_sizes;
+        vector<int64_t> offset_buff_sizes;
+
+        rdma_request() {}
+
+        rdma_request(int64_t num_cols) : num_cols(num_cols) { 
+            types.resize(num_cols);
+            data_buff_sizes.resize(num_cols);
+            offset_buff_sizes.resize(num_cols);
+        }
+
+        template<typename A>
+        void save(A& ar) const {
+            ar & num_rows;
+            ar & num_cols;
+            ar & types;
+            ar & data_buff_sizes;
+            ar & offset_buff_sizes;
+        }
+
+        template<typename A>
+        void load(A& ar) {
+            ar & num_rows;
+            ar & num_cols;
+            ar & types;
+            ar & data_buff_sizes;
+            ar & offset_buff_sizes;
+        }
+};

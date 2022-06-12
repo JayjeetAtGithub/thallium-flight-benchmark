@@ -21,10 +21,11 @@
 #include <thallium.hpp>
 
 #include "util.h"
-#include "request.h"
+#include "payload.h"
 
 
 namespace tl = thallium;
+
 
 int main(int argc, char** argv) {
 
@@ -33,6 +34,7 @@ int main(int argc, char** argv) {
     std::cout << "Client running at address " << engine.self() << std::endl;
 
     tl::remote_procedure scan = engine.define("scan");
+    tl::remote_procedure get_next_batch = engine.define("get_next_batch");
     
     std::vector<std::shared_ptr<arrow::Array>> columns;
 
@@ -88,12 +90,18 @@ int main(int argc, char** argv) {
 
     scan_request req(filter_buffer, 6, projection_buffer, 4);
 
-    int e = scan.on(server_endpoint)(req);
+    // all for a particular storage server
+    std::string uuid = scan.on(server_endpoint)(req);
+
+
     if (e != 200) {
         std::cout << "Error: " << e << std::endl;
         return 1;
     } else {
         std::cout << "Scan success" << std::endl;
-        std::cout << columns.size() << std::endl;
+
+        int e = get_next_batch.on(server_endpoint)(uuid);
     }
+
+
 }
