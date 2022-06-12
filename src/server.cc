@@ -67,9 +67,7 @@ int main(int argc, char** argv) {
                 num_cols = batch->num_columns();
                 std::vector<std::pair<void*,std::size_t>> segments(num_cols*2);
 
-                // rdma_request rdma_req(num_cols);
-                std::string null_buff = "xx";
-
+                // std::string null_buff = "xx";
 
                 for (int64_t i = 0; i < num_cols; i++) {
                     std::shared_ptr<arrow::Array> col_arr = batch->column(i);
@@ -97,11 +95,11 @@ int main(int argc, char** argv) {
                         std::shared_ptr<arrow::Buffer> data_buff = 
                             std::static_pointer_cast<arrow::PrimitiveArray>(col_arr)->values();
                         data_size = data_buff->size();
-                        offset_size = null_buff.size() + 1; 
+                        // offset_size = null_buff.size() + 1; 
                         segments[i*2].first  = (void*)data_buff->data();
                         segments[i*2].second = data_size;
-                        segments[(i*2)+1].first = (void*)(&null_buff[0]);
-                        segments[(i*2)+1].second = offset_size;
+                        // segments[(i*2)+1].first = (void*)(&null_buff[0]);
+                        // segments[(i*2)+1].second = offset_size;
                     }
                     data_buff_sizes.push_back(data_size);
                     offset_buff_sizes.push_back(offset_size);
