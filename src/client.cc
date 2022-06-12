@@ -41,6 +41,27 @@ int main(int argc, char** argv) {
     std::function<void(const tl::request&, rdma_request&, tl::bulk&)> f =
         [&engine, &columns](const tl::request& req, rdma_request& rdma_req, tl::bulk& b) {
 
+            int64_t num_cols = rdma_req.num_cols;
+            int64_t num_rows = rdma_req.num_rows;
+
+            std::vector<std::unique_ptr<arrow::Buffer>> data_buffs(num_cols);
+            std::vector<std::unique_ptr<arrow::Buffer>> offset_buffs(num_cols);
+            std::vector<std::pair<void*,std::size_t>> segments(num_cols*2);
+            
+            for (int64_t i = 0; i < num_cols; i++) {
+                data_buffs[i] = arrow::AllocateBuffer(rdma_req.data_buff_sizez[i]);
+                offset_buffs[i] = arrow::AllocateBuffer(rdma_req.offset_buff_sizez[i]);
+
+                segments[i*2].first = (void*)data_buffs[i]->mutable_data();
+                segments[i*2].second = rdma_req.data_buff_sizez[i];
+
+                segments[i*2+1].first = (void*)offset_buffs[i]->mutable_data();
+                segments[i*2+1].second = rdma_req.offset_buff_sizez[i];
+            }
+
+            tl::bulk local = engine.expose(segments, tl::bulk_mode::write_only);
+            b.on(req.get_endpoint()) >> local;
+            
             // std::shared_ptr<arrow::DataType> type = type_from_id(type_id);        
 
             // if (is_binary_like(type->id())) {
