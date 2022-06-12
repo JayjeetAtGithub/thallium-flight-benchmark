@@ -20,6 +20,10 @@ arrow::Result<std::shared_ptr<ScanResultConsumer>> Scan(cp::ExecContext& exec_co
     ARROW_ASSIGN_OR_RAISE(auto scanner_builder, dataset->NewScan());
     scanner_builder->Project({"passenger_count", "fare_amount"});
 
+    cp::Expression filter =
+      cp::greater(cp::field_ref("total_amount"), cp::literal(69));
+    scanner_builder->Filter(filter);
+
     ARROW_ASSIGN_OR_RAISE(auto scanner, scanner_builder->Finish());
 
     ARROW_ASSIGN_OR_RAISE(auto reader, scanner->ToRecordBatchReader());
