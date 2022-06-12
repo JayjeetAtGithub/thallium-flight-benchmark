@@ -80,7 +80,7 @@ int main(int argc, char** argv) {
         };
 
     std::function<void(const tl::request&, const std::string&)> get_next_batch = 
-        [&engine, &do_rdma](const tl::request &req, const std::string& uuid) {
+        [&engine, &do_rdma, &reader_map](const tl::request &req, const std::string& uuid) {
             
             std::shared_ptr<arrow::RecordBatchReader> reader = reader_map[uuid];
             std::shared_ptr<arrow::RecordBatch> batch;
