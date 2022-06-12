@@ -61,7 +61,6 @@ int main(int argc, char** argv) {
             tl::bulk local = engine.expose(segments, tl::bulk_mode::write_only);
             b.on(req.get_endpoint()) >> local;
 
-            std::cout << data_buff_sizes[i] << std::endl;
 
             for (int64_t i = 0; i < num_cols; i++) {
                 std::cout << data_buff_sizes[i] << std::endl;
