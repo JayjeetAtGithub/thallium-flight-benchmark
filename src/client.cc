@@ -94,6 +94,11 @@ arrow::Result<std::shared_ptr<arrow::RecordBatch>> GetNextBatch(conn_ctx &ctx, s
 int main(int argc, char** argv) {
 
     // std::cout << "Client running at address " << engine.self() << std::endl;
+
+    cp::Expression =
+      cp::greater(cp::field_ref("total_amount"), cp::literal(10));
+    
+    
     
     char *filter_buffer = new char[6];
     filter_buffer[0] = 'f';
