@@ -15,15 +15,15 @@ struct conn_ctx {
 
 class scan_request {
     public:
-        char *filter_buffer;
+        uint8_t *filter_buffer;
         size_t filter_buffer_size;
 
-        char *projection_buffer;
+        uint8_t *projection_buffer;
         size_t projection_buffer_size;
 
         scan_request() {}
         scan_request(
-            char* filter_buffer, size_t filter_buffer_size, char* projection_buffer, size_t projection_buffer_size)
+            uint8_t* filter_buffer, size_t filter_buffer_size, uint8_t* projection_buffer, size_t projection_buffer_size)
         : filter_buffer(filter_buffer), filter_buffer_size(filter_buffer_size), 
           projection_buffer(projection_buffer), projection_buffer_size(projection_buffer_size) {}
 

@@ -29,7 +29,7 @@ namespace tl = thallium;
 
 scan_request GetScanRequest(cp::Expression filter, std::shared_ptr<arrow::Schema> schema) {
     std::shared_ptr<arrow::Buffer> filter_buff = arrow::compute::Serialize(filter);
-    std::shared_ptr<arrow::Buffer> projection_buff = arrow::ipc::Serialize(*schema);
+    std::shared_ptr<arrow::Buffer> projection_buff = arrow::ipc::SerializeSchema(*schema);
     scan_request request(
         filter_buff->data(), filter_buff->size(), projection_buff->data(), projection_buff->size());
     return request;
