@@ -73,7 +73,7 @@ arrow::Result<std::shared_ptr<arrow::RecordBatch>> GetNextBatch(tl::engine &engi
     if (e == 0) {
         return batch;
     } else {
-        return arrow::Status::IOError("GetNextBatch failed");
+        return nullptr;
     }
 }
 
