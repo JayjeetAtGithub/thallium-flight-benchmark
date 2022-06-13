@@ -27,9 +27,9 @@
 namespace tl = thallium;
 
 
-scan_request GetScanRequest(cp::Expression filter, std::shared_ptr<arrow::Schema> schema) {
+arrow::Result<scan_request> GetScanRequest(cp::Expression filter, std::shared_ptr<arrow::Schema> schema) {
     std::shared_ptr<arrow::Buffer> filter_buff = arrow::compute::Serialize(filter);
-    std::shared_ptr<arrow::Buffer> projection_buff = arrow::ipc::SerializeSchema(*schema);
+    ARROW_ASSIGN_OR_RAISE(auto projection_buff, arrow::ipc::SerializeSchema(*schema));
     scan_request request(
         filter_buff->data(), filter_buff->size(), projection_buff->data(), projection_buff->size());
     return request;
@@ -125,7 +125,7 @@ int main(int argc, char** argv) {
 
     conn_ctx ctx = Init(argv[1]);
 
-    scan_request req = GetScanRequest(filter, schema);
+    ARROW_ASSIGN_OR_RAISE(auto req, GetScanRequest(filter, schema));
 
     std::string uuid = Scan(ctx, req);
 

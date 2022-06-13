@@ -23,7 +23,7 @@ class scan_request {
 
         scan_request() {}
         scan_request(
-            uint8_t* filter_buffer, size_t filter_buffer_size, uint8_t* projection_buffer, size_t projection_buffer_size)
+            cosnt uint8_t* filter_buffer, size_t filter_buffer_size, const uint8_t* projection_buffer, size_t projection_buffer_size)
         : filter_buffer(filter_buffer), filter_buffer_size(filter_buffer_size), 
           projection_buffer(projection_buffer), projection_buffer_size(projection_buffer_size) {}
 
