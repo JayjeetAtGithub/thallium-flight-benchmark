@@ -2,8 +2,15 @@
 #include <vector>
 #include <string>
 
+#include <thallium.hpp>
 #include <thallium/serialization/stl/string.hpp>
 #include <thallium/serialization/stl/vector.hpp>
+
+
+struct conn_ctx {
+    thallium::engine engine;
+    thallium::endpoint endpoint;
+};
 
 
 class scan_request {

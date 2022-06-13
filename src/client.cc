@@ -27,23 +27,26 @@
 namespace tl = thallium;
 
 
-int main(int argc, char** argv) {
-
+conn_ctx Init(std::string host) {
+    conn_ctx ctx;
     tl::engine engine("tcp", THALLIUM_SERVER_MODE);
-    tl::endpoint server_endpoint = engine.lookup(argv[1]);
-    std::cout << "Client running at address " << engine.self() << std::endl;
+    tl::endpoint endpoint = engine.lookup(host);
+    ctx.engine = engine;
+    ctx.endpoint = endpoint;
+    return ctx;
+}
 
-    tl::remote_procedure scan = engine.define("scan");
-    tl::remote_procedure get_next_batch = engine.define("get_next_batch");
-    
+std::string Scan(conn_ctx &ctx, scan_request &req) {
+    tl::remote_procedure scan = ctx.engine.define("scan");
+    return scan.on(ctx.endpoint)(req);
+}
+
+arrow::Result<std::shared_ptr<arrow::RecordBatch>> GetNextBatch(conn_ctx &ctx, std::string uuid) {
     auto schema = arrow::schema({arrow::field("a", arrow::int64()),
                                  arrow::field("b", arrow::boolean())});
-    
-    int64_t total_rows_read = 0;
-
+    std::shared_ptr<arrow::RecordBatch> batch;
     std::function<void(const tl::request&, int64_t&, int64_t&, std::vector<int>&, std::vector<int64_t>&, std::vector<int64_t>&, tl::bulk&)> f =
-        [&engine, &schema, &total_rows_read](const tl::request& req, int64_t& num_rows, int64_t& num_cols, std::vector<int>& types, std::vector<int64_t>& data_buff_sizes, std::vector<int64_t>& offset_buff_sizes, tl::bulk& b) {
-
+        [&ctx, &schema, &batch](const tl::request& req, int64_t& num_rows, int64_t& num_cols, std::vector<int>& types, std::vector<int64_t>& data_buff_sizes, std::vector<int64_t>& offset_buff_sizes, tl::bulk& b) {
             std::vector<std::shared_ptr<arrow::Array>> columns;
             std::vector<std::unique_ptr<arrow::Buffer>> data_buffs(num_cols);
             std::vector<std::unique_ptr<arrow::Buffer>> offset_buffs(num_cols);
@@ -60,7 +63,7 @@ int main(int argc, char** argv) {
                 segments[(i*2)+1].second = offset_buff_sizes[i];
             }
 
-            tl::bulk local = engine.expose(segments, tl::bulk_mode::write_only);
+            tl::bulk local = ctx.engine.expose(segments, tl::bulk_mode::write_only);
             b.on(req.get_endpoint()) >> local;
 
             for (int64_t i = 0; i < num_cols; i++) {
@@ -74,12 +77,23 @@ int main(int argc, char** argv) {
                 }
             }
 
-            auto batch = arrow::RecordBatch::Make(schema, num_rows, columns);
-            // std::cout << batch->ToString() << std::endl;
-            total_rows_read += batch->num_rows();
+            batch = arrow::RecordBatch::Make(schema, num_rows, columns);
             return req.respond(0);
         };
-    engine.define("do_rdma", f);
+    ctx.engine.define("do_rdma", f);
+    tl::remote_procedure get_next_batch = ctx.engine.define("get_next_batch");
+
+    int e = get_next_batch.on(ctx.endpoint)(uuid);
+    if (e == 0) {
+        return batch;
+    } else {
+        return nullptr;
+    }
+}
+
+int main(int argc, char** argv) {
+
+    // std::cout << "Client running at address " << engine.self() << std::endl;
     
     char *filter_buffer = new char[6];
     filter_buffer[0] = 'f';
@@ -95,13 +109,15 @@ int main(int argc, char** argv) {
     projection_buffer[2] = 'o';
     projection_buffer[3] = 'j';
 
+    conn_ctx ctx = Init(argv[1]);
+
     scan_request req(filter_buffer, 6, projection_buffer, 4);
 
-    // all for a particular storage server
-    std::string uuid = scan.on(server_endpoint)(req);
-    std::cout << "Scan success: Got an UUID: " << uuid << std::endl;
+    std::string uuid = Scan(ctx, req);
 
-    int e;
-    while ((e = get_next_batch.on(server_endpoint)(uuid)) == 0);
-    std::cout << "Scan success: Got " << total_rows_read << " rows" << std::endl;
+    std::shared_ptr<arrow::RecordBatch> batch;
+    while ((batch = GetNextBatch(ctx, uuid).ValueOrDie()) != nullptr) {
+        std::cout << batch->ToString();
+    }
+    exit(0);
 }
