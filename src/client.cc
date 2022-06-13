@@ -30,10 +30,10 @@ namespace tl = thallium;
 arrow::Result<std::shared_ptr<arrow::RecordBatch>> GetNextBatch(tl::engine &engine, tl::endpoint &endpoint, std::string uuid) {
     auto schema = arrow::schema({arrow::field("a", arrow::int64()),
                                  arrow::field("b", arrow::boolean())});
-    std::vector<std::shared_ptr<arrow::Array>> columns;
     std::shared_ptr<arrow::RecordBatch> batch;
     std::function<void(const tl::request&, int64_t&, int64_t&, std::vector<int>&, std::vector<int64_t>&, std::vector<int64_t>&, tl::bulk&)> f =
-        [&engine, &schema, &columns](const tl::request& req, int64_t& num_rows, int64_t& num_cols, std::vector<int>& types, std::vector<int64_t>& data_buff_sizes, std::vector<int64_t>& offset_buff_sizes, tl::bulk& b) {
+        [&engine, &schema, &batch](const tl::request& req, int64_t& num_rows, int64_t& num_cols, std::vector<int>& types, std::vector<int64_t>& data_buff_sizes, std::vector<int64_t>& offset_buff_sizes, tl::bulk& b) {
+            std::vector<std::shared_ptr<arrow::Array>> columns;
             std::vector<std::unique_ptr<arrow::Buffer>> data_buffs(num_cols);
             std::vector<std::unique_ptr<arrow::Buffer>> offset_buffs(num_cols);
             std::vector<std::pair<void*,std::size_t>> segments(num_cols*2);
@@ -69,7 +69,7 @@ arrow::Result<std::shared_ptr<arrow::RecordBatch>> GetNextBatch(tl::engine &engi
     engine.define("do_rdma", f);
     tl::remote_procedure get_next_batch = engine.define("get_next_batch");
 
-    int e = get_next_batch.on(server_endpoint)(uuid);
+    int e = get_next_batch.on(endpoint)(uuid);
     if (e == 0) {
         return batch;
     } else {
@@ -108,5 +108,4 @@ int main(int argc, char** argv) {
     std::cout << "Scan success: Got an UUID: " << uuid << std::endl;
 
     GetNextBatch(engine, server_endpoint, uuid);
-    std::cout << "Scan success: Got " << total_rows_read << " rows" << std::endl;
 }
