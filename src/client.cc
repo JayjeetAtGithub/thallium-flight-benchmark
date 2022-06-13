@@ -27,6 +27,14 @@
 namespace tl = thallium;
 
 
+scan_request GetScanRequest(cp::Expression filter, std::shared_ptr<arrow::Schema> schema) {
+    std::shared_ptr<arrow::Buffer> filter_buff = arrow::compute::Serialize(filter);
+    std::shared_ptr<arrow::Buffer> projection_buff = arrow::ipc::Serialize(*schema);
+    scan_request request(
+        filter_buff->data(), filter_buff->size(), projection_buff->data(), projection_buff->size());
+    return request;
+}
+
 conn_ctx Init(std::string host) {
     conn_ctx ctx;
     tl::engine engine("tcp", THALLIUM_SERVER_MODE);
@@ -93,11 +101,12 @@ arrow::Result<std::shared_ptr<arrow::RecordBatch>> GetNextBatch(conn_ctx &ctx, s
 
 int main(int argc, char** argv) {
 
-    // std::cout << "Client running at address " << engine.self() << std::endl;
-
-    cp::Expression filter = 
+    // define the filter and projection
+    auto filter = 
         cp::greater(cp::field_ref("total_amount"), cp::literal(10));
     
+    auto schema = arrow::schema({arrow::field("passenger_count", arrow::int64()),
+                                 arrow::field("fair_amount", arrow::float64())});
     
     
     char *filter_buffer = new char[6];
