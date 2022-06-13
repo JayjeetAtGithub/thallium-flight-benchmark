@@ -99,29 +99,12 @@ arrow::Result<std::shared_ptr<arrow::RecordBatch>> GetNextBatch(conn_ctx &ctx, s
     }
 }
 
-int main(int argc, char** argv) {
-
-    // define the filter and projection
+arrow::Status Main(char **argv) {
     auto filter = 
         cp::greater(cp::field_ref("total_amount"), cp::literal(10));
     
     auto schema = arrow::schema({arrow::field("passenger_count", arrow::int64()),
                                  arrow::field("fair_amount", arrow::float64())});
-    
-    
-    // char *filter_buffer = new char[6];
-    // filter_buffer[0] = 'f';
-    // filter_buffer[1] = 'i';
-    // filter_buffer[2] = 'l';
-    // filter_buffer[3] = 't';
-    // filter_buffer[4] = 'e';
-    // filter_buffer[5] = 'r';
-
-    // char *projection_buffer = new char[4];
-    // projection_buffer[0] = 'p';
-    // projection_buffer[1] = 'r';
-    // projection_buffer[2] = 'o';
-    // projection_buffer[3] = 'j';
 
     conn_ctx ctx = Init(argv[1]);
 
@@ -133,5 +116,9 @@ int main(int argc, char** argv) {
     while ((batch = GetNextBatch(ctx, uuid).ValueOrDie()) != nullptr) {
         std::cout << batch->ToString();
     }
+}
+
+int main(int argc, char** argv) {
+    Main(argv);
     exit(0);
 }
