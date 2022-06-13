@@ -95,8 +95,8 @@ int main(int argc, char** argv) {
 
     // std::cout << "Client running at address " << engine.self() << std::endl;
 
-    cp::Expression =
-      cp::greater(cp::field_ref("total_amount"), cp::literal(10));
+    cp::Expression filter = 
+        cp::greater(cp::field_ref("total_amount"), cp::literal(10));
     
     
     
