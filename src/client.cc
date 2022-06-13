@@ -27,7 +27,21 @@
 namespace tl = thallium;
 
 
-arrow::Result<std::shared_ptr<arrow::RecordBatch>> GetNextBatch(tl::engine &engine, tl::endpoint &endpoint, std::string uuid) {
+conn_ctx Init(std::string host) {
+    conn_ctx ctx;
+    tl::engine engine("tcp", THALLIUM_SERVER_MODE);
+    tl::endpoint endpoint = engine.lookup(host);
+    ctx.engine = engine;
+    ctx.endpoint = endpoint;
+    return ctx;
+}
+
+std::string Scan(conn_ctx &ctx, scan_request &req) {
+    tl::remote_procedure scan = ctx.engine.define("scan");
+    return scan.on(ctx.endpoint)(req);
+}
+
+arrow::Result<std::shared_ptr<arrow::RecordBatch>> GetNextBatch(conn_ctx &ctx, std::string uuid) {
     auto schema = arrow::schema({arrow::field("a", arrow::int64()),
                                  arrow::field("b", arrow::boolean())});
     std::shared_ptr<arrow::RecordBatch> batch;
@@ -49,7 +63,7 @@ arrow::Result<std::shared_ptr<arrow::RecordBatch>> GetNextBatch(tl::engine &engi
                 segments[(i*2)+1].second = offset_buff_sizes[i];
             }
 
-            tl::bulk local = engine.expose(segments, tl::bulk_mode::write_only);
+            tl::bulk local = ctx.engine.expose(segments, tl::bulk_mode::write_only);
             b.on(req.get_endpoint()) >> local;
 
             for (int64_t i = 0; i < num_cols; i++) {
@@ -66,10 +80,10 @@ arrow::Result<std::shared_ptr<arrow::RecordBatch>> GetNextBatch(tl::engine &engi
             batch = arrow::RecordBatch::Make(schema, num_rows, columns);
             return req.respond(0);
         };
-    engine.define("do_rdma", f);
-    tl::remote_procedure get_next_batch = engine.define("get_next_batch");
+    ctx.engine.define("do_rdma", f);
+    tl::remote_procedure get_next_batch = ctx.engine.define("get_next_batch");
 
-    int e = get_next_batch.on(endpoint)(uuid);
+    int e = get_next_batch.on(ctx.endpoint)(uuid);
     if (e == 0) {
         return batch;
     } else {
@@ -79,13 +93,7 @@ arrow::Result<std::shared_ptr<arrow::RecordBatch>> GetNextBatch(tl::engine &engi
 
 int main(int argc, char** argv) {
 
-    tl::engine engine("tcp", THALLIUM_SERVER_MODE);
-    tl::endpoint server_endpoint = engine.lookup(argv[1]);
-    std::cout << "Client running at address " << engine.self() << std::endl;
-
-    tl::remote_procedure scan = engine.define("scan");
-    
-    
+    // std::cout << "Client running at address " << engine.self() << std::endl;
     
     char *filter_buffer = new char[6];
     filter_buffer[0] = 'f';
@@ -101,14 +109,14 @@ int main(int argc, char** argv) {
     projection_buffer[2] = 'o';
     projection_buffer[3] = 'j';
 
+    conn_ctx ctx = Init(argv[1]);
+
     scan_request req(filter_buffer, 6, projection_buffer, 4);
 
-    // all for a particular storage server
-    std::string uuid = scan.on(server_endpoint)(req);
-    std::cout << "Scan success: Got an UUID: " << uuid << std::endl;
+    std::string uuid = Scan(ctx, req);
 
     std::shared_ptr<arrow::RecordBatch> batch;
-    while ((batch = GetNextBatch(engine, server_endpoint, uuid).ValueOrDie()) != nullptr) {
+    while ((batch = GetNextBatch(ctx, uuid).ValueOrDie()) != nullptr) {
         std::cout << batch->ToString();
     }
 }
