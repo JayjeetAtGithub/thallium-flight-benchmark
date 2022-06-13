@@ -119,4 +119,5 @@ int main(int argc, char** argv) {
     while ((batch = GetNextBatch(ctx, uuid).ValueOrDie()) != nullptr) {
         std::cout << batch->ToString();
     }
+    exit(0);
 }
