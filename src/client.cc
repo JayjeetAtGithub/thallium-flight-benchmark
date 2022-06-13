@@ -107,7 +107,6 @@ int main(int argc, char** argv) {
     std::string uuid = scan.on(server_endpoint)(req);
     std::cout << "Scan success: Got an UUID: " << uuid << std::endl;
 
-
     std::shared_ptr<arrow::RecordBatch> batch;
     std::cout << batch->ToString();
     while ((batch = GetNextBatch(engine, server_endpoint, uuid).ValueOrDie()) != nullptr) {
