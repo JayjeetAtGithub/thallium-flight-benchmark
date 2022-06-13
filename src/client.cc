@@ -109,23 +109,23 @@ int main(int argc, char** argv) {
                                  arrow::field("fair_amount", arrow::float64())});
     
     
-    char *filter_buffer = new char[6];
-    filter_buffer[0] = 'f';
-    filter_buffer[1] = 'i';
-    filter_buffer[2] = 'l';
-    filter_buffer[3] = 't';
-    filter_buffer[4] = 'e';
-    filter_buffer[5] = 'r';
+    // char *filter_buffer = new char[6];
+    // filter_buffer[0] = 'f';
+    // filter_buffer[1] = 'i';
+    // filter_buffer[2] = 'l';
+    // filter_buffer[3] = 't';
+    // filter_buffer[4] = 'e';
+    // filter_buffer[5] = 'r';
 
-    char *projection_buffer = new char[4];
-    projection_buffer[0] = 'p';
-    projection_buffer[1] = 'r';
-    projection_buffer[2] = 'o';
-    projection_buffer[3] = 'j';
+    // char *projection_buffer = new char[4];
+    // projection_buffer[0] = 'p';
+    // projection_buffer[1] = 'r';
+    // projection_buffer[2] = 'o';
+    // projection_buffer[3] = 'j';
 
     conn_ctx ctx = Init(argv[1]);
 
-    scan_request req(filter_buffer, 6, projection_buffer, 4);
+    scan_request req = GetScanRequest(filter, schema);
 
     std::string uuid = Scan(ctx, req);
 
