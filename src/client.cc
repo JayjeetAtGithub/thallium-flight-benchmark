@@ -31,11 +31,13 @@ arrow::Result<scan_request> GetScanRequest(cp::Expression filter, std::shared_pt
     ARROW_ASSIGN_OR_RAISE(std::shared_ptr<arrow::Buffer> filter_buff, arrow::compute::Serialize(filter));
     ARROW_ASSIGN_OR_RAISE(auto projection_buff, arrow::ipc::SerializeSchema(*schema));
     scan_request request(
-        filter_buff->data(), filter_buff->size(), projection_buff->data(), projection_buff->size());
+        const_cast<uint8_t*>(filter_buff->data()), filter_buff->size(), 
+        const_cast<uint8_t*>(projection_buff->data()), projection_buff->size()
+    );
     return request;
 }
 
-conn_ctx Init(std::string host) {
+arrow::Result<conn_ctx> Init(std::string host) {
     conn_ctx ctx;
     tl::engine engine("tcp", THALLIUM_SERVER_MODE);
     tl::endpoint endpoint = engine.lookup(host);
@@ -44,7 +46,7 @@ conn_ctx Init(std::string host) {
     return ctx;
 }
 
-std::string Scan(conn_ctx &ctx, scan_request &req) {
+arrow::Result<std::string> Scan(conn_ctx &ctx, scan_request &req) {
     tl::remote_procedure scan = ctx.engine.define("scan");
     return scan.on(ctx.endpoint)(req);
 }
@@ -106,11 +108,9 @@ arrow::Status Main(char **argv) {
     auto schema = arrow::schema({arrow::field("passenger_count", arrow::int64()),
                                  arrow::field("fair_amount", arrow::float64())});
 
-    conn_ctx ctx = Init(argv[1]);
-
+    ARROW_ASSIGN_OR_RAISE(auto ctx, Init(argv[1]));
     ARROW_ASSIGN_OR_RAISE(auto req, GetScanRequest(filter, schema));
-
-    std::string uuid = Scan(ctx, req);
+    ARROW_ASSIGN_OR_RAISE(auto uuid, Scan(ctx, req));
 
     std::shared_ptr<arrow::RecordBatch> batch;
     while ((batch = GetNextBatch(ctx, uuid).ValueOrDie()) != nullptr) {

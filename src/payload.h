@@ -23,7 +23,7 @@ class scan_request {
 
         scan_request() {}
         scan_request(
-            const uint8_t* filter_buffer, size_t filter_buffer_size, const uint8_t* projection_buffer, size_t projection_buffer_size)
+            uint8_t* filter_buffer, size_t filter_buffer_size, uint8_t* projection_buffer, size_t projection_buffer_size)
         : filter_buffer(filter_buffer), filter_buffer_size(filter_buffer_size), 
           projection_buffer(projection_buffer), projection_buffer_size(projection_buffer_size) {}
 
@@ -39,11 +39,11 @@ class scan_request {
         template<typename A>
         void load(A& ar) {
             ar & filter_buffer_size;
-            filter_buffer = new char[filter_buffer_size];
+            filter_buffer = new uint8_t[filter_buffer_size];
             ar.read(filter_buffer, filter_buffer_size);
 
             ar & projection_buffer_size;
-            projection_buffer = new char[projection_buffer_size];
+            projection_buffer = new uint8_t[projection_buffer_size];
             ar.read(projection_buffer, projection_buffer_size);
         }
 };
