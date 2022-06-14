@@ -37,7 +37,7 @@ int main(int argc, char** argv) {
     std::unordered_map<std::string, std::shared_ptr<arrow::RecordBatchReader>> reader_map;
     
     std::function<void(const tl::request&, const ScanReqRPCStub&)> scan = 
-        [&reader_map](const tl::request &req, const ScanReqRPCStub& ScanReqRPCStub) {
+        [&reader_map](const tl::request &req, const ScanReqRPCStub& stub) {
             
             arrow::dataset::internal::Initialize();
             cp::ExecContext exec_context;

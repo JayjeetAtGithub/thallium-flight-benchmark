@@ -11,20 +11,23 @@ class ScanResultConsumer {
         std::shared_ptr<cp::ExecPlan> plan;
 };
 
-arrow::Result<std::shared_ptr<ScanResultConsumer>> Scan(cp::ExecContext& exec_context) {
+arrow::Result<std::shared_ptr<ScanResultConsumer>> Scan(cp::ExecContext& exec_context, ScanReqRPCStub& stub) {
+    ARROW_ASSIGN_OR_RAISE(auto filter,
+                            arrow::compute::Deserialize(std::make_shared<arrow::Buffer>(
+                            stub->filter_buffer, stub->filter_buffer_size)));
+
+    arrow::ipc::DictionaryMemo empty_memo;
+    arrow::io::BufferReader schema_reader(stub->projection_buffer, stub->projection_buffer_size);
+    ARROW_ASSIGN_OR_RAISE(auto schema, arrow::ipc::ReadSchema(&schema_reader, &empty_memo));
+
     ARROW_ASSIGN_OR_RAISE(std::shared_ptr<cp::ExecPlan> plan,
                             cp::ExecPlan::Make(&exec_context));
 
     ARROW_ASSIGN_OR_RAISE(std::shared_ptr<arrow::dataset::Dataset> dataset, GetDataset());
-    auto schema = dataset->schema();
-    std::cout << "Schema: " << schema->ToString() << std::endl;
 
     ARROW_ASSIGN_OR_RAISE(auto scanner_builder, dataset->NewScan());
-    scanner_builder->Project({"passenger_count", "fare_amount"});
-
-    cp::Expression filter =
-      cp::greater(cp::field_ref("total_amount"), cp::literal(-200));
-    scanner_builder->Filter(filter);
+    ARROW_RETURN_NOT_OK(scanner_builder->Project(schema));
+    ARROW_RETURN_NOT_OK(scanner_builder->Filter(filter));
 
     ARROW_ASSIGN_OR_RAISE(auto scanner, scanner_builder->Finish());
 
