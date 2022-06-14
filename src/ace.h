@@ -16,6 +16,8 @@ arrow::Result<std::shared_ptr<ScanResultConsumer>> Scan(cp::ExecContext& exec_co
                             cp::ExecPlan::Make(&exec_context));
 
     ARROW_ASSIGN_OR_RAISE(std::shared_ptr<arrow::dataset::Dataset> dataset, GetDataset());
+    auto schema = dataset->schema();
+    std::cout << "Schema: " << schema->ToString() << std::endl;
 
     ARROW_ASSIGN_OR_RAISE(auto scanner_builder, dataset->NewScan());
     scanner_builder->Project({"passenger_count", "fare_amount"});

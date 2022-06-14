@@ -27,8 +27,18 @@
 namespace tl = thallium;
 
 
-conn_ctx Init(std::string host) {
-    conn_ctx ctx;
+arrow::Result<ScanReq> GetScanReq(cp::Expression filter, std::shared_ptr<arrow::Schema> schema) {
+    ARROW_ASSIGN_OR_RAISE(std::shared_ptr<arrow::Buffer> filter_buff, arrow::compute::Serialize(filter));
+    ARROW_ASSIGN_OR_RAISE(auto projection_buff, arrow::ipc::SerializeSchema(*schema));
+    ScanReq request(
+        const_cast<uint8_t*>(filter_buff->data()), filter_buff->size(), 
+        const_cast<uint8_t*>(projection_buff->data()), projection_buff->size()
+    );
+    return request;
+}
+
+ConnCtx Init(std::string host) {
+    ConnCtx ctx;
     tl::engine engine("tcp", THALLIUM_SERVER_MODE);
     tl::endpoint endpoint = engine.lookup(host);
     ctx.engine = engine;
@@ -36,12 +46,12 @@ conn_ctx Init(std::string host) {
     return ctx;
 }
 
-std::string Scan(conn_ctx &ctx, scan_request &req) {
+std::string Scan(ConnCtx &ctx, ScanReq &req) {
     tl::remote_procedure scan = ctx.engine.define("scan");
     return scan.on(ctx.endpoint)(req);
 }
 
-arrow::Result<std::shared_ptr<arrow::RecordBatch>> GetNextBatch(conn_ctx &ctx, std::string uuid) {
+arrow::Result<std::shared_ptr<arrow::RecordBatch>> GetNextBatch(ConnCtx &ctx, std::string uuid) {
     auto schema = arrow::schema({arrow::field("a", arrow::int64()),
                                  arrow::field("b", arrow::boolean())});
     std::shared_ptr<arrow::RecordBatch> batch;
@@ -91,28 +101,15 @@ arrow::Result<std::shared_ptr<arrow::RecordBatch>> GetNextBatch(conn_ctx &ctx, s
     }
 }
 
-int main(int argc, char** argv) {
-
-    // std::cout << "Client running at address " << engine.self() << std::endl;
+arrow::Status Main(char **argv) {
+    auto filter = 
+        cp::greater(cp::field_ref("total_amount"), cp::literal(10));
     
-    char *filter_buffer = new char[6];
-    filter_buffer[0] = 'f';
-    filter_buffer[1] = 'i';
-    filter_buffer[2] = 'l';
-    filter_buffer[3] = 't';
-    filter_buffer[4] = 'e';
-    filter_buffer[5] = 'r';
+    auto schema = arrow::schema({arrow::field("passenger_count", arrow::int64()),
+                                 arrow::field("fair_amount", arrow::float64())});
 
-    char *projection_buffer = new char[4];
-    projection_buffer[0] = 'p';
-    projection_buffer[1] = 'r';
-    projection_buffer[2] = 'o';
-    projection_buffer[3] = 'j';
-
-    conn_ctx ctx = Init(argv[1]);
-
-    scan_request req(filter_buffer, 6, projection_buffer, 4);
-
+    ConnCtx ctx = Init(argv[1]);
+    ARROW_ASSIGN_OR_RAISE(auto req, GetScanReq(filter, schema));
     std::string uuid = Scan(ctx, req);
 
     std::shared_ptr<arrow::RecordBatch> batch;
@@ -120,4 +117,8 @@ int main(int argc, char** argv) {
         std::cout << batch->ToString();
     }
     exit(0);
+}
+
+int main(int argc, char** argv) {
+    Main(argv);
 }
