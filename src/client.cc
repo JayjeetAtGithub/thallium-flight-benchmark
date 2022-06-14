@@ -27,10 +27,10 @@
 namespace tl = thallium;
 
 
-arrow::Result<ScanRequest> GetScanRequest(cp::Expression filter, std::shared_ptr<arrow::Schema> schema) {
+arrow::Result<ScanReq> GetScanReq(cp::Expression filter, std::shared_ptr<arrow::Schema> schema) {
     ARROW_ASSIGN_OR_RAISE(std::shared_ptr<arrow::Buffer> filter_buff, arrow::compute::Serialize(filter));
     ARROW_ASSIGN_OR_RAISE(auto projection_buff, arrow::ipc::SerializeSchema(*schema));
-    ScanRequest request(
+    ScanReq request(
         const_cast<uint8_t*>(filter_buff->data()), filter_buff->size(), 
         const_cast<uint8_t*>(projection_buff->data()), projection_buff->size()
     );
@@ -46,7 +46,7 @@ ConnCtx Init(std::string host) {
     return ctx;
 }
 
-std::string Scan(ConnCtx &ctx, ScanRequest &req) {
+std::string Scan(ConnCtx &ctx, ScanReq &req) {
     tl::remote_procedure scan = ctx.engine.define("scan");
     return scan.on(ctx.endpoint)(req);
 }
@@ -109,16 +109,16 @@ arrow::Status Main(char **argv) {
                                  arrow::field("fair_amount", arrow::float64())});
 
     ConnCtx ctx = Init(argv[1]);
-    ARROW_ASSIGN_OR_RAISE(auto req, GetScanRequest(filter, schema));
+    ARROW_ASSIGN_OR_RAISE(auto req, GetScanReq(filter, schema));
     std::string uuid = Scan(ctx, req);
 
     std::shared_ptr<arrow::RecordBatch> batch;
     while ((batch = GetNextBatch(ctx, uuid).ValueOrDie()) != nullptr) {
         std::cout << batch->ToString();
     }
+    exit(0);
 }
 
 int main(int argc, char** argv) {
     Main(argv);
-    exit(0);
 }

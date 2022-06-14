@@ -13,7 +13,7 @@ struct ConnCtx {
 };
 
 
-class ScanRequest {
+class ScanReq {
     public:
         uint8_t *filter_buffer;
         size_t filter_buffer_size;
@@ -21,8 +21,8 @@ class ScanRequest {
         uint8_t *projection_buffer;
         size_t projection_buffer_size;
 
-        ScanRequest() {}
-        ScanRequest(
+        ScanReq() {}
+        ScanReq(
             uint8_t* filter_buffer, size_t filter_buffer_size, uint8_t* projection_buffer, size_t projection_buffer_size)
         : filter_buffer(filter_buffer), filter_buffer_size(filter_buffer_size), 
           projection_buffer(projection_buffer), projection_buffer_size(projection_buffer_size) {}
