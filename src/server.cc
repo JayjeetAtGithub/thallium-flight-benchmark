@@ -22,8 +22,6 @@
 #include <thallium.hpp>
 
 #include "ace.h"
-#include "payload.h"
-
 
 namespace tl = thallium;
 namespace cp = arrow::compute;
