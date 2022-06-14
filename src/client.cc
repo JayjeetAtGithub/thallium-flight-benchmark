@@ -46,7 +46,7 @@ arrow::Result<conn_ctx> Init(std::string host) {
     return ctx;
 }
 
-arrow::Result<std::string> Scan(conn_ctx &ctx, scan_request &req) {
+std::string Scan(conn_ctx &ctx, scan_request &req) {
     tl::remote_procedure scan = ctx.engine.define("scan");
     return scan.on(ctx.endpoint)(req);
 }
@@ -110,7 +110,7 @@ arrow::Status Main(char **argv) {
 
     ARROW_ASSIGN_OR_RAISE(auto ctx, Init(argv[1]));
     ARROW_ASSIGN_OR_RAISE(auto req, GetScanRequest(filter, schema));
-    ARROW_ASSIGN_OR_RAISE(auto uuid, Scan(ctx, req));
+    std::string uuid = Scan(ctx, req);
 
     std::shared_ptr<arrow::RecordBatch> batch;
     while ((batch = GetNextBatch(ctx, uuid).ValueOrDie()) != nullptr) {
