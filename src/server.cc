@@ -22,8 +22,6 @@
 #include <thallium.hpp>
 
 #include "ace.h"
-#include "payload.h"
-
 
 namespace tl = thallium;
 namespace cp = arrow::compute;
@@ -37,11 +35,11 @@ int main(int argc, char** argv) {
     std::unordered_map<std::string, std::shared_ptr<arrow::RecordBatchReader>> reader_map;
     
     std::function<void(const tl::request&, const ScanReqRPCStub&)> scan = 
-        [&reader_map](const tl::request &req, const ScanReqRPCStub& ScanReqRPCStub) {
+        [&reader_map](const tl::request &req, const ScanReqRPCStub& stub) {
             
             arrow::dataset::internal::Initialize();
             cp::ExecContext exec_context;
-            std::shared_ptr<ScanResultConsumer> consumer = Scan(exec_context).ValueOrDie();
+            std::shared_ptr<ScanResultConsumer> consumer = Scan(exec_context, stub).ValueOrDie();
             std::shared_ptr<arrow::RecordBatchReader> reader = consumer->reader;
 
             std::string uuid = generate_uuid();

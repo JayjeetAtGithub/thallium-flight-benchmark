@@ -109,10 +109,10 @@ arrow::Result<std::shared_ptr<arrow::RecordBatch>> GetNextBatch(ConnCtx &conn_ct
 
 arrow::Status Main(char **argv) {
     auto filter = 
-        cp::greater(cp::field_ref("total_amount"), cp::literal(10));
+        cp::greater(cp::field_ref("total_amount"), cp::literal(-400));
     
     auto schema = arrow::schema({arrow::field("passenger_count", arrow::int64()),
-                                 arrow::field("fair_amount", arrow::float64())});
+                                 arrow::field("fare_amount", arrow::float64())});
 
     ConnCtx conn_ctx = Init(argv[1]);
     ARROW_ASSIGN_OR_RAISE(auto scan_req, GetScanRequest(filter, schema));

@@ -6,6 +6,8 @@
 #include <thallium/serialization/stl/string.hpp>
 #include <thallium/serialization/stl/vector.hpp>
 
+#include <arrow/compute/exec/expression.h>
+
 
 struct ConnCtx {
     thallium::engine engine;
@@ -54,6 +56,6 @@ class ScanReqRPCStub {
 
 struct ScanReq {
     ScanReqRPCStub stub;
-    cp::Expression filter;
+    arrow::compute::Expression filter;
     std::shared_ptr<arrow::Schema> schema;
 };
