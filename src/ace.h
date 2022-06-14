@@ -13,7 +13,7 @@ class ScanResultConsumer {
         std::shared_ptr<cp::ExecPlan> plan;
 };
 
-arrow::Result<std::shared_ptr<ScanResultConsumer>> Scan(cp::ExecContext& exec_context, ScanReqRPCStub& stub) {
+arrow::Result<std::shared_ptr<ScanResultConsumer>> Scan(cp::ExecContext& exec_context, const ScanReqRPCStub& stub) {
     ARROW_ASSIGN_OR_RAISE(auto filter,
                             arrow::compute::Deserialize(std::make_shared<arrow::Buffer>(
                             stub.filter_buffer, stub.filter_buffer_size)));
