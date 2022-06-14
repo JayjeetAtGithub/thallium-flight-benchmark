@@ -6,6 +6,10 @@
 #include <thallium/serialization/stl/string.hpp>
 #include <thallium/serialization/stl/vector.hpp>
 
+#include "util.h"
+
+namespace cp = arrow::compute;
+
 
 struct ConnCtx {
     thallium::engine engine;
