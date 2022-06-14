@@ -7,13 +7,13 @@
 #include <thallium/serialization/stl/vector.hpp>
 
 
-struct conn_ctx {
+struct ConnCtx {
     thallium::engine engine;
     thallium::endpoint endpoint;
 };
 
 
-class scan_request {
+class ScanRequest {
     public:
         uint8_t *filter_buffer;
         size_t filter_buffer_size;
@@ -21,8 +21,8 @@ class scan_request {
         uint8_t *projection_buffer;
         size_t projection_buffer_size;
 
-        scan_request() {}
-        scan_request(
+        ScanRequest() {}
+        ScanRequest(
             uint8_t* filter_buffer, size_t filter_buffer_size, uint8_t* projection_buffer, size_t projection_buffer_size)
         : filter_buffer(filter_buffer), filter_buffer_size(filter_buffer_size), 
           projection_buffer(projection_buffer), projection_buffer_size(projection_buffer_size) {}
