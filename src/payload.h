@@ -12,8 +12,12 @@ struct ConnCtx {
     thallium::endpoint endpoint;
 };
 
+struct ScanCtx {
+    std::string uuid;
+    std::shared_ptr<arrow::Schema> schema;  
+};
 
-class ScanReq {
+class ScanReqRPCStub {
     public:
         uint8_t *filter_buffer;
         size_t filter_buffer_size;
@@ -21,8 +25,8 @@ class ScanReq {
         uint8_t *projection_buffer;
         size_t projection_buffer_size;
 
-        ScanReq() {}
-        ScanReq(
+        ScanReqRPCStub() {}
+        ScanReqRPCStub(
             uint8_t* filter_buffer, size_t filter_buffer_size, uint8_t* projection_buffer, size_t projection_buffer_size)
         : filter_buffer(filter_buffer), filter_buffer_size(filter_buffer_size), 
           projection_buffer(projection_buffer), projection_buffer_size(projection_buffer_size) {}
@@ -46,4 +50,10 @@ class ScanReq {
             projection_buffer = new uint8_t[projection_buffer_size];
             ar.read(projection_buffer, projection_buffer_size);
         }
+};
+
+struct ScanReq {
+    ScanReqRPCStub stub;
+    cp::Expression filter;
+    std::shared_ptr<arrow::Schema> schema;
 };
