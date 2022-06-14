@@ -17,3 +17,9 @@ ifconfig ib0
 ifconfig ib0 10.0.1.50
 ifconfig ib0 10.0.2.50
 ```
+
+```
+./src/server 
+
+./src/client "ofi+tcp;ofi_rxm://[host]:[port]"
+```
