@@ -114,6 +114,8 @@ arrow::Status Main(char **argv) {
     auto schema = arrow::schema({arrow::field("passenger_count", arrow::int64()),
                                  arrow::field("fare_amount", arrow::float64())});
 
+    auto start = std::chrono::high_resolution_clock::now();
+
     ConnCtx conn_ctx = Init(argv[1]);
     ARROW_ASSIGN_OR_RAISE(auto scan_req, GetScanRequest(filter, schema));
     ScanCtx scan_ctx = Scan(conn_ctx, scan_req);
@@ -126,6 +128,11 @@ arrow::Status Main(char **argv) {
         total_rows += batch->num_rows();
     }
     std::cout << "Total rows: " << total_rows << std::endl;
+    auto stop = std::chrono::high_resolution_clock::now();
+    auto duration = std::chrono::duration_cast<std::chrono::microseconds>(stop - start);
+ 
+    std::cout << "Time taken: " << (double)(duration.count()/1000) << " ms" << std::endl;
+
     exit(0);
 }
 
