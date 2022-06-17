@@ -61,7 +61,7 @@ int main(int argc, char *argv[]) {
   {
     MEASURE_FUNCTION_EXECUTION_TIME
     client->DoGet(flight_info->endpoints()[0].ticket, &stream);
-    while (stream->Read(&batch).ok()) {
+    while (stream->ReadNext(&batch).ok()) {
       total_rows += batch->num_rows();
     }
   }
