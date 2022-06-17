@@ -129,9 +129,9 @@ arrow::Status Main(char **argv) {
     }
     std::cout << "Total rows: " << total_rows << std::endl;
     auto stop = std::chrono::high_resolution_clock::now();
-    auto duration = duration_cast<microseconds>(stop - start);
+    auto duration = std::chrono::duration_cast<std::chrono::microseconds>(stop - start);
  
-    std::cout << "Time taken by function: " << duration.count() << " microseconds" << endl;
+    std::cout << "Time taken by function: " << duration.count() << " microseconds" << std::endl;
 
     exit(0);
 }
