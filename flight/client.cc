@@ -55,16 +55,13 @@ int main(int argc, char *argv[]) {
   //std::cout << flight_info->descriptor().ToString() << std::endl;
 
   // Read table from flight server
-  std::shared_ptr<arrow::RecordBatch> batch;
+  std::shared_ptr<arrow::Table> table;
   std::unique_ptr<arrow::flight::FlightStreamReader> stream;
-  int64_t total_rows = 0;
   {
     MEASURE_FUNCTION_EXECUTION_TIME
     client->DoGet(flight_info->endpoints()[0].ticket, &stream);
-    while (stream->ReadNext(&batch).ok()) {
-      total_rows += batch->num_rows();
-    }
+    stream->ReadAll(&table);
   }
-  std::cout << "Read " << total_rows << " rows" << std::endl;
+  std::cout << "Read " << table->num_rows() << " rows" << std::endl;
   //std::cout << table->ToString() << std::endl;
 }
