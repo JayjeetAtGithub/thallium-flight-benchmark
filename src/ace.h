@@ -14,13 +14,13 @@ class ScanResultConsumer {
 };
 
 arrow::Result<std::shared_ptr<ScanResultConsumer>> Scan(cp::ExecContext& exec_context, const ScanReqRPCStub& stub) {
-    ARROW_ASSIGN_OR_RAISE(auto filter,
-                            arrow::compute::Deserialize(std::make_shared<arrow::Buffer>(
-                            stub.filter_buffer, stub.filter_buffer_size)));
+    // ARROW_ASSIGN_OR_RAISE(auto filter,
+    //                         arrow::compute::Deserialize(std::make_shared<arrow::Buffer>(
+    //                         stub.filter_buffer, stub.filter_buffer_size)));
 
-    arrow::ipc::DictionaryMemo empty_memo;
-    arrow::io::BufferReader schema_reader(stub.projection_buffer, stub.projection_buffer_size);
-    ARROW_ASSIGN_OR_RAISE(auto schema, arrow::ipc::ReadSchema(&schema_reader, &empty_memo));
+    // arrow::ipc::DictionaryMemo empty_memo;
+    // arrow::io::BufferReader schema_reader(stub.projection_buffer, stub.projection_buffer_size);
+    // ARROW_ASSIGN_OR_RAISE(auto schema, arrow::ipc::ReadSchema(&schema_reader, &empty_memo));
 
     ARROW_ASSIGN_OR_RAISE(std::shared_ptr<cp::ExecPlan> plan,
                             cp::ExecPlan::Make(&exec_context));
@@ -28,8 +28,10 @@ arrow::Result<std::shared_ptr<ScanResultConsumer>> Scan(cp::ExecContext& exec_co
     ARROW_ASSIGN_OR_RAISE(std::shared_ptr<arrow::dataset::Dataset> dataset, GetDataset());
 
     ARROW_ASSIGN_OR_RAISE(auto scanner_builder, dataset->NewScan());
-    ARROW_RETURN_NOT_OK(scanner_builder->Project(schema->field_names()));
-    ARROW_RETURN_NOT_OK(scanner_builder->Filter(filter));
+    // ARROW_RETURN_NOT_OK(scanner_builder->Project(schema->field_names()));
+    // ARROW_RETURN_NOT_OK(scanner_builder->Filter(filter));
+    ARROW_RETURN_NOT_OK(scanner_builder->Project({"passenger_count", "fare_amount"}));
+
     ARROW_ASSIGN_OR_RAISE(auto scanner, scanner_builder->Finish());
 
     ARROW_ASSIGN_OR_RAISE(auto reader, scanner->ToRecordBatchReader());

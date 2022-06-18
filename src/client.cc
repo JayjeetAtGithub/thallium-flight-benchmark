@@ -28,15 +28,15 @@ namespace tl = thallium;
 
 
 arrow::Result<ScanReq> GetScanRequest(cp::Expression filter, std::shared_ptr<arrow::Schema> schema) {
-    ARROW_ASSIGN_OR_RAISE(std::shared_ptr<arrow::Buffer> filter_buff, arrow::compute::Serialize(filter));
-    ARROW_ASSIGN_OR_RAISE(auto projection_buff, arrow::ipc::SerializeSchema(*schema));
-    ScanReqRPCStub stub(
-        const_cast<uint8_t*>(filter_buff->data()), filter_buff->size(), 
-        const_cast<uint8_t*>(projection_buff->data()), projection_buff->size()
-    );
+    // ARROW_ASSIGN_OR_RAISE(std::shared_ptr<arrow::Buffer> filter_buff, arrow::compute::Serialize(filter));
+    // ARROW_ASSIGN_OR_RAISE(auto projection_buff, arrow::ipc::SerializeSchema(*schema));
+    // ScanReqRPCStub stub(
+    //     const_cast<uint8_t*>(filter_buff->data()), filter_buff->size(), 
+    //     const_cast<uint8_t*>(projection_buff->data()), projection_buff->size()
+    // );
     ScanReq req;
-    req.stub = stub;
-    req.filter = filter;
+    // req.stub = stub;
+    // req.filter = filter;
     req.schema = schema;
     return req;
 }
