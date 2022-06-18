@@ -52,7 +52,6 @@ int main(int argc, char *argv[]) {
   // Get flight info
   std::unique_ptr<arrow::flight::FlightInfo> flight_info;
   client->GetFlightInfo(descriptor, &flight_info);
-  //std::cout << flight_info->descriptor().ToString() << std::endl;
 
   // Read table from flight server
   std::shared_ptr<arrow::Table> table;
@@ -63,5 +62,4 @@ int main(int argc, char *argv[]) {
     stream->ReadAll(&table);
   }
   std::cout << "Read " << table->num_rows() << " rows" << std::endl;
-  //std::cout << table->ToString() << std::endl;
 }
