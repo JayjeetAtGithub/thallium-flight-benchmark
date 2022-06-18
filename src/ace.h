@@ -28,8 +28,10 @@ arrow::Result<std::shared_ptr<ScanResultConsumer>> Scan(cp::ExecContext& exec_co
     ARROW_ASSIGN_OR_RAISE(std::shared_ptr<arrow::dataset::Dataset> dataset, GetDataset());
 
     ARROW_ASSIGN_OR_RAISE(auto scanner_builder, dataset->NewScan());
-    ARROW_RETURN_NOT_OK(scanner_builder->Project(schema->field_names()));
+    // ARROW_RETURN_NOT_OK(scanner_builder->Project(schema->field_names()));
     // ARROW_RETURN_NOT_OK(scanner_builder->Filter(filter));
+    ARROW_RETURN_NOT_OK(scanner_builder->Project("passenger_count", "fare_amount"));
+
     ARROW_ASSIGN_OR_RAISE(auto scanner, scanner_builder->Finish());
 
     ARROW_ASSIGN_OR_RAISE(auto reader, scanner->ToRecordBatchReader());
