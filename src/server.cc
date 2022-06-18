@@ -54,7 +54,7 @@ int main(int argc, char** argv) {
             std::shared_ptr<arrow::RecordBatchReader> reader = reader_map[uuid];
             std::shared_ptr<arrow::RecordBatch> batch;
             if (reader->ReadNext(&batch).ok() && batch != nullptr) {
-                // std::cout << "Batch: " << batch->ToString() << std::endl;
+                std::cout << "Batch: " << batch->ToString() << std::endl;
                 std::cout << "Batch Size: " << batch->num_rows() << std::endl;
                 total_rows_written += batch->num_rows();
 
