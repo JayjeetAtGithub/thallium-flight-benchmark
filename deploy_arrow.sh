@@ -7,6 +7,7 @@ apt install -y python3 \
                python3-venv \
                python3-numpy \
                cmake \
+               libboost-all-dev \
                llvm
 
 if [ ! -d "arrow" ]; then

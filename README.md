@@ -6,7 +6,7 @@ https://www.rdmamojo.com/2015/01/24/verify-rdma-working/
 
 ```
 apt update
-apt install -y ibverbs-utils
+apt install -y ibverbs-utils libboost-all-dev
 
 modprobe ib_uverbs
 
