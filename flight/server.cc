@@ -40,6 +40,10 @@ class ParquetStorageService : public arrow::flight::FlightServerBase {
     s.base_dir = std::move(path);
     s.recursive = true;
 
+    auto filter = 
+        arrow::compute::greater(arrow::compute::field_ref("total_amount"),
+                                arrow::compute::literal(-200));
+
     arrow::dataset::FileSystemFactoryOptions options;
     ARROW_ASSIGN_OR_RAISE(auto factory, 
       arrow::dataset::FileSystemDatasetFactory::Make(std::move(fs), s, std::move(format), options));
@@ -47,6 +51,7 @@ class ParquetStorageService : public arrow::flight::FlightServerBase {
     ARROW_ASSIGN_OR_RAISE(auto dataset,factory->Finish(finish_options));
 
     ARROW_ASSIGN_OR_RAISE(auto scanner_builder, dataset->NewScan());
+    ARROW_RETURN_NOT_OK(scanner_builder->Filter(filter));
     ARROW_RETURN_NOT_OK(scanner_builder->Project({"passenger_count", "fare_amount"}));
 
     ARROW_ASSIGN_OR_RAISE(auto scanner, scanner_builder->Finish());

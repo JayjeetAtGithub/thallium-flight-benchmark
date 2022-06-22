@@ -43,7 +43,7 @@ arrow::Result<ScanReq> GetScanRequest(cp::Expression filter, std::shared_ptr<arr
 
 ConnCtx Init(std::string host) {
     ConnCtx ctx;
-    tl::engine engine("tcp", THALLIUM_SERVER_MODE);
+    tl::engine engine("verbs", THALLIUM_SERVER_MODE);
     tl::endpoint endpoint = engine.lookup(host);
     ctx.engine = engine;
     ctx.endpoint = endpoint;
@@ -124,7 +124,6 @@ arrow::Status Main(char **argv) {
     int64_t total_rows = 0;
     std::shared_ptr<arrow::RecordBatch> batch;
     while ((batch = GetNextBatch(conn_ctx, scan_ctx).ValueOrDie()) != nullptr) {
-        std::cout << batch->ToString();
         total_rows += batch->num_rows();
     }
     std::cout << "Total rows: " << total_rows << std::endl;

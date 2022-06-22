@@ -19,7 +19,12 @@ ifconfig ib0 10.0.2.50
 ```
 
 ```
-./src/server 
+./bin/ts 
+./src/tc "ofi+tcp;ofi_rxm://[host]:[port]"
+```
 
-./src/client "ofi+tcp;ofi_rxm://[host]:[port]"
+
+```
+./bin/fs 10.10.1.2 4001
+./bin/fc 10.10.1.2 4001 /mnt/cephfs/dataset
 ```
