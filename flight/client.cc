@@ -60,9 +60,10 @@ int main(int argc, char *argv[]) {
   // Read table from flight server
   std::shared_ptr<arrow::Table> table;
   std::unique_ptr<arrow::flight::FlightStreamReader> stream;
+  client->DoGet(flight_info->endpoints()[0].ticket, &stream);
+
   {
     MEASURE_FUNCTION_EXECUTION_TIME
-    client->DoGet(flight_info->endpoints()[0].ticket, &stream);
     stream->ReadAll(&table);
   }
   std::cout << "Read " << table->num_rows() << " rows" << std::endl;

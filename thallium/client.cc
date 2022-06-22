@@ -24,6 +24,23 @@
 #include "payload.h"
 
 
+class MeasureExecutionTime{
+  private:
+      const std::chrono::steady_clock::time_point begin;
+      const std::string caller;
+  public:
+      MeasureExecutionTime(const std::string& caller):caller(caller),begin(std::chrono::steady_clock::now()){}
+      ~MeasureExecutionTime(){
+          const auto duration=std::chrono::steady_clock::now()-begin;
+          std::cout << (double)std::chrono::duration_cast<std::chrono::milliseconds>(duration).count()/1000<<std::endl;
+      }
+};
+
+#ifndef MEASURE_FUNCTION_EXECUTION_TIME
+#define MEASURE_FUNCTION_EXECUTION_TIME const MeasureExecutionTime measureExecutionTime(__FUNCTION__);
+#endif
+
+
 namespace tl = thallium;
 
 
@@ -117,24 +134,18 @@ arrow::Status Main(char **argv) {
     std::string uri_base = "ofi+verbs;ofi_rxm://10.10.1.2:";
     std::string uri = uri_base + argv[1];
 
-    auto start = std::chrono::high_resolution_clock::now();
-
     ConnCtx conn_ctx = Init(uri);
     ARROW_ASSIGN_OR_RAISE(auto scan_req, GetScanRequest(filter, schema));
     ScanCtx scan_ctx = Scan(conn_ctx, scan_req);
-
-
     int64_t total_rows = 0;
     std::shared_ptr<arrow::RecordBatch> batch;
-    while ((batch = GetNextBatch(conn_ctx, scan_ctx).ValueOrDie()) != nullptr) {
-        total_rows += batch->num_rows();
+    {
+        MEASURE_FUNCTION_EXECUTION_TIME
+        while ((batch = GetNextBatch(conn_ctx, scan_ctx).ValueOrDie()) != nullptr) {
+            total_rows += batch->num_rows();
+        }
     }
-    std::cout << "Total rows: " << total_rows << std::endl;
-    auto stop = std::chrono::high_resolution_clock::now();
-    auto duration = std::chrono::duration_cast<std::chrono::microseconds>(stop - start);
- 
-    std::cout << "Time taken: " << (double)(duration.count()/1000) << " ms" << std::endl;
-
+    std::cout << "Read " << total_rows << " rows" << std::endl;
     exit(0);
 }
 

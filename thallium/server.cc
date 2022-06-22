@@ -54,7 +54,6 @@ int main(int argc, char** argv) {
             std::shared_ptr<arrow::RecordBatchReader> reader = reader_map[uuid];
             std::shared_ptr<arrow::RecordBatch> batch;
             if (reader->ReadNext(&batch).ok() && batch != nullptr) {
-                std::cout << "Batch Size: " << batch->num_rows() << std::endl;
                 total_rows_written += batch->num_rows();
 
                 int64_t num_rows;
@@ -107,7 +106,6 @@ int main(int argc, char** argv) {
 
                 tl::bulk arrow_bulk = engine.expose(segments, tl::bulk_mode::read_only);
                 do_rdma.on(req.get_endpoint())(num_rows, num_cols, types, data_buff_sizes, offset_buff_sizes, arrow_bulk);
-                std::cout << "Total rows written: " << total_rows_written << std::endl;
                 return req.respond(0);
             } else {
                 return req.respond(1);
