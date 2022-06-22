@@ -86,8 +86,8 @@ class ParquetStorageService : public arrow::flight::FlightServerBase {
 };
 
 int main(int argc, char *argv[]) {
-  std::string host = argv[1];
-  int32_t port = (int32_t)std::stoi(argv[2]);
+  std::string host = "10.10.1.2";
+  int32_t port = 4000;
   auto fs = std::make_shared<arrow::fs::LocalFileSystem>();
 
   arrow::flight::Location server_location;

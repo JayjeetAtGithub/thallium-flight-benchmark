@@ -42,12 +42,16 @@ arrow::Result<std::unique_ptr<arrow::flight::FlightClient>> ConnectToFlightServe
 int main(int argc, char *argv[]) {
   // Get connection info from user input
   ConnectionInfo info;
-  info.host = argv[1];
-  info.port = (int32_t)std::stoi(argv[2]);
+
+  std::string host = "10.10.1.2";
+  info.host = host;
+  info.port = 4000;
 
    // Connect to flight server
   auto client = ConnectToFlightServer(info).ValueOrDie();
-  auto descriptor = arrow::flight::FlightDescriptor::Path({argv[3]});
+
+  std::string path = "/mnt/cephfs/dataset";
+  auto descriptor = arrow::flight::FlightDescriptor::Path({path});
 
   // Get flight info
   std::unique_ptr<arrow::flight::FlightInfo> flight_info;

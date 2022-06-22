@@ -114,9 +114,12 @@ arrow::Status Main(char **argv) {
     auto schema = arrow::schema({arrow::field("passenger_count", arrow::int64()),
                                  arrow::field("fare_amount", arrow::float64())});
 
+    std::string uri_base = "ofi+verbs;ofi_rxm://10.10.1.2:";
+    std::string uri = uri_base + argv[1];
+
     auto start = std::chrono::high_resolution_clock::now();
 
-    ConnCtx conn_ctx = Init(argv[1]);
+    ConnCtx conn_ctx = Init(uri);
     ARROW_ASSIGN_OR_RAISE(auto scan_req, GetScanRequest(filter, schema));
     ScanCtx scan_ctx = Scan(conn_ctx, scan_req);
 

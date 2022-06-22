@@ -20,7 +20,7 @@ ifconfig ib0 10.0.2.50
 
 ```
 ./bin/ts 
-./src/tc "ofi+tcp;ofi_rxm://[host]:[port]"
+./src/tc "ofi+verbs;ofi_rxm://[host]:[port]"
 ```
 
 
