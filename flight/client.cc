@@ -45,7 +45,7 @@ int main(int argc, char *argv[]) {
 
   std::string host = "10.10.1.2";
   info.host = host;
-  info.port = 4000;
+  info.port = (int32_t)std::stoi(argv[1]);
 
    // Connect to flight server
   auto client = ConnectToFlightServer(info).ValueOrDie();
