@@ -39,7 +39,7 @@ int main(int argc, char** argv) {
             
             arrow::dataset::internal::Initialize();
             cp::ExecContext exec_context;
-            std::shared_ptr<ScanResultConsumer> consumer = Scan(exec_context, stub).ValueOrDie();
+            std::shared_ptr<ScanResultConsumer> consumer = ScanB(exec_context, stub).ValueOrDie();
             std::shared_ptr<arrow::RecordBatchReader> reader = consumer->reader;
 
             std::string uuid = generate_uuid();
