@@ -54,26 +54,21 @@ int main(int argc, char** argv) {
             std::shared_ptr<arrow::RecordBatchReader> reader = reader_map[uuid];
             std::shared_ptr<arrow::RecordBatch> batch;
             if (reader->ReadNext(&batch).ok() && batch != nullptr) {
-                total_rows_written += batch->num_rows();
 
-                int64_t num_rows;
-                int64_t num_cols;
-                std::vector<int> types;
                 std::vector<int64_t> data_buff_sizes;
                 std::vector<int64_t> offset_buff_sizes;
+                int64_t num_rows = batch->num_rows();
+                total_rows_written += num_rows;
 
-                num_rows = batch->num_rows();
-                num_cols = batch->num_columns();
-                std::vector<std::pair<void*,std::size_t>> segments(num_cols*2);
+
+                std::vector<std::pair<void*,std::size_t>> segments(batch->num_columns()*2);
 
                 std::string null_buff = "xx";
 
-                for (int64_t i = 0; i < num_cols; i++) {
+                for (int64_t i = 0; i < batch->num_columns(); i++) {
                     std::shared_ptr<arrow::Array> col_arr = batch->column(i);
                     arrow::Type::type type = col_arr->type_id();
                     int64_t null_count = col_arr->null_count();
-
-                    types.push_back((int)type);
 
                     int64_t data_size = 0;
                     int64_t offset_size = 0;
@@ -105,7 +100,7 @@ int main(int argc, char** argv) {
                 }
 
                 tl::bulk arrow_bulk = engine.expose(segments, tl::bulk_mode::read_only);
-                do_rdma.on(req.get_endpoint())(num_rows, types, data_buff_sizes, offset_buff_sizes, arrow_bulk);
+                do_rdma.on(req.get_endpoint())(num_rows, data_buff_sizes, offset_buff_sizes, arrow_bulk);
                 return req.respond(0);
             } else {
                 return req.respond(1);
