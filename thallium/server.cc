@@ -17,6 +17,10 @@
 #include "arrow/testing/random.h"
 #include "arrow/util/key_value_metadata.h"
 
+#include <boost/uuid/uuid.hpp>
+#include <boost/uuid/uuid_generators.hpp>
+#include <boost/uuid/uuid_io.hpp>
+
 #include <parquet/arrow/reader.h>
 #include <parquet/arrow/writer.h>
 #include <thallium.hpp>
@@ -42,7 +46,7 @@ int main(int argc, char** argv) {
             std::shared_ptr<ScanResultConsumer> consumer = ScanB(exec_context, stub).ValueOrDie();
             std::shared_ptr<arrow::RecordBatchReader> reader = consumer->reader;
 
-            std::string uuid = generate_uuid();
+            std::string uuid = boost::uuids::to_string(boost::uuids::random_generator()());
             reader_map[uuid] = reader;
             return req.respond(uuid);
         };

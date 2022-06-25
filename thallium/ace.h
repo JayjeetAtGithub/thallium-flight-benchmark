@@ -1,5 +1,26 @@
+#include <iostream>
+#include <memory>
+#include <utility>
+#include <vector>
+
+#include <arrow/api.h>
+#include <arrow/csv/api.h>
+#include <arrow/dataset/api.h>
+#include <arrow/io/api.h>
+#include <arrow/ipc/api.h>
+#include <arrow/compute/api.h>
+#include <arrow/compute/api_vector.h>
+#include <arrow/compute/cast.h>
+#include <arrow/compute/exec/exec_plan.h>
+#include <arrow/compute/exec/expression.h>
+#include <arrow/filesystem/filesystem.h>
+#include <arrow/filesystem/path_util.h>
+#include <arrow/util/future.h>
+#include <arrow/util/range.h>
+#include <arrow/util/thread_pool.h>
+#include <arrow/util/vector.h>
+
 #include "payload.h"
-#include "util.h"
 
 
 namespace cp = arrow::compute;

@@ -1,6 +1,7 @@
 #include <iostream>
 #include <thread>
 #include <chrono>
+
 #include <arrow/api.h>
 #include <arrow/compute/exec/expression.h>
 #include <arrow/dataset/api.h>
@@ -8,7 +9,6 @@
 #include <arrow/io/api.h>
 #include <arrow/util/checked_cast.h>
 #include <arrow/util/iterator.h>
-
 #include "arrow/array/array_base.h"
 #include "arrow/array/array_nested.h"
 #include "arrow/array/data.h"
@@ -20,7 +20,6 @@
 #include <parquet/arrow/writer.h>
 #include <thallium.hpp>
 
-#include "util.h"
 #include "payload.h"
 
 
