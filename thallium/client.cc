@@ -41,6 +41,7 @@ class MeasureExecutionTime{
 
 
 namespace tl = thallium;
+namespace cp = arrow::compute;
 
 
 arrow::Result<ScanReq> GetScanRequest(cp::Expression filter, std::shared_ptr<arrow::Schema> schema) {
