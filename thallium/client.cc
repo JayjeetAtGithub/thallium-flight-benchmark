@@ -7,6 +7,7 @@
 #include <arrow/dataset/api.h>
 #include <arrow/filesystem/api.h>
 #include <arrow/io/api.h>
+#include <arrow/ipc/api.h>
 #include <arrow/util/checked_cast.h>
 #include <arrow/util/iterator.h>
 #include "arrow/array/array_base.h"
