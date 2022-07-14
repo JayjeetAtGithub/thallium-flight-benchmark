@@ -61,7 +61,7 @@ arrow::Result<ScanReq> GetScanRequest(cp::Expression filter, std::shared_ptr<arr
 
 ConnCtx Init(std::string host) {
     ConnCtx ctx;
-    tl::engine engine("verbs", THALLIUM_SERVER_MODE);
+    tl::engine engine("verbs://ibp8s0", THALLIUM_SERVER_MODE);
     tl::endpoint endpoint = engine.lookup(host);
     ctx.engine = engine;
     ctx.endpoint = endpoint;
@@ -134,7 +134,7 @@ arrow::Status Main(char **argv) {
     auto schema = arrow::schema({arrow::field("passenger_count", arrow::int64()),
                                  arrow::field("fare_amount", arrow::float64())});
 
-    std::string uri_base = "ofi+verbs;ofi_rxm://10.10.1.2:";
+    std::string uri_base = "ofi+verbs;ofi_rxm://10.0.2.50:";
     std::string uri = uri_base + argv[1];
 
     ConnCtx conn_ctx = Init(uri);
