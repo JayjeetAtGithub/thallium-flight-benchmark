@@ -14,6 +14,12 @@ apt install -y ibverbs-utils
 # install arrow
 ./deploy_arrow.sh
 
+# install spack
+git clone -c feature.manyFiles=true https://github.com/spack/spack.git ~/spack
+cd ~/spack
+git checkout releases/v0.18
+. share/spack/setup-env.sh
+
 # install mochi-thallium
 spack install libfabric fabrics=tcp,udp,sockets,verbs,rxm
 spack install --reuse mochi-thallium
