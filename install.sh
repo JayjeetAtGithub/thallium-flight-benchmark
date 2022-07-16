@@ -3,7 +3,7 @@ set -ex
 
 # installing some dependencies
 apt update
-apt install -y uuid-dev libjson-c-dev libpmemobj-cpp-dev
+apt install -y uuid-dev libjson-c-dev libpmemobj-cpp-dev gcc-multilib g++-multilib
 
 # create the working dir
 rm -rf $HOME/mochi-tools
@@ -83,3 +83,19 @@ cd build
 make
 make install
 cd ../..
+
+# build cereal
+git clone https://github.com/USCiLab/cereal
+cd cereal
+cmake .
+make -j32
+make install
+cd ../
+
+# build thallium
+git clone https://github.com/mochi-hpc/mochi-thallium
+cd mochi-thallium
+PKG_CONFIG_PATH=$HOME/mochi/install/lib/pkgconfig cmake -DCMAKE_INSTALL_PREFIX=$HOME/mochi/install .
+make 
+make install
+cd ../
