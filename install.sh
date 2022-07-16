@@ -3,7 +3,7 @@ set -ex
 
 # installing some dependencies
 apt update
-apt install uuid-dev libjson-c-dev libpmemobj-cpp-dev
+apt install -y uuid-dev libjson-c-dev libpmemobj-cpp-dev
 
 # create the working dir
 rm -rf $HOME/mochi-tools
