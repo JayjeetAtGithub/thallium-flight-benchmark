@@ -32,7 +32,7 @@ namespace cp = arrow::compute;
 
 
 int main(int argc, char** argv) {
-    tl::engine engine("verbs://ibp8s0", THALLIUM_SERVER_MODE);
+    tl::engine engine("verbs://ibp8s0", THALLIUM_SERVER_MODE, true);
     
     tl::remote_procedure do_rdma = engine.define("do_rdma");
 
