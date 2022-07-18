@@ -1,5 +1,6 @@
 #include <iostream>
 #include <unordered_map>
+#include <chrono>
 
 #include <arrow/api.h>
 #include <arrow/compute/exec/expression.h>
@@ -52,12 +53,21 @@ int main(int argc, char** argv) {
         };
 
     int64_t total_rows_written = 0;
+    double total_time_io = 0;
     std::function<void(const tl::request&, const std::string&)> get_next_batch = 
-        [&engine, &do_rdma, &reader_map, &total_rows_written](const tl::request &req, const std::string& uuid) {
+        [&engine, &do_rdma, &reader_map, &total_rows_written, &total_time_io](const tl::request &req, const std::string& uuid) {
             
             std::shared_ptr<arrow::RecordBatchReader> reader = reader_map[uuid];
             std::shared_ptr<arrow::RecordBatch> batch;
-            if (reader->ReadNext(&batch).ok() && batch != nullptr) {
+
+            auto start = std::chrono::high_resolution_clock::now();
+            auto status = reader->ReadNext(&batch);
+            auto end = std::chrono::high_resolution_clock::now();
+            double time_taken = (double)std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count();
+            total_time_io += time_taken;
+            std::cout << "I/O: " << total_time_io << "\n";
+
+            if (status.ok() && batch != nullptr) {
 
                 std::vector<int64_t> data_buff_sizes;
                 std::vector<int64_t> offset_buff_sizes;
