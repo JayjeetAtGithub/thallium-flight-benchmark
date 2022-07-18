@@ -150,6 +150,7 @@ arrow::Status Main(char **argv) {
     }
     std::cout << "Read " << total_rows << " rows" << std::endl;
     exit(0);
+    return arrow::Status::OK();
 }
 
 int main(int argc, char** argv) {
