@@ -55,7 +55,12 @@ class ParquetStorageService : public arrow::flight::FlightServerBase {
     ARROW_RETURN_NOT_OK(scanner_builder->Project({"passenger_count", "fare_amount"}));
 
     ARROW_ASSIGN_OR_RAISE(auto scanner, scanner_builder->Finish());
-    ARROW_ASSIGN_OR_RAISE(auto reader, scanner->ToRecordBatchReader());
+    ARROW_ASSIGN_OR_RAISE(auto reader, scanner->ToTable());
+
+    auto im_ds = std::make_shared<arrow::dataset::InMemoryDataset>(table);
+    ARROW_ASSIGN_OR_RAISE(auto im_ds_scanner_builder, im_ds->NewScan());
+    ARROW_ASSIGN_OR_RAISE(auto im_ds_scanner, im_ds_scanner_builder->Finish());
+    ARROW_ASSIGN_OR_RAISE(auto reader, im_ds_scanner->ToRecordBatchReader());
 
     *stream = std::unique_ptr<arrow::flight::FlightDataStream>(
         new arrow::flight::RecordBatchStream(reader));
