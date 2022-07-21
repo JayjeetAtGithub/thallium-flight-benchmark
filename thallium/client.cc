@@ -149,7 +149,7 @@ arrow::Status Main(char **argv) {
         }
     }
     std::cout << "Read " << total_rows << " rows" << std::endl;
-    exit(0);
+    ctx.engine.finalize();
     return arrow::Status::OK();
 }
 
