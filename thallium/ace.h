@@ -90,7 +90,12 @@ arrow::Result<std::shared_ptr<ScanResultConsumer>> ScanB(cp::ExecContext& exec_c
     ARROW_RETURN_NOT_OK(scanner_builder->Project({"passenger_count", "fare_amount"}));
 
     ARROW_ASSIGN_OR_RAISE(auto scanner, scanner_builder->Finish());
-    ARROW_ASSIGN_OR_RAISE(auto reader, scanner->ToRecordBatchReader());
+    ARROW_ASSIGN_OR_RAISE(auto table, scanner->ToTable());
+
+    auto im_ds = std::make_shared<arrow::InMemoryDataset(table);
+    ARROW_ASSIGN_OR_RAISE(auto im_ds_scanner_builder, im_ds->NewScan());
+    ARROW_ASSIGN_OR_RAISE(auto im_ds_scanner, im_ds_scanner_builder->Finish());
+    ARROW_ASSIGN_OR_RAISE(auto reader, im_ds_scanner->scanner->ToRecordBatchReader());
 
     auto consumer = std::make_shared<ScanResultConsumer>(reader, plan);
     return consumer;
