@@ -61,7 +61,7 @@ arrow::Result<ScanReq> GetScanRequest(cp::Expression filter, std::shared_ptr<arr
 
 ConnCtx Init(std::string host) {
     ConnCtx ctx;
-    tl::engine engine("verbs://ibp130s0", THALLIUM_SERVER_MODE, true);
+    tl::engine engine("verbs://ibp8s0", THALLIUM_SERVER_MODE, true);
     tl::endpoint endpoint = engine.lookup(host);
     ctx.engine = engine;
     ctx.endpoint = endpoint;
