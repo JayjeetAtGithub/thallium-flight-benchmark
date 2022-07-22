@@ -77,6 +77,11 @@ ScanCtx Scan(ConnCtx &conn_ctx, ScanReq &scan_req) {
     return scan_ctx;
 }
 
+void Finish(ConnCtx &conn_ctx, ScanCtx& scan_ctx) {
+    tl::remote_procedure finish = conn_ctx.engine.define("finish");
+    finish.on(conn_ctx.endpoint)(scan_ctx.uuid);
+}
+
 arrow::Result<std::shared_ptr<arrow::RecordBatch>> GetNextBatch(ConnCtx &conn_ctx, ScanCtx &scan_ctx) {
     std::shared_ptr<arrow::RecordBatch> batch;
     std::function<void(const tl::request&, int64_t&, std::vector<int64_t>&, std::vector<int64_t>&, tl::bulk&)> f =
@@ -151,8 +156,9 @@ arrow::Status Main(char **argv) {
             }
         }
         std::cout << "Read " << total_rows << " rows" << std::endl;
+        Finish(conn_ctx, scan_ctx);
     }
-    
+
     conn_ctx.engine.finalize();
     return arrow::Status::OK();
 }
