@@ -67,6 +67,5 @@ int main(int argc, char *argv[]) {
       MEASURE_FUNCTION_EXECUTION_TIME
       stream->ReadAll(&table);
     }
-    std::cout << "Read " << table->num_rows() << " rows" << std::endl;
   }
 }
