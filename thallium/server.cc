@@ -48,7 +48,8 @@ int main(int argc, char** argv) {
     
     std::function<void(const tl::request&, const ScanReqRPCStub&)> scan = 
         [&consumer_map](const tl::request &req, const ScanReqRPCStub& stub) {
-            
+                        std::cout << "scanning again\n";
+
             arrow::dataset::internal::Initialize();
             cp::ExecContext exec_context;
             std::shared_ptr<ScanResultConsumer> consumer = ScanB(exec_context, stub).ValueOrDie();
