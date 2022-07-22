@@ -115,7 +115,6 @@ int main(int argc, char** argv) {
     
     engine.define("scan", scan);
     engine.define("get_next_batch", get_next_batch);
-    engine.define("finish", finish);
 
     std::cout << "Server running at address " << engine.self() << std::endl;            
 };
