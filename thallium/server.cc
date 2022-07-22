@@ -42,7 +42,7 @@ int main(int argc, char** argv) {
         [&consumer_map](const tl::request &req, const std::string& uuid) {
             std::shared_ptr<ScanResultConsumer> consumer = consumer_map[uuid];
             consumer->dataset.reset();
-            delete consumer->dataset.get();
+            delete consumer.get();
             return req.respond(0);
         };
     
