@@ -58,15 +58,12 @@ int main(int argc, char** argv) {
             std::shared_ptr<arrow::RecordBatchReader> reader = reader_map[uuid];
             std::shared_ptr<arrow::RecordBatch> batch;
 
-            auto status = reader->ReadNext(&batch);
-
-            if (status.ok() && batch != nullptr) {
+            if (reader->ReadNext(&batch).ok() && batch != nullptr) {
 
                 std::vector<int64_t> data_buff_sizes;
                 std::vector<int64_t> offset_buff_sizes;
                 int64_t num_rows = batch->num_rows();
                 total_rows_written += num_rows;
-
 
                 std::vector<std::pair<void*,std::size_t>> segments(batch->num_columns()*2);
 
