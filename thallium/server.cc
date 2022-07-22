@@ -37,16 +37,6 @@ int main(int argc, char** argv) {
     tl::remote_procedure do_rdma = engine.define("do_rdma");
 
     std::unordered_map<std::string, std::shared_ptr<ScanResultConsumer>> consumer_map;
-
-    std::function<void(const tl::request&, const std::string&)> finish = 
-        [&consumer_map](const tl::request &req, const std::string& uuid) {
-                        std::cout << "about to deallocate stuff\n";
-
-            consumer_map.erase(uuid);
-
-            std::cout << "deallocate stuff\n";
-            return req.respond(0);
-        };
     
     std::function<void(const tl::request&, const ScanReqRPCStub&)> scan = 
         [&consumer_map](const tl::request &req, const ScanReqRPCStub& stub) {
@@ -56,12 +46,9 @@ int main(int argc, char** argv) {
             cp::ExecContext exec_context;
             std::shared_ptr<ScanResultConsumer> consumer = ScanB(exec_context, stub).ValueOrDie();
 
-            std::cout << "scanned again\n";
-
             std::string uuid = boost::uuids::to_string(boost::uuids::random_generator()());
             consumer_map[uuid] = consumer;
 
-            std::cout << "mapped a new consumer\n";
             return req.respond(uuid);
         };
 
@@ -69,8 +56,7 @@ int main(int argc, char** argv) {
     std::function<void(const tl::request&, const std::string&)> get_next_batch = 
         [&engine, &do_rdma, &consumer_map, &total_rows_written](const tl::request &req, const std::string& uuid) {
             
-            std::shared_ptr<ScanResultConsumer> consumer = consumer_map[uuid];
-            std::shared_ptr<arrow::RecordBatchReader> reader = consumer->reader;
+            std::shared_ptr<arrow::RecordBatchReader> reader = consumer_map[uuid]->reader;
             std::shared_ptr<arrow::RecordBatch> batch;
 
             if (reader->ReadNext(&batch).ok() && batch != nullptr) {
@@ -122,6 +108,7 @@ int main(int argc, char** argv) {
                 do_rdma.on(req.get_endpoint())(num_rows, data_buff_sizes, offset_buff_sizes, arrow_bulk);
                 return req.respond(0);
             } else {
+                consumer_map.erase(uuid);
                 return req.respond(1);
             }
         };
