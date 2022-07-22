@@ -32,11 +32,6 @@ class ScanResultConsumer {
             std::shared_ptr<arrow::RecordBatchReader> reader, std::shared_ptr<cp::ExecPlan> plan, std::shared_ptr<arrow::dataset::Dataset> dataset)
             : reader(reader), plan(plan), dataset(dataset) {}
 
-        ~ScanResultConsumer() {
-            std::cout << "called destructor\n";
-            dataset.reset();
-            delete dataset.get();
-        }    
         std::shared_ptr<arrow::RecordBatchReader> reader;
         std::shared_ptr<cp::ExecPlan> plan;
         std::shared_ptr<arrow::dataset::Dataset> dataset;
