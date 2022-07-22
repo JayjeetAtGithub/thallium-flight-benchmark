@@ -42,7 +42,7 @@ int main(int argc, char** argv) {
         [&consumer_map](const tl::request &req, const std::string& uuid) {
             std::shared_ptr<ScanResultConsumer> consumer = consumer_map[uuid];
             std::cout << "about to deallocate stuff\n";
-            delete consumer.get();
+            // delete consumer.get();
 
             std::cout << "deallocate stuff\n";
             return req.respond(0);
