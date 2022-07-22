@@ -139,16 +139,20 @@ arrow::Status Main(char **argv) {
 
     ConnCtx conn_ctx = Init(uri);
     ARROW_ASSIGN_OR_RAISE(auto scan_req, GetScanRequest(filter, schema));
-    ScanCtx scan_ctx = Scan(conn_ctx, scan_req);
-    int64_t total_rows = 0;
-    std::shared_ptr<arrow::RecordBatch> batch;
-    {
-        MEASURE_FUNCTION_EXECUTION_TIME
-        while ((batch = GetNextBatch(conn_ctx, scan_ctx).ValueOrDie()) != nullptr) {
-            total_rows += batch->num_rows();
+
+    for (int i = 0; i < 10; i++) {
+        ScanCtx scan_ctx = Scan(conn_ctx, scan_req);
+        int64_t total_rows = 0;
+        std::shared_ptr<arrow::RecordBatch> batch;
+        {
+            MEASURE_FUNCTION_EXECUTION_TIME
+            while ((batch = GetNextBatch(conn_ctx, scan_ctx).ValueOrDie()) != nullptr) {
+                total_rows += batch->num_rows();
+            }
         }
+        std::cout << "Read " << total_rows << " rows" << std::endl;
     }
-    std::cout << "Read " << total_rows << " rows" << std::endl;
+    
     conn_ctx.engine.finalize();
     return arrow::Status::OK();
 }
