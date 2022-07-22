@@ -41,8 +41,11 @@ int main(int argc, char** argv) {
     std::function<void(const tl::request&, const std::string&)> finish = 
         [&consumer_map](const tl::request &req, const std::string& uuid) {
             std::shared_ptr<ScanResultConsumer> consumer = consumer_map[uuid];
+            std::cout << "about to deallocate stuff\n";
             consumer->dataset.reset();
             delete consumer.get();
+
+            std::cout << "deallocate stuff\n";
             return req.respond(0);
         };
     
