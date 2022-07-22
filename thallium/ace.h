@@ -73,6 +73,6 @@ arrow::Result<std::shared_ptr<ScanResultConsumer>> ScanB(cp::ExecContext& exec_c
     ARROW_ASSIGN_OR_RAISE(auto im_ds_scanner, im_ds_scanner_builder->Finish());
     ARROW_ASSIGN_OR_RAISE(auto reader, im_ds_scanner->ToRecordBatchReader());
 
-    auto consumer = std::make_shared<ScanResultConsumer>(reader, plan, dataset);
+    auto consumer = std::make_shared<ScanResultConsumer>(reader, plan, im_ds);
     return consumer;
 }

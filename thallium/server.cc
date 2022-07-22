@@ -36,7 +36,7 @@ int main(int argc, char** argv) {
     
     tl::remote_procedure do_rdma = engine.define("do_rdma");
 
-    std::unordered_map<std::string, std::shared_ptr<arrow::RecordBatchReader>> reader_map;
+    std::unordered_map<std::string, std::shared_ptr<ScanResultConsumer>> reader_map;
     
     std::function<void(const tl::request&, const ScanReqRPCStub&)> scan = 
         [&reader_map](const tl::request &req, const ScanReqRPCStub& stub) {
@@ -44,10 +44,9 @@ int main(int argc, char** argv) {
             arrow::dataset::internal::Initialize();
             cp::ExecContext exec_context;
             std::shared_ptr<ScanResultConsumer> consumer = ScanB(exec_context, stub).ValueOrDie();
-            std::shared_ptr<arrow::RecordBatchReader> reader = consumer->reader;
 
             std::string uuid = boost::uuids::to_string(boost::uuids::random_generator()());
-            reader_map[uuid] = reader;
+            reader_map[uuid] = consumer;
             return req.respond(uuid);
         };
 
@@ -55,7 +54,7 @@ int main(int argc, char** argv) {
     std::function<void(const tl::request&, const std::string&)> get_next_batch = 
         [&engine, &do_rdma, &reader_map, &total_rows_written](const tl::request &req, const std::string& uuid) {
             
-            std::shared_ptr<arrow::RecordBatchReader> reader = reader_map[uuid];
+            std::shared_ptr<arrow::RecordBatchReader> reader = reader_map[uuid]->reader;
             std::shared_ptr<arrow::RecordBatch> batch;
 
             if (reader->ReadNext(&batch).ok() && batch != nullptr) {
