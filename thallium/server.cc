@@ -42,7 +42,7 @@ int main(int argc, char** argv) {
         [&consumer_map](const tl::request &req, const std::string& uuid) {
                         std::cout << "about to deallocate stuff\n";
 
-            delete consumer_map[uuid];
+            consumer_map.erase(uuid);
 
             std::cout << "deallocate stuff\n";
             return req.respond(0);
