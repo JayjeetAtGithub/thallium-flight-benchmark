@@ -53,8 +53,12 @@ int main(int argc, char** argv) {
             cp::ExecContext exec_context;
             std::shared_ptr<ScanResultConsumer> consumer = ScanB(exec_context, stub).ValueOrDie();
 
+            std::cout << "scanned again\n";
+
             std::string uuid = boost::uuids::to_string(boost::uuids::random_generator()());
             consumer_map[uuid] = consumer;
+
+            std::cout << "mapped a new consumer\n";
             return req.respond(uuid);
         };
 
