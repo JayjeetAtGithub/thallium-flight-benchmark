@@ -151,6 +151,7 @@ arrow::Status Main(char **argv) {
             }
         }
         std::cout << "Read " << total_rows << " rows" << std::endl;
+        std::this_thread::sleep_for(std::chrono::milliseconds(2000));
     }
 
     conn_ctx.engine.finalize();
