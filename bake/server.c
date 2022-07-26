@@ -143,7 +143,7 @@ int main(int argc, char* argv[])
 
     fprintf(stdout, "coming till here\n");
 
-    ret = bake_get_data(bph, bti, the_rid, &buf);
+    ret = bake_get_data(bph, bti, the_rid, &(void*)buf);
     if (ret != 0) {
         bake_perror("Error: bake_get_data()", ret);
         bake_provider_handle_release(bph);
