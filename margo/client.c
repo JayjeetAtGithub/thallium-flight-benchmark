@@ -11,7 +11,7 @@ int main(int argc, char** argv)
         exit(0);
     }
 
-    margo_instance_id mid = margo_init("tcp", MARGO_CLIENT_MODE, 0, 0);
+    margo_instance_id mid = margo_init("verbs://ibp130s0", MARGO_CLIENT_MODE, 0, 0);
     margo_set_log_level(mid, MARGO_LOG_DEBUG);
 
     hg_id_t sum_rpc_id = MARGO_REGISTER(mid, "sum", sum_in_t, sum_out_t, NULL);

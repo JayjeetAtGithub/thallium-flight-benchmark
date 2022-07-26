@@ -12,7 +12,7 @@ DECLARE_MARGO_RPC_HANDLER(sum)
 
 int main(int argc, char** argv)
 {
-    margo_instance_id mid = margo_init("tcp", MARGO_SERVER_MODE, 0, 0);
+    margo_instance_id mid = margo_init("verbs://ibp130s0", MARGO_SERVER_MODE, 0, 0);
     assert(mid);
     margo_set_log_level(mid, MARGO_LOG_INFO);
 
