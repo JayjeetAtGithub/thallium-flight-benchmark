@@ -10,4 +10,4 @@ pkg_check_modules (BAKECLIENT REQUIRED IMPORTED_TARGET bake-client)
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
 
 add_executable(bs server.c)
-target_link_libraries(bs bake-client)
+target_link_libraries(bs PkgConfig::BAKECLIENT)
