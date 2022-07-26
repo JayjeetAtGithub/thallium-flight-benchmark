@@ -114,29 +114,29 @@ int main(int argc, char* argv[])
     buf = malloc(buf_size);
     memset(buf, 0, buf_size);
 
-    uint64_t bytes_read;
-    ret = bake_read(bph, bti, the_rid, 0, buf, buf_size, &bytes_read);
-    if (ret != 0) {
-        bake_perror("Error: bake_read()", ret);
-        free(buf);
-        bake_provider_handle_release(bph);
-        margo_addr_free(mid, svr_addr);
-        bake_client_finalize(bcl);
-        margo_finalize(mid);
-        return (-1);
-    }
+    // uint64_t bytes_read;
+    // ret = bake_read(bph, bti, the_rid, 0, buf, buf_size, &bytes_read);
+    // if (ret != 0) {
+    //     bake_perror("Error: bake_read()", ret);
+    //     free(buf);
+    //     bake_provider_handle_release(bph);
+    //     margo_addr_free(mid, svr_addr);
+    //     bake_client_finalize(bcl);
+    //     margo_finalize(mid);
+    //     return (-1);
+    // }
 
-    /* check to make sure we get back the string we expect */
-    if (strcmp(buf, test_str) != 0) {
-        fprintf(stderr,
-                "Error: unexpected buffer contents returned from BAKE\n");
-        free(buf);
-        bake_provider_handle_release(bph);
-        margo_addr_free(mid, svr_addr);
-        bake_client_finalize(bcl);
-        margo_finalize(mid);
-        return (-1);
-    }
+    // /* check to make sure we get back the string we expect */
+    // if (strcmp(buf, test_str) != 0) {
+    //     fprintf(stderr,
+    //             "Error: unexpected buffer contents returned from BAKE\n");
+    //     free(buf);
+    //     bake_provider_handle_release(bph);
+    //     margo_addr_free(mid, svr_addr);
+    //     bake_client_finalize(bcl);
+    //     margo_finalize(mid);
+    //     return (-1);
+    // }
 
     // get a raw pointer to the data
     void *ptr;
