@@ -150,7 +150,6 @@ int main(int argc, char* argv[])
         return (-1);
     }
 
-    fprintf(stdout, size);
 
     /* shutdown the server */
     // ret = bake_shutdown_service(bcl, svr_addr);
