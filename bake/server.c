@@ -139,6 +139,9 @@ int main(int argc, char* argv[])
     // }
 
     // get a raw pointer to the data
+
+    fprintf(stdout, "coming till here\n");
+
     ret = bake_get_data(bph, bti, the_rid, &buf);
     if (ret != 0) {
         bake_perror("Error: bake_get_data()", ret);
