@@ -24,7 +24,7 @@ int main(int argc, char* argv[])
     bake_target_id_t       bti;
     bake_region_id_t       the_rid;
     char*                  test_str = NULL;
-    char*                  buf;
+    void*                  buf;
     uint64_t               buf_size;
     hg_return_t            hret;
     int                    ret;
@@ -112,7 +112,7 @@ int main(int argc, char* argv[])
 
     /**** read-back phase ****/
 
-    buf = malloc(buf_size);
+    buf = (void*)malloc(buf_size);
     memset(buf, 0, buf_size);
 
     // uint64_t bytes_read;
@@ -143,7 +143,7 @@ int main(int argc, char* argv[])
 
     fprintf(stdout, "coming till here\n");
 
-    ret = bake_get_data(bph, bti, the_rid, &(void*)buf);
+    ret = bake_get_data(bph, bti, the_rid, &buf);
     if (ret != 0) {
         bake_perror("Error: bake_get_data()", ret);
         bake_provider_handle_release(bph);
