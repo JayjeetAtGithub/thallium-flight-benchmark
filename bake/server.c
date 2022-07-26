@@ -139,7 +139,7 @@ int main(int argc, char* argv[])
     }
 
     // get a raw pointer to the data
-    void *ptr = NULL;
+    void *ptr;
     ret = bake_get_data(bph, bti, the_rid, &ptr);
     if (ret != 0) {
         bake_perror("Error: bake_get_data()", ret);
