@@ -139,27 +139,16 @@ int main(int argc, char* argv[])
     }
 
     // get a raw pointer to the data
-    // void *ptr = NULL;
-    // ret = bake_get_data(bph, bti, the_rid, &ptr);
-    // if (ret != 0) {
-    //     bake_perror("Error: bake_get_data()", ret);
-    //     bake_provider_handle_release(bph);
-    //     margo_addr_free(mid, svr_addr);
-    //     bake_client_finalize(bcl);
-    //     margo_finalize(mid);
-    //     return (-1);
-    // }
-
-    uint64_t size;
-    ret = bake_get_size(bph, bti, the_rid, &size);
+    void *ptr = NULL;
+    ret = bake_get_data(bph, bti, the_rid, &ptr);
     if (ret != 0) {
-        bake_perror("Error: bake_get_size()", ret);
+        bake_perror("Error: bake_get_data()", ret);
         bake_provider_handle_release(bph);
         margo_addr_free(mid, svr_addr);
         bake_client_finalize(bcl);
         margo_finalize(mid);
-        return -1;
-    }   
+        return (-1);
+    }
 
     fprintf(stdout, size);
 
