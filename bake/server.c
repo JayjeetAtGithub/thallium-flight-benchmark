@@ -58,7 +58,7 @@ int main(int argc, char* argv[])
         return (-1);
     }
 
-q    ret = bake_client_init(mid, &bcl);
+    ret = bake_client_init(mid, &bcl);
     if (ret != 0) {
         bake_perror("Error: bake_client_init()", ret);
         margo_finalize(mid);
