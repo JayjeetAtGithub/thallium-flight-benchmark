@@ -139,7 +139,7 @@ int main(int argc, char* argv[])
     }
 
     /* shutdown the server */
-    ret = bake_shutdown_service(bcl, svr_addr);
+    // ret = bake_shutdown_service(bcl, svr_addr);
 
     /**** cleanup ****/
 
