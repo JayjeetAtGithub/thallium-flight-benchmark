@@ -9,3 +9,4 @@ set(CMAKE_INSTALL_PREFIX ${PROJECT_SOURCE_DIR})
 
 add_subdirectory(thallium)
 add_subdirectory(flight)
+add_subdirectory(margo)
