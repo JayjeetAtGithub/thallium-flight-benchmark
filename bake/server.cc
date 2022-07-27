@@ -5,6 +5,7 @@
 #include <mercury.h>
 #include <abt.h>
 #include <margo.h>
+#include <memory>
 
 #include <bake-client.hpp>
 
@@ -14,19 +15,12 @@ namespace bk = bake;
 
 int main(int argc, char* argv[]) {
 
-    
-
     int                    i;
     char                   cli_addr_prefix[64] = {0};
     char*                  bake_svr_addr_str;
     margo_instance_id      mid;
     hg_addr_t              svr_addr;
     uint8_t                mplex_id;
-    bake_client_t          bcl;
-    bake_provider_handle_t bph;
-    uint64_t               num_targets;
-    bake_target_id_t       bti;
-    bake_region_id_t       the_rid;
     char*                  test_str = NULL;
     void*                  buf;
     uint64_t               buf_size;
@@ -153,7 +147,7 @@ static char* read_input_file(const char* filename)
     fseek(fp, 0, SEEK_END);
     size_t sz = ftell(fp);
     fseek(fp, 0, SEEK_SET);
-    char* buf = calloc(1, sz + 1);
+    char* buf = (char*)calloc(1, sz + 1);
     ret       = fread(buf, 1, sz, fp);
     if (ret != sz && ferror(fp)) {
         free(buf);
