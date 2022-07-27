@@ -16,22 +16,12 @@ namespace bk = bake;
 
 int main(int argc, char* argv[]) {
 
-    char                   cli_addr_prefix[64] = {0};
-
-
     char* input_file  = argv[1];
     char *bake_svr_addr_str = argv[2];
+    
     char *test_str = read_input_file(input_file);
 
-    /* initialize Margo using the transport portion of the server
-     * address (i.e., the part before the first : character if present)
-    //  */
-    // for (int i = 0; (i < 63 && bake_svr_addr_str[i] != '\0'
-    //              && bake_svr_addr_str[i] != ':');
-    //      i++)
-    //     cli_addr_prefix[i] = bake_svr_addr_str[i];
-
-    margo_instance_id mid = margo_init("verbs", MARGO_SERVER_MODE, 0, 0);
+    margo_instance_id mid = margo_init("verbs://ibp130s0", MARGO_SERVER_MODE, 0, 0);
     if (mid == MARGO_INSTANCE_NULL) {
         std::cerr << "Error: margo_init()\n";
         return -1;
