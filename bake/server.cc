@@ -38,23 +38,19 @@ int main(int argc, char* argv[]) {
     bk::client bcl(mid);
     bk::provider_handle bph(bcl, svr_addr, 1);
     bph.set_eager_limit(0);
-
     bk::target tid = bcl.probe(bph, 1)[0];
 
-    /**** write phase ****/
+    // write phase
     uint64_t buf_size = strlen(test_str) + 1;
-
     auto region = bcl.create_write_persist(bph, tid, test_str, buf_size);
 
 
-    /**** read-back phase ****/
-
+    // read-back phase
     void *buf = (void*)malloc(buf_size);
     memset(buf, 0, buf_size);
-
     bcl.read(bph, tid, region, 0, buf, buf_size);
 
-    /* check to make sure we get back the string we expect */
+    // verify the returned string
     if (strcmp((char*)buf, test_str) != 0) {
         std::cerr << "Error: unexpected buffer contents returned from BAKE\n";
         delete buf;
@@ -63,14 +59,12 @@ int main(int argc, char* argv[]) {
         return -1;
     }
 
-    std::string s((char*)buf, buf_size);
-    std::cout << s << std::endl;
+    // try zero copy access
+    char* zero_copy_pointer = (char*)bcl.get_data(bph, tid, region);
+    std::string str((char*)zero_copy_pointer, buf_size);
+    std::cout << str << std::endl;
 
-    char* zc_str = (char*)bcl.get_data(bph, tid, region);
-    std::string zc_s((char*)zc_str, buf_size);
-    std::cout << zc_s << std::endl;
-
-
+    // free resources
     delete buf;
     delete test_str;
     margo_addr_free(mid, svr_addr);
