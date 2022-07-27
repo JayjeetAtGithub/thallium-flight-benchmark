@@ -44,8 +44,9 @@ int main(int argc, char* argv[]) {
     std::cout << "till here\n";
 
     // write phase
-    // uint64_t buf_size = strlen(test_str) + 1;
-    // bk::region rid = bcl.create_write_persist(bph, tid, test_str, buf_size);
+    uint64_t buf_size = strlen(test_str) + 1;
+    bk::region rid = bcl.create_write_persist(bph, tid, test_str, buf_size);
+    std::cout << "wroite\n";
 
     // // read-back phase
     // void *buf = (void*)malloc(buf_size);
