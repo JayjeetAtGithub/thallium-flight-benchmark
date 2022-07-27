@@ -17,13 +17,13 @@ int main(int argc, char* argv[]) {
         return -1;
     }
     
-    hg_addr_t svr_addr;
-    hg_return_t hret = margo_addr_lookup(mid, argv[2], &svr_addr);
-    if (hret != HG_SUCCESS) {
-        std::cerr << "Error: margo_addr_lookup()\n";
-        margo_finalize(mid);
-        return -1;
-    }
+    // hg_addr_t svr_addr;
+    // hg_return_t hret = margo_addr_lookup(mid, argv[2], &svr_addr);
+    // if (hret != HG_SUCCESS) {
+    //     std::cerr << "Error: margo_addr_lookup()\n";
+    //     margo_finalize(mid);
+    //     return -1;
+    // }
 
     char *config = read_input_file("bake/config.json");
 
@@ -35,41 +35,41 @@ int main(int argc, char* argv[]) {
 
     std::cout << "successfully setup provider";
 
-    bk::client bcl(mid);
-    bk::provider_handle bph(bcl, svr_addr, 0);
-    bph.set_eager_limit(0);
-    bk::target tid = bcl.probe(bph, 1)[0];
+    // bk::client bcl(mid);
+    // bk::provider_handle bph(bcl, svr_addr, 0);
+    // bph.set_eager_limit(0);
+    // bk::target tid = bcl.probe(bph, 1)[0];
 
-    // write phase
-    uint64_t buf_size = strlen(test_str) + 1;
-    bk::region rid = bcl.create_write_persist(bph, tid, test_str, buf_size);
+    // // write phase
+    // uint64_t buf_size = strlen(test_str) + 1;
+    // bk::region rid = bcl.create_write_persist(bph, tid, test_str, buf_size);
 
-    // read-back phase
-    void *buf = (void*)malloc(buf_size);
-    memset(buf, 0, buf_size);
-    bcl.read(bph, tid, rid, 0, buf, buf_size);
+    // // read-back phase
+    // void *buf = (void*)malloc(buf_size);
+    // memset(buf, 0, buf_size);
+    // bcl.read(bph, tid, rid, 0, buf, buf_size);
 
-    // verify the returned string
-    if (strcmp((char*)buf, test_str) != 0) {
-        std::cerr << "Error: unexpected buffer contents returned from BAKE\n";
-        free(buf);
-        margo_addr_free(mid, svr_addr);
-        margo_finalize(mid);
-        return -1;
-    } else {
-        std::cout << "Read: " << std::string((char*)buf, buf_size) << "\n";
-    }
+    // // verify the returned string
+    // if (strcmp((char*)buf, test_str) != 0) {
+    //     std::cerr << "Error: unexpected buffer contents returned from BAKE\n";
+    //     free(buf);
+    //     margo_addr_free(mid, svr_addr);
+    //     margo_finalize(mid);
+    //     return -1;
+    // } else {
+    //     std::cout << "Read: " << std::string((char*)buf, buf_size) << "\n";
+    // }
 
-    // try zero copy access
-    char* zero_copy_pointer = (char*)bcl.get_data(bph, tid, rid);
-    std::string str((char*)zero_copy_pointer, buf_size);
-    std::cout << str << std::endl;
+    // // try zero copy access
+    // char* zero_copy_pointer = (char*)bcl.get_data(bph, tid, rid);
+    // std::string str((char*)zero_copy_pointer, buf_size);
+    // std::cout << str << std::endl;
 
-    // free resources
-    free(buf);
-    free(test_str);
-    margo_addr_free(mid, svr_addr);
-    margo_finalize(mid);
+    // // free resources
+    // free(buf);
+    // free(test_str);
+    // margo_addr_free(mid, svr_addr);
+    // margo_finalize(mid);
     return 0;
 }
 
