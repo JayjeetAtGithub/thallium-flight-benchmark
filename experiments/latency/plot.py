@@ -9,7 +9,7 @@ if __name__ == "__main__":
         "mode": list()
     }
 
-    with open("thallium.out", "r") as th_file:
+    with open("thallium.out.3000", "r") as th_file:
         lines = th_file.readlines()
         lines = [float(l.rstrip()) for l in lines]
         for l in lines:
@@ -18,7 +18,7 @@ if __name__ == "__main__":
 
 
                 
-    with open("flight.out", "r") as flight_file:
+    with open("flight.out.3000", "r") as flight_file:
         lines = flight_file.readlines()
         lines = [float(l.rstrip()) for l in lines]
         for l in lines:
@@ -29,5 +29,5 @@ if __name__ == "__main__":
     df = pd.DataFrame(data)
     print(df)
     sns_plot = sns.barplot(x="mode", y="latency", data=df)
-    plt.title("Latency: 207.8 GB")
-    plt.savefig('latency.pdf')
+    plt.title("Latency: 311.7 GB")
+    plt.savefig('latency_3000.pdf')
