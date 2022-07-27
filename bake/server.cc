@@ -6,12 +6,16 @@
 #include <abt.h>
 #include <margo.h>
 
-#include "bake-client.h"
+#include <bake-client.hpp>
 
 static char* read_input_file(const char* filename);
 
-int main(int argc, char* argv[])
-{
+namespace bk = bake;
+
+int main(int argc, char* argv[]) {
+
+    
+
     int                    i;
     char                   cli_addr_prefix[64] = {0};
     char*                  bake_svr_addr_str;
@@ -58,14 +62,7 @@ int main(int argc, char* argv[])
         fprintf(stderr, "Error: margo_init()\n");
         return (-1);
     }
-
-    ret = bake_client_init(mid, &bcl);
-    if (ret != 0) {
-        bake_perror("Error: bake_client_init()", ret);
-        margo_finalize(mid);
-        return -1;
-    }
-
+    
     /* look up the BAKE server address */
     hret = margo_addr_lookup(mid, bake_svr_addr_str, &svr_addr);
     if (hret != HG_SUCCESS) {
@@ -75,89 +72,66 @@ int main(int argc, char* argv[])
         return (-1);
     }
 
-    /* create a BAKE provider handle */
-    ret = bake_provider_handle_create(bcl, svr_addr, mplex_id, &bph);
-    if (ret != 0) {
-        bake_perror("Error: bake_provider_handle_create()", ret);
-        margo_addr_free(mid, svr_addr);
-        bake_client_finalize(bcl);
-        margo_finalize(mid);
-        return (-1);
-    }
-    bake_provider_handle_set_eager_limit(bph, 0);
+    auto bcl = std::make_shared<bk::client>(mid);
+    auto bph = std::make_shared<bk::provider_handle>(client, 1);
+    bph->set_eager_limit(0);
 
-    /* obtain info on the server's BAKE target */
-    ret = bake_probe(bph, 1, &bti, &num_targets);
-    if (ret != 0) {
-        bake_perror("Error: bake_probe()", ret);
-        bake_provider_handle_release(bph);
-        margo_addr_free(mid, svr_addr);
-        bake_client_finalize(bcl);
-        margo_finalize(mid);
-        return (-1);
-    }
+    bk::target tid = bk::probe(bph, 1)[0];
 
     /**** write phase ****/
     buf_size = strlen(test_str) + 1;
 
-    ret = bake_create_write_persist(bph, bti, test_str, buf_size, &the_rid);
-    if (ret != 0) {
-        bake_perror("Error: bake_create_write_persist()", ret);
-        bake_provider_handle_release(bph);
-        margo_addr_free(mid, svr_addr);
-        bake_client_finalize(bcl);
-        margo_finalize(mid);
-        return (-1);
-    }
+    auto region = bk::client::create_write_persist(bph, tid, test_str, buf_size);
 
-    /**** read-back phase ****/
 
-    buf = (void*)malloc(buf_size);
-    memset(buf, 0, buf_size);
+    // /**** read-back phase ****/
 
-    uint64_t bytes_read;
-    ret = bake_read(bph, bti, the_rid, 0, buf, buf_size, &bytes_read);
-    if (ret != 0) {
-        bake_perror("Error: bake_read()", ret);
-        free(buf);
-        bake_provider_handle_release(bph);
-        margo_addr_free(mid, svr_addr);
-        bake_client_finalize(bcl);
-        margo_finalize(mid);
-        return (-1);
-    }
+    // buf = (void*)malloc(buf_size);
+    // memset(buf, 0, buf_size);
 
-    /* check to make sure we get back the string we expect */
-    if (strcmp(buf, test_str) != 0) {
-        fprintf(stderr,
-                "Error: unexpected buffer contents returned from BAKE\n");
-        free(buf);
-        bake_provider_handle_release(bph);
-        margo_addr_free(mid, svr_addr);
-        bake_client_finalize(bcl);
-        margo_finalize(mid);
-        return (-1);
-    }
+    // uint64_t bytes_read;
+    // ret = bake_read(bph, bti, the_rid, 0, buf, buf_size, &bytes_read);
+    // if (ret != 0) {
+    //     bake_perror("Error: bake_read()", ret);
+    //     free(buf);
+    //     bake_provider_handle_release(bph);
+    //     margo_addr_free(mid, svr_addr);
+    //     bake_client_finalize(bcl);
+    //     margo_finalize(mid);
+    //     return (-1);
+    // }
 
-    /* get a raw pointer to the data */
-    void *ptr;
-    ret = bake_get_data(bph, bti, the_rid, &ptr);
+    // /* check to make sure we get back the string we expect */
+    // if (strcmp(buf, test_str) != 0) {
+    //     fprintf(stderr,
+    //             "Error: unexpected buffer contents returned from BAKE\n");
+    //     free(buf);
+    //     bake_provider_handle_release(bph);
+    //     margo_addr_free(mid, svr_addr);
+    //     bake_client_finalize(bcl);
+    //     margo_finalize(mid);
+    //     return (-1);
+    // }
+
+    // /* get a raw pointer to the data */
+    // void *ptr;
+    // ret = bake_get_data(bph, bti, the_rid, &ptr);
     
-    fprintf(stdout, "coming till here 2\n");
-    if (ret != 0) {
-        bake_perror("Error: bake_get_data()", ret);
-        bake_provider_handle_release(bph);
-        margo_addr_free(mid, svr_addr);
-        bake_client_finalize(bcl);
-        margo_finalize(mid);
-        return (-1);
-    }
+    // fprintf(stdout, "coming till here 2\n");
+    // if (ret != 0) {
+    //     bake_perror("Error: bake_get_data()", ret);
+    //     bake_provider_handle_release(bph);
+    //     margo_addr_free(mid, svr_addr);
+    //     bake_client_finalize(bcl);
+    //     margo_finalize(mid);
+    //     return (-1);
+    // }
 
 
-    /* shutdown the server */
-    // ret = bake_shutdown_service(bcl, svr_addr);
+    // /* shutdown the server */
+    // // ret = bake_shutdown_service(bcl, svr_addr);
 
-    /**** cleanup ****/
+    // /**** cleanup ****/
 
     free(buf);
     free(test_str);
