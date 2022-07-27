@@ -45,7 +45,7 @@ int main(int argc, char* argv[]) {
     // verify the returned string
     if (strcmp((char*)buf, test_str) != 0) {
         std::cerr << "Error: unexpected buffer contents returned from BAKE\n";
-        delete buf;
+        free(buf);
         margo_addr_free(mid, svr_addr);
         margo_finalize(mid);
         return -1;
@@ -59,8 +59,8 @@ int main(int argc, char* argv[]) {
     std::cout << str << std::endl;
 
     // free resources
-    free (buf);
-    free (test_str);
+    free(buf);
+    free(test_str);
     margo_addr_free(mid, svr_addr);
     margo_finalize(mid);
     return 0;
