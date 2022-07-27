@@ -75,7 +75,7 @@ int main(int argc, char* argv[]) {
     /**** write phase ****/
     buf_size = strlen(test_str) + 1;
 
-    auto region = bk::client::create_write_persist(bph, tid, test_str, buf_size);
+    auto region = bk::client::create_write_persist(*bph, tid, test_str, buf_size);
 
 
     // /**** read-back phase ****/
