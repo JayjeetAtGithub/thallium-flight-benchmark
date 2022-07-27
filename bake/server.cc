@@ -17,13 +17,13 @@ int main(int argc, char* argv[]) {
         return -1;
     }
     
-    // hg_addr_t svr_addr;
-    // hg_return_t hret = margo_addr_lookup(mid, argv[2], &svr_addr);
-    // if (hret != HG_SUCCESS) {
-    //     std::cerr << "Error: margo_addr_lookup()\n";
-    //     margo_finalize(mid);
-    //     return -1;
-    // }
+    hg_addr_t svr_addr;
+    hg_return_t hret = margo_addr_lookup(mid, argv[2], &svr_addr);
+    if (hret != HG_SUCCESS) {
+        std::cerr << "Error: margo_addr_lookup()\n";
+        margo_finalize(mid);
+        return -1;
+    }
 
     char *config = read_input_file("bake/config.json");
 
