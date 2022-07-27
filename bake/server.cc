@@ -25,7 +25,7 @@ int main(int argc, char* argv[]) {
         return -1;
     }
 
-    std::string config_filename = "config.json";
+    std::string config_filename = "bake/config.json";
     char *config = read_input_file(config_filename.c_str());
 
     // setup provider
