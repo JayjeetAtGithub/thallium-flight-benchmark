@@ -1,6 +1,3 @@
-#include <mercury.h>
-#include <abt.h>
-#include <margo.h>
 #include <memory>
 #include <iostream>
 
