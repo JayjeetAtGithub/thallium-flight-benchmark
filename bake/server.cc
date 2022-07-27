@@ -34,8 +34,8 @@ int main(int argc, char* argv[]) {
     // bk::target target = p->attach_target("/mnt/cephfs/bake.dat");
 
     std::cout << "successfully setup provider";
-    std::string config = p->get_config();
-    std::cout << config << "\n";
+    std::string cfg = p->get_config();
+    std::cout << cfg << "\n";
 
     bk::client bcl(mid);
     bk::provider_handle bph(bcl, svr_addr, 0);
