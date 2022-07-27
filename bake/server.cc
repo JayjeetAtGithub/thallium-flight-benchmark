@@ -33,7 +33,7 @@ int main(int argc, char* argv[]) {
     // bk::target target = p->attach_target("/mnt/cephfs/bake.dat");
 
     bk::client bcl(mid);
-    bk::provider_handle bph(bcl, svr_addr, 1);
+    bk::provider_handle bph(bcl, svr_addr, 0);
     bph.set_eager_limit(0);
     bk::target tid = bcl.probe(bph, 1)[0];
 
