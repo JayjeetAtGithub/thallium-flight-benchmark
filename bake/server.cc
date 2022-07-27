@@ -60,8 +60,7 @@ int main(int argc, char* argv[]) {
     /* look up the BAKE server address */
     hret = margo_addr_lookup(mid, bake_svr_addr_str, &svr_addr);
     if (hret != HG_SUCCESS) {
-        bake_perror("Error: margo_addr_lookup()", ret);
-        bake_client_finalize(bcl);
+        std::cerr << "Error: margo_addr_lookup() :" << ret << "\n";
         margo_finalize(mid);
         return (-1);
     }
