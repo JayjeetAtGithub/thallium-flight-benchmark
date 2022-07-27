@@ -93,7 +93,8 @@ int main(int argc, char* argv[]) {
         return (-1);
     }
 
-    std::cout << static_cast<const void*>(buf) << "\n";
+    std::string s((char*)buf, buf_size);
+    std::cout << s << "\n";
 
     // /* get a raw pointer to the data */
     // void *ptr;
