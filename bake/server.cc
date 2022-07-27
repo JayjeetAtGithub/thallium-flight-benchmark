@@ -84,7 +84,7 @@ int main(int argc, char* argv[]) {
     bcl.read(bph, tid, region, 0, buf, buf_size);
 
     /* check to make sure we get back the string we expect */
-    if (strcmp(buf, test_str) != 0) {
+    if (strcmp((char*)buf, test_str) != 0) {
         fprintf(stderr,
                 "Error: unexpected buffer contents returned from BAKE\n");
         free(buf);
