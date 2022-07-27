@@ -28,7 +28,7 @@ int main(int argc, char* argv[]) {
     char *config = read_input_file("config.json");
 
     // setup provider
-    provider *p = bk::provider::create(
+    bk::provider *p = bk::provider::create(
         mid, 1, ABT_POOL_NULL, std::string(config, strlen(config)+1), ABT_IO_INSTANCE_NULL, NULL, NULL);
 
     bk::client bcl(mid);
