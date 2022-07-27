@@ -94,7 +94,7 @@ int main(int argc, char* argv[]) {
     }
 
     std::string s((char*)buf, buf_size);
-    std::cout << s << "\n";
+    std::cout << s << std::endl;
 
     // /* get a raw pointer to the data */
     // void *ptr;
