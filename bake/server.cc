@@ -1,7 +1,3 @@
-#include <stdio.h>
-#include <assert.h>
-#include <unistd.h>
-#include <stdlib.h>
 #include <mercury.h>
 #include <abt.h>
 #include <margo.h>
