@@ -32,6 +32,8 @@ int main(int argc, char* argv[]) {
         mid, 0, ABT_POOL_NULL, std::string(config, strlen(config)+1), ABT_IO_INSTANCE_NULL, NULL, NULL);
     // bk::target target = p->attach_target("/mnt/cephfs/bake.dat");
 
+    std::cout << "successfully setup provider";
+
     bk::client bcl(mid);
     bk::provider_handle bph(bcl, svr_addr, 0);
     bph.set_eager_limit(0);
