@@ -7,12 +7,8 @@ static char* read_input_file(const char* filename);
 
 namespace bk = bake;
 
-int main(int argc, char* argv[]) {
-
-    char* input_file  = argv[1];
-    char *bake_svr_addr_str = argv[2];
-    
-    char *test_str = read_input_file(input_file);
+int main(int argc, char* argv[]) {    
+    char *test_str = read_input_file(argv[1]);
 
     margo_instance_id mid = margo_init("verbs://ibp130s0", MARGO_SERVER_MODE, 0, 0);
     if (mid == MARGO_INSTANCE_NULL) {
@@ -21,7 +17,7 @@ int main(int argc, char* argv[]) {
     }
     
     hg_addr_t svr_addr;
-    hg_return_t hret = margo_addr_lookup(mid, bake_svr_addr_str, &svr_addr);
+    hg_return_t hret = margo_addr_lookup(mid, argv[2], &svr_addr);
     if (hret != HG_SUCCESS) {
         std::cerr << "Error: margo_addr_lookup()\n";
         margo_finalize(mid);
