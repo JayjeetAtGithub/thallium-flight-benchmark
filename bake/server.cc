@@ -29,9 +29,9 @@ int main(int argc, char* argv[]) {
     char *config = read_input_file(config_filename.c_str());
 
     // setup provider
-    bk::target target = bk::attach_target("/mnt/cephfs/bake.dat");
     bk::provider *p = bk::provider::create(
-        mid, 1, ABT_POOL_NULL, std::string(config, strlen(config)+1), ABT_IO_INSTANCE_NULL, NULL, NULL);
+        mid, 0, ABT_POOL_NULL, std::string(config, strlen(config)+1), ABT_IO_INSTANCE_NULL, NULL, NULL);
+    bk::target target = p->attach_target("/mnt/cephfs/bake.dat");
 
     bk::client bcl(mid);
     bk::provider_handle bph(bcl, svr_addr, 1);
