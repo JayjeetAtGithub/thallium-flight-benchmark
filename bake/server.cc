@@ -85,7 +85,7 @@ int main(int argc, char* argv[]) {
     delete test_str;
     margo_addr_free(mid, svr_addr);
     margo_finalize(mid);
-    return ret;
+    return 0;
 }
 
 static char* read_input_file(const char* filename)
