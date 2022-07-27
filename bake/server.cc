@@ -35,13 +35,12 @@ int main(int argc, char* argv[]) {
 
     // write phase
     uint64_t buf_size = strlen(test_str) + 1;
-    auto region = bcl.create_write_persist(bph, tid, test_str, buf_size);
-
+    bk::region rid = bcl.create_write_persist(bph, tid, test_str, buf_size);
 
     // read-back phase
     void *buf = (void*)malloc(buf_size);
     memset(buf, 0, buf_size);
-    bcl.read(bph, tid, region, 0, buf, buf_size);
+    bcl.read(bph, tid, rid, 0, buf, buf_size);
 
     // verify the returned string
     if (strcmp((char*)buf, test_str) != 0) {
@@ -50,16 +49,18 @@ int main(int argc, char* argv[]) {
         margo_addr_free(mid, svr_addr);
         margo_finalize(mid);
         return -1;
+    } else {
+        std::cout << "Read: " << std::string((char*)buf, buf_size) << "\n";
     }
 
     // try zero copy access
-    char* zero_copy_pointer = (char*)bcl.get_data(bph, tid, region);
+    char* zero_copy_pointer = (char*)bcl.get_data(bph, tid, rid);
     std::string str((char*)zero_copy_pointer, buf_size);
     std::cout << str << std::endl;
 
     // free resources
-    delete buf;
-    delete test_str;
+    free (buf);
+    free (test_str);
     margo_addr_free(mid, svr_addr);
     margo_finalize(mid);
     return 0;
