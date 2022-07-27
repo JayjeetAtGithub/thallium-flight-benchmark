@@ -66,16 +66,16 @@ int main(int argc, char* argv[]) {
         return (-1);
     }
 
-    auto bcl = std::make_shared<bk::client>(mid);
-    auto bph = std::make_shared<bk::provider_handle>(bcl, 1);
-    bph->set_eager_limit(0);
+    bk::client bcl(mid);
+    bk::provider_handle bph(bcl, 1);
+    bph.set_eager_limit(0);
 
-    bk::target tid = bcl->probe(*bph, 1)[0];
+    bk::target tid = bcl.probe(bph, 1)[0];
 
     /**** write phase ****/
     buf_size = strlen(test_str) + 1;
 
-    auto region = bcl->create_write_persist(*bph, tid, test_str, buf_size);
+    auto region = bcl.create_write_persist(bph, tid, test_str, buf_size);
 
 
     // /**** read-back phase ****/
