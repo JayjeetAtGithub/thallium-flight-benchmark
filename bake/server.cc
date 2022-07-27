@@ -40,7 +40,7 @@ int main(int argc, char* argv[]) {
     // bk::client bcl(mid);
     // bk::provider_handle bph(bcl, svr_addr, 0);
     // bph.set_eager_limit(0);
-    // bk::target tid = p->list_targets()[0];
+    bk::target tid = p->list_targets()[0];
 
     // write phase
     // uint64_t buf_size = strlen(test_str) + 1;
