@@ -31,7 +31,7 @@ int main(int argc, char* argv[]) {
     uint64_t config_size = strlen(config) + 1;
     bk::provider *p = bk::provider::create(
         mid, 0, ABT_POOL_NULL, std::string(config, config_size), ABT_IO_INSTANCE_NULL, NULL, NULL);
-    bk::target target = p->attach_target("/mnt/cephfs/bake.dat");
+    // bk::target target = p->attach_target("/mnt/cephfs/bake.dat");
 
     std::cout << "successfully setup provider";
     std::string cfg = p->get_config();
@@ -40,6 +40,7 @@ int main(int argc, char* argv[]) {
     bk::client bcl(mid);
     bk::provider_handle bph(bcl, svr_addr, 0);
     bph.set_eager_limit(0);
+    bk::target tid = p->list_targets()[0];
 
     // write phase
     uint64_t buf_size = strlen(test_str) + 1;
