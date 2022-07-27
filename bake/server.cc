@@ -28,8 +28,9 @@ int main(int argc, char* argv[]) {
     char *config = read_input_file("bake/config.json");
 
     // setup provider
+    uint64_t config_size = strlen(config) + 1;
     bk::provider *p = bk::provider::create(
-        mid, 0, ABT_POOL_NULL, std::string(config, strlen(config)+1), ABT_IO_INSTANCE_NULL, NULL, NULL);
+        mid, 0, ABT_POOL_NULL, std::string(config, config_size), ABT_IO_INSTANCE_NULL, NULL, NULL);
     // bk::target target = p->attach_target("/mnt/cephfs/bake.dat");
 
     std::cout << "successfully setup provider";
