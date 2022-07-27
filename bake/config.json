@@ -6,8 +6,9 @@
     "pipeline_first_buffer_size":65536,
     "pipeline_multiplier":4,
     "pmem_backend":{
+      "default_initial_target_size":1073741824,
       "targets":[
         "/mnt/cephfs/bake.dat"
       ]
     }
-  }
+}
