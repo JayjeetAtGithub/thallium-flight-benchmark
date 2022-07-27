@@ -129,9 +129,7 @@ int main(int argc, char* argv[]) {
 
     free(buf);
     free(test_str);
-    bake_provider_handle_release(bph);
     margo_addr_free(mid, svr_addr);
-    bake_client_finalize(bcl);
     margo_finalize(mid);
     return (ret);
 }
