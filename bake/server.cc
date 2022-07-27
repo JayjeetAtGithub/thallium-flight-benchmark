@@ -37,8 +37,8 @@ int main(int argc, char* argv[]) {
     std::string cfg = p->get_config();
     std::cout << cfg << "\n";
 
-    // bk::client bcl(mid);
-    // bk::provider_handle bph(bcl, svr_addr, 0);
+    bk::client bcl(mid);
+    bk::provider_handle bph(bcl, svr_addr, 0);
     // bph.set_eager_limit(0);
     bk::target tid = p->list_targets()[0];
 
