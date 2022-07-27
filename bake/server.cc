@@ -96,6 +96,13 @@ int main(int argc, char* argv[]) {
     std::string s((char*)buf, buf_size);
     std::cout << s << std::endl;
 
+
+    char* zc_str = (char*)bcl.get_data(bph, tid, region);
+    std::string zc_s((char*)zc_str, buf_size);
+    std::cout << zc_s << std::endl;
+
+
+
     // /* get a raw pointer to the data */
     // void *ptr;
     // ret = bake_get_data(bph, bti, the_rid, &ptr);
