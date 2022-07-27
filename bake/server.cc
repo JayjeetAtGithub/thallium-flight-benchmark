@@ -36,7 +36,7 @@ int main(int argc, char* argv[]) {
     std::cout << "successfully setup provider";
 
     bk::client bcl(mid);
-    // bk::provider_handle bph(bcl, svr_addr, 0);
+    bk::provider_handle bph(bcl, svr_addr, 0);
     // bph.set_eager_limit(0);
     // bk::target tid = bcl.probe(bph, 1)[0];
 
