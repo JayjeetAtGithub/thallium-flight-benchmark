@@ -17,13 +17,13 @@ int main(int argc, char* argv[]) {
         return -1;
     }
     
-    hg_addr_t svr_addr;
-    hg_return_t hret = margo_addr_lookup(mid, argv[2], &svr_addr);
-    if (hret != HG_SUCCESS) {
-        std::cerr << "Error: margo_addr_lookup()\n";
-        margo_finalize(mid);
-        return -1;
-    }
+    // hg_addr_t svr_addr;
+    // hg_return_t hret = margo_addr_lookup(mid, argv[2], &svr_addr);
+    // if (hret != HG_SUCCESS) {
+    //     std::cerr << "Error: margo_addr_lookup()\n";
+    //     margo_finalize(mid);
+    //     return -1;
+    // }
 
     char *config = read_input_file("bake/config.json");
 
@@ -37,14 +37,14 @@ int main(int argc, char* argv[]) {
     std::string cfg = p->get_config();
     std::cout << cfg << "\n";
 
-    bk::client bcl(mid);
-    bk::provider_handle bph(bcl, svr_addr, 0);
-    bph.set_eager_limit(0);
-    bk::target tid = p->list_targets()[0];
+    // bk::client bcl(mid);
+    // bk::provider_handle bph(bcl, svr_addr, 0);
+    // bph.set_eager_limit(0);
+    // bk::target tid = p->list_targets()[0];
 
     // write phase
-    uint64_t buf_size = strlen(test_str) + 1;
-    bk::region rid = bcl.create_write_persist(bph, tid, test_str, buf_size);
+    // uint64_t buf_size = strlen(test_str) + 1;
+    // bk::region rid = bcl.create_write_persist(bph, tid, test_str, buf_size);
 
     // // read-back phase
     // void *buf = (void*)malloc(buf_size);
