@@ -41,6 +41,7 @@ int main(int argc, char* argv[]) {
     bk::provider_handle bph(bcl, svr_addr, 0);
     // bph.set_eager_limit(0);
     bk::target tid = p->list_targets()[0];
+    std::cout << "till here\n";
 
     // write phase
     // uint64_t buf_size = strlen(test_str) + 1;
