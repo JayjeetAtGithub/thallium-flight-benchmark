@@ -67,10 +67,10 @@ int main(int argc, char* argv[]) {
     }
 
     auto bcl = std::make_shared<bk::client>(mid);
-    auto bph = std::make_shared<bk::provider_handle>(client, 1);
+    auto bph = std::make_shared<bk::provider_handle>(bcl, 1);
     bph->set_eager_limit(0);
 
-    bk::target tid = bk::probe(bph, 1)[0];
+    bk::target tid = bcl->probe(bph, 1)[0];
 
     /**** write phase ****/
     buf_size = strlen(test_str) + 1;
