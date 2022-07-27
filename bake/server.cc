@@ -6,6 +6,7 @@
 #include <abt.h>
 #include <margo.h>
 #include <memory>
+#include <iostream>
 
 #include <bake-client.hpp>
 
