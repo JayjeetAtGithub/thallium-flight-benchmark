@@ -25,7 +25,8 @@ int main(int argc, char* argv[]) {
         return -1;
     }
 
-    char *config = read_input_file("config.json");
+    std::string config_filename = "config.json";
+    char *config = read_input_file(config_filename.c_str());
 
     // setup provider
     bk::provider *p = bk::provider::create(
