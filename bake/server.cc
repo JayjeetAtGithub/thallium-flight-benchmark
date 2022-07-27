@@ -93,6 +93,8 @@ int main(int argc, char* argv[]) {
         return (-1);
     }
 
+    std::cout << buf << "\n";
+
     // /* get a raw pointer to the data */
     // void *ptr;
     // ret = bake_get_data(bph, bti, the_rid, &ptr);
