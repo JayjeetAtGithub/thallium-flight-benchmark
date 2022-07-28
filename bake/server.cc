@@ -39,7 +39,7 @@ int main(int argc, char* argv[]) {
     bk::target tid = p->list_targets()[0];
 
     // try zero copy access
-    bake::region rid("AAAAAO0B3hifXASe0Ag8AAAAAAA=")
+    bake::region rid("AAAAAO0B3hifXASe0Ag8AAAAAAA=");
     char* zero_copy_pointer = (char*)bcl.get_data(bph, tid, );
     std::string str((char*)zero_copy_pointer, 5);
     std::cout << str << std::endl;
