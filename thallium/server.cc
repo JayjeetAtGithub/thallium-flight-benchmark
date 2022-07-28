@@ -95,8 +95,7 @@ int main(int argc, char** argv) {
         [&consumer_map](const tl::request &req, const ScanReqRPCStub& stub) {
             
             arrow::dataset::internal::Initialize();
-            cp::ExecContext exec_context;
-            std::shared_ptr<ScanResultConsumer> consumer = Scan(exec_context, stub, NULL).ValueOrDie();
+            std::shared_ptr<ScanResultConsumer> consumer = Scan(stub, NULL).ValueOrDie();
 
             std::string uuid = boost::uuids::to_string(boost::uuids::random_generator()());
             consumer_map[uuid] = consumer;

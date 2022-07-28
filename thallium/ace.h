@@ -123,7 +123,7 @@ class ScanResultConsumer {
 };
 
 
-arrow::Result<std::shared_ptr<ScanResultConsumer>> Scan(cp::ExecContext& exec_context, const ScanReqRPCStub& stub, void *ptr) {        
+arrow::Result<std::shared_ptr<ScanResultConsumer>> Scan(const ScanReqRPCStub& stub, void *ptr) {        
     auto filter = 
         arrow::compute::greater(arrow::compute::field_ref("total_amount"),
                                 arrow::compute::literal(-200));
@@ -140,9 +140,6 @@ arrow::Result<std::shared_ptr<ScanResultConsumer>> Scan(cp::ExecContext& exec_co
     auto options = std::make_shared<arrow::dataset::ScanOptions>();
     auto scanner_builder = std::make_shared<arrow::dataset::ScannerBuilder>(
         dataset_schema, std::move(fragment), std::move(options));
-
-    ARROW_ASSIGN_OR_RAISE(std::shared_ptr<cp::ExecPlan> plan,
-                          cp::ExecPlan::Make(&exec_context));
 
     ARROW_RETURN_NOT_OK(scanner_builder->Filter(filter));
     ARROW_RETURN_NOT_OK(scanner_builder->Project({"passenger_count", "fare_amount"}));
