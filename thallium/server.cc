@@ -23,17 +23,42 @@
 
 #include <parquet/arrow/reader.h>
 #include <parquet/arrow/writer.h>
+
 #include <thallium.hpp>
+#include <bake-client.hpp>
+#include <bake-server.hpp>
 
 #include "ace.h"
 
 namespace tl = thallium;
+namespace bk = bake;
 namespace cp = arrow::compute;
-
 
 int main(int argc, char** argv) {
     tl::engine engine("verbs://ibp130s0", THALLIUM_SERVER_MODE, true);
-    
+    hg_addr_t svr_addr;
+    hg_return_t hret = margo_addr_self(engine->get_margo_instance(), &svr_addr);
+    if (hret != HG_SUCCESS) {
+        std::cerr << "Error: margo_addr_lookup()\n";
+        margo_finalize(mid);
+        return -1;
+    }
+    char *config = read_input_file("bake/config.json");
+
+    // setup provider
+    bk::provider *p = bk::provider::create(
+        mid, 0, ABT_POOL_NULL, std::string(config, strlen(config) + 1), ABT_IO_INSTANCE_NULL, NULL, NULL);
+
+    std::cout << "successfully setup provider" << std::endl;
+    std::string cfg = p->get_config();
+    std::cout << cfg << std::endl;
+
+    bk::client bcl(mid);
+    bk::provider_handle bph(bcl, svr_addr, 0);
+    bph.set_eager_limit(0);
+    bk::target tid = p->list_targets()[0];
+
+
     tl::remote_procedure do_rdma = engine.define("do_rdma");
 
     std::unordered_map<std::string, std::shared_ptr<ScanResultConsumer>> consumer_map;
