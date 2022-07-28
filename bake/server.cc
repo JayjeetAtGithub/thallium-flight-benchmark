@@ -9,8 +9,6 @@ static char* read_input_file(const char* filename);
 namespace bk = bake;
 
 int main(int argc, char* argv[]) {    
-    char *test_str = read_input_file(argv[1]);
-
     margo_instance_id mid = margo_init("verbs://ibp130s0", MARGO_SERVER_MODE, 0, 0);
     if (mid == MARGO_INSTANCE_NULL) {
         std::cerr << "Error: margo_init()\n";
@@ -28,10 +26,8 @@ int main(int argc, char* argv[]) {
     char *config = read_input_file("bake/config.json");
 
     // setup provider
-    uint64_t config_size = strlen(config) + 1;
     bk::provider *p = bk::provider::create(
-        mid, 0, ABT_POOL_NULL, std::string(config, config_size), ABT_IO_INSTANCE_NULL, NULL, NULL);
-    // bk::target target = p->attach_target("/mnt/cephfs/bake.dat");
+        mid, 0, ABT_POOL_NULL, std::string(config, strlen(config) + 1), ABT_IO_INSTANCE_NULL, NULL, NULL);
 
     std::cout << "successfully setup provider" << std::endl;
     std::string cfg = p->get_config();
@@ -39,39 +35,18 @@ int main(int argc, char* argv[]) {
 
     bk::client bcl(mid);
     bk::provider_handle bph(bcl, svr_addr, 0);
-    // bph.set_eager_limit(0);
+    bph.set_eager_limit(0);
     bk::target tid = p->list_targets()[0];
-
-    // write phase
-    uint64_t buf_size = strlen(test_str) + 1;
-    bk::region rid = bcl.create_write_persist(bph, tid, test_str, buf_size);
-    std::cout << "write" << std::endl;
-    // // read-back phase
-    // void *buf = (void*)malloc(buf_size);
-    // memset(buf, 0, buf_size);
-    // bcl.read(bph, tid, rid, 0, buf, buf_size);
-
-    // // verify the returned string
-    // if (strcmp((char*)buf, test_str) != 0) {
-    //     std::cerr << "Error: unexpected buffer contents returned from BAKE\n";
-    //     free(buf);
-    //     margo_addr_free(mid, svr_addr);
-    //     margo_finalize(mid);
-    //     return -1;
-    // } else {
-    //     std::cout << "Read: " << std::string((char*)buf, buf_size) << "\n";
-    // }
 
     // // try zero copy access
     char* zero_copy_pointer = (char*)bcl.get_data(bph, tid, rid);
     std::string str((char*)zero_copy_pointer, buf_size);
     std::cout << str << std::endl;
 
-    // // free resources
-    // free(buf);
-    // free(test_str);
-    // margo_addr_free(mid, svr_addr);
-    // margo_finalize(mid);
+    // free resources
+    free(zero_copy_pointer);
+    margo_addr_free(mid, svr_addr);
+    margo_finalize(mid);
     return 0;
 }
 
