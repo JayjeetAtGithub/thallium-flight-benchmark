@@ -132,6 +132,9 @@ arrow::Result<std::shared_ptr<ScanResultConsumer>> Scan(cp::ExecContext& exec_co
         arrow::compute::greater(arrow::compute::field_ref("total_amount"),
                                 arrow::compute::literal(-200));
 
+    auto dataset_schema = arrow::schema({arrow::field("passenger_count", arrow::int64()),
+                                 arrow::field("fare_amount", arrow::float64())});
+
     auto format = std::make_shared<arrow::dataset::ParquetFileFormat>();
     auto file = std::make_shared<RandomAccessObject>(ptr, 5);
     arrow::dataset::FileSource source(file);
@@ -140,7 +143,7 @@ arrow::Result<std::shared_ptr<ScanResultConsumer>> Scan(cp::ExecContext& exec_co
     
     auto options = std::make_shared<arrow::dataset::ScanOptions>();
     auto builder = std::make_shared<arrow::dataset::ScannerBuilder>(
-        stub.dataset_schema, std::move(fragment), std::move(options));
+        dataset_schema, std::move(fragment), std::move(options));
 
     ARROW_ASSIGN_OR_RAISE(std::shared_ptr<cp::ExecPlan> plan,
                           cp::ExecPlan::Make(&exec_context));
