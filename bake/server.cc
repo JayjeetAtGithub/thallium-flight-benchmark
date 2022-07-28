@@ -15,8 +15,9 @@ namespace bk = bake;
 
 class random_access_object : public arrow::io::RandomAccessFile {
  public:
-  explicit random_access_object(void *ptr, uint64_t file_size) {
-    content_length_ = file_size;
+  explicit random_access_object(void *ptr, uint64_t size) {
+    file_ptr = ptr;
+    file_size = size;
   }
 
   ~random_access_object() override { DCHECK_OK(Close()); }
@@ -32,7 +33,7 @@ class random_access_object : public arrow::io::RandomAccessFile {
     if (position < 0) {
       return arrow::Status::Invalid("Cannot ", action, " from negative position");
     }
-    if (position > content_length_) {
+    if (position > file_size) {
       return arrow::Status::IOError("Cannot ", action, " past end of file");
     }
     return arrow::Status::OK();
@@ -48,7 +49,7 @@ class random_access_object : public arrow::io::RandomAccessFile {
     RETURN_NOT_OK(CheckClosed());
     RETURN_NOT_OK(CheckPosition(position, "read"));
 
-    nbytes = std::min(nbytes, content_length_ - position);
+    nbytes = std::min(nbytes, file_size - position);
 
     if (nbytes > 0) {
       return std::make_shared<arrow::Buffer>((uint8_t*)ptr + position, nbytes);
@@ -70,7 +71,7 @@ class random_access_object : public arrow::io::RandomAccessFile {
 
   arrow::Result<int64_t> GetSize() override {
     RETURN_NOT_OK(CheckClosed());
-    return content_length_;
+    return file_size;
   }
 
   arrow::Status Seek(int64_t position) override {
@@ -96,7 +97,8 @@ class random_access_object : public arrow::io::RandomAccessFile {
  private:
   bool closed_ = false;
   int64_t pos_ = 0;
-  int64_t content_length_ = -1;
+  void *file_ptr = NULL;
+  int64_t file_size = -1;
 };
 
 
