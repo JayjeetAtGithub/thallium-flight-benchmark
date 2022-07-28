@@ -38,9 +38,10 @@ int main(int argc, char* argv[]) {
     bph.set_eager_limit(0);
     bk::target tid = p->list_targets()[0];
 
-    // // try zero copy access
-    char* zero_copy_pointer = (char*)bcl.get_data(bph, tid, rid);
-    std::string str((char*)zero_copy_pointer, buf_size);
+    // try zero copy access
+    region rid("AAAAAO0B3hifXASe0Ag8AAAAAAA=")
+    char* zero_copy_pointer = (char*)bcl.get_data(bph, tid, );
+    std::string str((char*)zero_copy_pointer, 5);
     std::cout << str << std::endl;
 
     // free resources
