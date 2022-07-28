@@ -12,3 +12,6 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
 
 add_executable(bs server.cc)
 target_link_libraries(bs PkgConfig::BAKECLIENT PkgConfig::BAKESERVER)
+
+add_executable(bake_writer writer.cc)
+target_link_libraries(bake_writer PkgConfig::BAKECLIENT PkgConfig::BAKESERVER)
