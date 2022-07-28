@@ -45,18 +45,19 @@ namespace tl = thallium;
 namespace cp = arrow::compute;
 
 
-arrow::Result<ScanReq> GetScanRequest(cp::Expression filter, std::shared_ptr<arrow::Schema> projection_schema, std::shared_ptr<arrow::Schema> dataset_schema) {
+arrow::Result<ScanReq> GetScanRequest(cp::Expression filter, 
+                                      std::shared_ptr<arrow::Schema> projection_schema,
+                                      std::shared_ptr<arrow::Schema> dataset_schema) {
     ARROW_ASSIGN_OR_RAISE(std::shared_ptr<arrow::Buffer> filter_buff, arrow::compute::Serialize(filter));
     ARROW_ASSIGN_OR_RAISE(auto projection_schema_buff, arrow::ipc::SerializeSchema(*projection_schema));
-    ARROW_ASSIGN_OR_RAISE(auto dataset_schema_buff, arrow::ipc::SerializeSchema(*dataset_schema_buff));
+    ARROW_ASSIGN_OR_RAISE(auto dataset_schema_buff, arrow::ipc::SerializeSchema(*dataset_schema));
     ScanReqRPCStub stub(
         const_cast<uint8_t*>(filter_buff->data()), filter_buff->size(), 
-        const_cast<uint8_t*>(dataset_schema_buff->data(), dataset_schema_buff->size()),
+        const_cast<uint8_t*>(dataset_schema_buff->data()), dataset_schema_buff->size(),
         const_cast<uint8_t*>(projection_schema_buff->data()), projection_schema_buff->size()
     );
     ScanReq req;
     req.stub = stub;
-    req.filter = filter;
     req.schema = schema;
     return req;
 }

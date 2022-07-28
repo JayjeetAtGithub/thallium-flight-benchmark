@@ -27,17 +27,17 @@ class ScanReqRPCStub {
         uint8_t *dataset_schema_buffer;
         size_t dataset_schema_buffer_size;
 
-        uint8_t *projection_buffer;
-        size_t projection_buffer_size;
+        uint8_t *projection_schema_buffer;
+        size_t projection_schema_buffer_size;
 
         ScanReqRPCStub() {}
         ScanReqRPCStub(
             uint8_t* filter_buffer, size_t filter_buffer_size,
             uint8_t* dataset_schema_buffer, size_t dataset_schema_buffer_size, 
-            uint8_t* projection_buffer, size_t projection_buffer_size)
+            uint8_t* projection_schema_buffer, size_t projection_schema_buffer_size)
         : filter_buffer(filter_buffer), filter_buffer_size(filter_buffer_size),
           dataset_schema_buffer(dataset_schema_buffer),  dataset_schema_buffer_size(dataset_schema_buffer_size),
-          projection_buffer(projection_buffer), projection_buffer_size(projection_buffer_size) {}
+          projection_schema_buffer(projection_schema_buffer), projection_schema_buffer_size(projection_schema_buffer_size) {}
 
         template<typename A>
         void save(A& ar) const {
@@ -47,8 +47,8 @@ class ScanReqRPCStub {
             ar & dataset_schema_buffer_size;
             ar.write(dataset_schema_buffer, dataset_schema_buffer_size);
 
-            ar & projection_buffer_size;
-            ar.write(projection_buffer, projection_buffer_size);
+            ar & projection_schema_buffer_size;
+            ar.write(projection_schema_buffer, projection_schema_buffer_size);
         }
 
         template<typename A>
@@ -61,9 +61,9 @@ class ScanReqRPCStub {
             dataset_schema_buffer = new uint8_t[dataset_schema_buffer_size];
             ar.read(dataset_schema_buffer, dataset_schema_buffer_size);
 
-            ar & projection_buffer_size;
-            projection_buffer = new uint8_t[projection_buffer_size];
-            ar.read(projection_buffer, projection_buffer_size);
+            ar & projection_schema_buffer_size;
+            projection_schema_buffer = new uint8_t[projection_schema_buffer_size];
+            ar.read(projection_schema_buffer, projection_schema_buffer_size);
         }
 };
 
