@@ -1,12 +1,104 @@
 #include <memory>
 #include <iostream>
 
+#include <arrow/io/interfaces.h>
+#include <arrow/result.h>
+#include <arrow/util/logging.h>
+
 #include <bake-client.hpp>
 #include <bake-server.hpp>
+
 
 static char* read_input_file(const char* filename);
 
 namespace bk = bake;
+
+class random_access_object : public arrow::io::RandomAccessFile {
+ public:
+  explicit random_access_object(void *ptr, uint64_t file_size) {
+    content_length_ = file_size;
+  }
+
+  ~random_access_object() override { DCHECK_OK(Close()); }
+
+  arrow::Status CheckClosed() const {
+    if (closed_) {
+      return arrow::Status::Invalid("Operation on closed stream");
+    }
+    return arrow::Status::OK();
+  }
+
+  arrow::Status CheckPosition(int64_t position, const char* action) const {
+    if (position < 0) {
+      return arrow::Status::Invalid("Cannot ", action, " from negative position");
+    }
+    if (position > content_length_) {
+      return arrow::Status::IOError("Cannot ", action, " past end of file");
+    }
+    return arrow::Status::OK();
+  }
+
+  arrow::Result<int64_t> ReadAt(int64_t position, int64_t nbytes, void* out) override {
+    return arrow::Status::NotImplemented(
+        "ReadAt has not been implemented in random_access_object");
+  }
+
+  arrow::Result<std::shared_ptr<arrow::Buffer>> ReadAt(int64_t position,
+                                                       int64_t nbytes) override {
+    RETURN_NOT_OK(CheckClosed());
+    RETURN_NOT_OK(CheckPosition(position, "read"));
+
+    nbytes = std::min(nbytes, content_length_ - position);
+
+    if (nbytes > 0) {
+      return std::make_shared<arrow::Buffer>((uint8_t*)ptr + position, nbytes);
+    }
+    return std::make_shared<arrow::Buffer>("");
+  }
+
+  arrow::Result<std::shared_ptr<arrow::Buffer>> Read(int64_t nbytes) override {
+    ARROW_ASSIGN_OR_RAISE(auto buffer, ReadAt(pos_, nbytes));
+    pos_ += buffer->size();
+    return std::move(buffer);
+  }
+
+  arrow::Result<int64_t> Read(int64_t nbytes, void* out) override {
+    ARROW_ASSIGN_OR_RAISE(int64_t bytes_read, ReadAt(pos_, nbytes, out));
+    pos_ += bytes_read;
+    return bytes_read;
+  }
+
+  arrow::Result<int64_t> GetSize() override {
+    RETURN_NOT_OK(CheckClosed());
+    return content_length_;
+  }
+
+  arrow::Status Seek(int64_t position) override {
+    RETURN_NOT_OK(CheckClosed());
+    RETURN_NOT_OK(CheckPosition(position, "seek"));
+
+    pos_ = position;
+    return arrow::Status::OK();
+  }
+
+  arrow::Result<int64_t> Tell() const override {
+    RETURN_NOT_OK(CheckClosed());
+    return pos_;
+  }
+
+  arrow::Status Close() override {
+    closed_ = true;
+    return arrow::Status::OK();
+  }
+
+  bool closed() const override { return closed_; }
+
+ private:
+  bool closed_ = false;
+  int64_t pos_ = 0;
+  int64_t content_length_ = -1;
+};
+
 
 int main(int argc, char* argv[]) {    
     margo_instance_id mid = margo_init("verbs://ibp130s0", MARGO_SERVER_MODE, 0, 0);
