@@ -18,7 +18,7 @@ int main(int argc, char* argv[]) {
     }
     
     hg_addr_t svr_addr;
-    hg_return_t hret = margo_addr_lookup(mid, argv[2], &svr_addr);
+    hg_return_t hret = margo_addr_self(mid, &svr_addr);
     if (hret != HG_SUCCESS) {
         std::cerr << "Error: margo_addr_lookup()\n";
         margo_finalize(mid);
@@ -33,21 +33,19 @@ int main(int argc, char* argv[]) {
         mid, 0, ABT_POOL_NULL, std::string(config, config_size), ABT_IO_INSTANCE_NULL, NULL, NULL);
     // bk::target target = p->attach_target("/mnt/cephfs/bake.dat");
 
-    std::cout << "successfully setup provider";
+    std::cout << "successfully setup provider" << std::endl;
     std::string cfg = p->get_config();
-    std::cout << cfg << "\n";
+    std::cout << cfg << std::endl;
 
     bk::client bcl(mid);
     bk::provider_handle bph(bcl, svr_addr, 0);
     // bph.set_eager_limit(0);
     bk::target tid = p->list_targets()[0];
-    std::cout << "till here\n";
 
     // write phase
     uint64_t buf_size = strlen(test_str) + 1;
     bk::region rid = bcl.create_write_persist(bph, tid, test_str, buf_size);
-    std::cout << "wroite\n";
-
+    std::cout << "write" << std::endl;
     // // read-back phase
     // void *buf = (void*)malloc(buf_size);
     // memset(buf, 0, buf_size);
