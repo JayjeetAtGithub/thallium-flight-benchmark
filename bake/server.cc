@@ -40,7 +40,7 @@ int main(int argc, char* argv[]) {
 
     // try zero copy access
     bake::region rid("AAAAAO0B3hifXASe0Ag8AAAAAAA=");
-    char* zero_copy_pointer = (char*)bcl.get_data(bph, tid, );
+    char* zero_copy_pointer = (char*)bcl.get_data(bph, tid, rid);
     std::string str((char*)zero_copy_pointer, 5);
     std::cout << str << std::endl;
 
