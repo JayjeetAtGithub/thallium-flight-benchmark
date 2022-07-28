@@ -81,6 +81,11 @@ int main(int argc, char** argv) {
     bph.set_eager_limit(0);
     bk::target tid = p->list_targets()[0];
 
+    bk::region rid("AAAAAO0B3hifXASe0Ag8AAAAAAA=");
+    char* zero_copy_pointer = (char*)bcl.get_data(bph, tid, rid);
+    std::string str((char*)zero_copy_pointer, 3);
+    std::cout << str << std::endl;
+
 
     tl::remote_procedure do_rdma = engine.define("do_rdma");
 
