@@ -4,7 +4,7 @@
 #include <arrow/api.h>
 #include <arrow/io/api.h>
 #include <arrow/util/logging.h>
-ç
+
 #include <bake-client.hpp>
 #include <bake-server.hpp>
 
