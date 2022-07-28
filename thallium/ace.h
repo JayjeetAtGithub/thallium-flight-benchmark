@@ -118,12 +118,8 @@ class RandomAccessObject : public arrow::io::RandomAccessFile {
 class ScanResultConsumer {
     public:
         ScanResultConsumer(
-            std::shared_ptr<arrow::RecordBatchReader> reader, std::shared_ptr<cp::ExecPlan> plan, std::shared_ptr<arrow::dataset::Dataset> dataset)
-            : reader(reader), plan(plan), dataset(dataset) {}
-
+            std::shared_ptr<arrow::RecordBatchReader> reader): reader(reader) {}
         std::shared_ptr<arrow::RecordBatchReader> reader;
-        std::shared_ptr<cp::ExecPlan> plan;
-        std::shared_ptr<arrow::dataset::Dataset> dataset;
 };
 
 
@@ -152,13 +148,8 @@ arrow::Result<std::shared_ptr<ScanResultConsumer>> Scan(cp::ExecContext& exec_co
     ARROW_RETURN_NOT_OK(scanner_builder->Project({"passenger_count", "fare_amount"}));
 
     ARROW_ASSIGN_OR_RAISE(auto scanner, scanner_builder->Finish());
-    ARROW_ASSIGN_OR_RAISE(auto table, scanner->ToTable());
+    ARROW_ASSIGN_OR_RAISE(auto table, scanner->ToRecordBatchReader());
 
-    auto im_ds = std::make_shared<arrow::dataset::InMemoryDataset>(table);
-    ARROW_ASSIGN_OR_RAISE(auto im_ds_scanner_builder, im_ds->NewScan());
-    ARROW_ASSIGN_OR_RAISE(auto im_ds_scanner, im_ds_scanner_builder->Finish());
-    ARROW_ASSIGN_OR_RAISE(auto reader, im_ds_scanner->ToRecordBatchReader());
-
-    auto consumer = std::make_shared<ScanResultConsumer>(reader, plan, im_ds);
+    auto consumer = std::make_shared<ScanResultConsumer>(reader);
     return consumer;
 }
