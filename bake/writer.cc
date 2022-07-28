@@ -48,7 +48,7 @@ int main(int argc, char* argv[]) {
     // write phase
     uint64_t buf_size = strlen(file_content) + 1;
     bk::region rid = bcl.create_write_persist(bph, tid, file_content, buf_size);
-    std::cout << rid << std::endl;
+    std::cout << std::string(rid) << std::endl;
     
     // free resources
     free(file_content);
