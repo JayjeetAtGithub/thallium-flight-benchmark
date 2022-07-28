@@ -1,10 +1,10 @@
 #include <memory>
 #include <iostream>
 
-#include <arrow/io/interfaces.h>
-#include <arrow/result.h>
+#include <arrow/api.h>
+#include <arrow/io/api.h>
 #include <arrow/util/logging.h>
-
+ç
 #include <bake-client.hpp>
 #include <bake-server.hpp>
 
@@ -52,7 +52,7 @@ class random_access_object : public arrow::io::RandomAccessFile {
     nbytes = std::min(nbytes, file_size - position);
 
     if (nbytes > 0) {
-      return std::make_shared<arrow::Buffer>((uint8_t*)ptr + position, nbytes);
+      return std::make_shared<arrow::Buffer>((uint8_t*)file_ptr + position, nbytes);
     }
     return std::make_shared<arrow::Buffer>("");
   }
