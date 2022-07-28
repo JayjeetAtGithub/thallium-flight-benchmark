@@ -127,26 +127,20 @@ class ScanResultConsumer {
 };
 
 
-arrow::Result<std::shared_ptr<ScanResultConsumer>> ScanB(cp::ExecContext& exec_context, const ScanReqRPCStub& stub) {
-    std::string uri = "file:///mnt/cephfs/dataset";
-    
-    std::string path;
-    ARROW_ASSIGN_OR_RAISE(auto fs, arrow::fs::FileSystemFromUri(uri, &path)); 
-    auto format = std::make_shared<arrow::dataset::ParquetFileFormat>();
-      
-    arrow::fs::FileSelector s;
-    s.base_dir = std::move(path);
-    s.recursive = true;
-
+arrow::Result<std::shared_ptr<ScanResultConsumer>> Scan(cp::ExecContext& exec_context, const ScanReqRPCStub& stub, void *ptr) {        
     auto filter = 
         arrow::compute::greater(arrow::compute::field_ref("total_amount"),
                                 arrow::compute::literal(-200));
 
-    arrow::dataset::FileSystemFactoryOptions options;
-    ARROW_ASSIGN_OR_RAISE(auto factory, 
-      arrow::dataset::FileSystemDatasetFactory::Make(std::move(fs), s, std::move(format), options));
-    arrow::dataset::FinishOptions finish_options;
-    ARROW_ASSIGN_OR_RAISE(auto dataset,factory->Finish(finish_options));
+    auto format = std::make_shared<arrow::dataset::ParquetFileFormat>();
+    auto file = std::make_shared<RandomAccessObject>(ptr, 5);
+    arrow::dataset::FileSource source(file);
+    ARROW_ASSIGN_OR_RAISE(
+        auto fragment, format->MakeFragment(std::move(source), arrow::compute::literal(true)));
+    
+    auto options = std::make_shared<arrow::dataset::ScanOptions>();
+    auto builder = std::make_shared<arrow::dataset::ScannerBuilder>(
+        stub.dataset_schema, std::move(fragment), std::move(options));
 
     ARROW_ASSIGN_OR_RAISE(std::shared_ptr<cp::ExecPlan> plan,
                           cp::ExecPlan::Make(&exec_context));
