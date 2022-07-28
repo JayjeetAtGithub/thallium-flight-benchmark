@@ -63,9 +63,9 @@ int main(int argc, char* argv[]) {
     // }
 
     // // try zero copy access
-    // char* zero_copy_pointer = (char*)bcl.get_data(bph, tid, rid);
-    // std::string str((char*)zero_copy_pointer, buf_size);
-    // std::cout << str << std::endl;
+    char* zero_copy_pointer = (char*)bcl.get_data(bph, tid, rid);
+    std::string str((char*)zero_copy_pointer, buf_size);
+    std::cout << str << std::endl;
 
     // // free resources
     // free(buf);
