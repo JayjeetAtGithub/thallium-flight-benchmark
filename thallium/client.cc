@@ -58,7 +58,7 @@ arrow::Result<ScanReq> GetScanRequest(cp::Expression filter,
     );
     ScanReq req;
     req.stub = stub;
-    req.schema = schema;
+    req.schema = projection_schema;
     return req;
 }
 
