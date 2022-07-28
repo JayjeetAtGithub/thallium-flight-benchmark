@@ -45,7 +45,6 @@ int main(int argc, char* argv[]) {
     std::cout << str << std::endl;
 
     // free resources
-    free(zero_copy_pointer);
     margo_addr_free(mid, svr_addr);
     margo_finalize(mid);
     return 0;
