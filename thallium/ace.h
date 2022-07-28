@@ -142,13 +142,12 @@ arrow::Result<std::shared_ptr<ScanResultConsumer>> Scan(cp::ExecContext& exec_co
         auto fragment, format->MakeFragment(std::move(source), arrow::compute::literal(true)));
     
     auto options = std::make_shared<arrow::dataset::ScanOptions>();
-    auto builder = std::make_shared<arrow::dataset::ScannerBuilder>(
+    auto scanner_builder = std::make_shared<arrow::dataset::ScannerBuilder>(
         dataset_schema, std::move(fragment), std::move(options));
 
     ARROW_ASSIGN_OR_RAISE(std::shared_ptr<cp::ExecPlan> plan,
                           cp::ExecPlan::Make(&exec_context));
 
-    ARROW_ASSIGN_OR_RAISE(auto scanner_builder, dataset->NewScan());
     ARROW_RETURN_NOT_OK(scanner_builder->Filter(filter));
     ARROW_RETURN_NOT_OK(scanner_builder->Project({"passenger_count", "fare_amount"}));
 
