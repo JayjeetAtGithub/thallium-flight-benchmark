@@ -34,10 +34,33 @@ namespace tl = thallium;
 namespace bk = bake;
 namespace cp = arrow::compute;
 
+
+static char* read_input_file(const char* filename) {
+    size_t ret;
+    FILE*  fp = fopen(filename, "r");
+    if (fp == NULL) {
+        fprintf(stderr, "Could not open %s\n", filename);
+        exit(-1);
+    }
+    fseek(fp, 0, SEEK_END);
+    size_t sz = ftell(fp);
+    fseek(fp, 0, SEEK_SET);
+    char* buf = (char*)calloc(1, sz + 1);
+    ret       = fread(buf, 1, sz, fp);
+    if (ret != sz && ferror(fp)) {
+        free(buf);
+        perror("read_input_file");
+        buf = NULL;
+    }
+    fclose(fp);
+    return buf;
+}
+
 int main(int argc, char** argv) {
     tl::engine engine("verbs://ibp130s0", THALLIUM_SERVER_MODE, true);
+    margo_instance_id mid = engine->get_margo_instance();
     hg_addr_t svr_addr;
-    hg_return_t hret = margo_addr_self(engine->get_margo_instance(), &svr_addr);
+    hg_return_t hret = margo_addr_self(mid, &svr_addr);
     if (hret != HG_SUCCESS) {
         std::cerr << "Error: margo_addr_lookup()\n";
         margo_finalize(mid);
