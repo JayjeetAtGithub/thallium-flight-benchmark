@@ -148,7 +148,7 @@ arrow::Result<std::shared_ptr<ScanResultConsumer>> Scan(cp::ExecContext& exec_co
     ARROW_RETURN_NOT_OK(scanner_builder->Project({"passenger_count", "fare_amount"}));
 
     ARROW_ASSIGN_OR_RAISE(auto scanner, scanner_builder->Finish());
-    ARROW_ASSIGN_OR_RAISE(auto table, scanner->ToRecordBatchReader());
+    ARROW_ASSIGN_OR_RAISE(auto reader, scanner->ToRecordBatchReader());
 
     auto consumer = std::make_shared<ScanResultConsumer>(reader);
     return consumer;
