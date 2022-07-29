@@ -17,7 +17,7 @@ int main(int argc, char* argv[]) {
     stat(filename, &file_st);
     uint8_t *buffer = new uint8_t[file_st.st_size];
     std::ifstream fin(filename, std::ios::in | std::ios::binary );
-    fin.read(buffer, file_st.st_size);
+    fin.read((char*)buffer, file_st.st_size);
 
     // initialize margo instance
     margo_instance_id mid = margo_init("verbs://ibp130s0", MARGO_SERVER_MODE, 0, 0);
@@ -55,12 +55,12 @@ int main(int argc, char* argv[]) {
 
     // write phase
     uint64_t buffer_size = file_st.st_size;
-    std::cout << "Wrote: " << buf_size << " bytes" << std::endl;
+    std::cout << "Wrote: " << buffer_size << " bytes" << std::endl;
     bk::region rid = bcl.create_write_persist(bph, tid, buffer, buffer_size);
     std::cout << std::string(rid) << std::endl;
     
     // free resources
-    free(file_content);
+    free(buffer);
     margo_addr_free(mid, svr_addr);
     margo_finalize(mid);
     return 0;
