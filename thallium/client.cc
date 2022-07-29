@@ -143,7 +143,7 @@ arrow::Status Main(char **argv) {
     std::string uri = uri_base + argv[1];
 
     ConnCtx conn_ctx = Init(uri);
-    ARROW_ASSIGN_OR_RAISE(auto scan_req, GetScanRequest("AAAAAO0B3hifXASe0Ag8AAAAAAA", filter, projection_schema, projection_schema));
+    ARROW_ASSIGN_OR_RAISE(auto scan_req, GetScanRequest("AAAAAO0B3hifXASeUAk8AAAAAAA=", filter, projection_schema, projection_schema));
 
     for (int i = 0; i < 10; i++) {
         ScanCtx scan_ctx = Scan(conn_ctx, scan_req);
