@@ -67,19 +67,18 @@ int main(int argc, char** argv) {
         return -1;
     }
 
+    bk::provider *p = bk::provider::create(
+        mid, 0, ABT_POOL_NULL, std::string(config, strlen(config) + 1), ABT_IO_INSTANCE_NULL, NULL, NULL);
 
     tl::remote_procedure do_rdma = engine.define("do_rdma");
 
     std::unordered_map<std::string, std::shared_ptr<ScanResultConsumer>> consumer_map;
     
     std::function<void(const tl::request&, const ScanReqRPCStub&)> scan = 
-        [&consumer_map, &mid, &svr_addr](const tl::request &req, const ScanReqRPCStub& stub) {
+        [&consumer_map, &mid, &svr_addr, &p](const tl::request &req, const ScanReqRPCStub& stub) {
             arrow::dataset::internal::Initialize();
 
             char *config = read_input_file("bake/config.json");
-
-            bk::provider *p = bk::provider::create(
-                mid, 0, ABT_POOL_NULL, std::string(config, strlen(config) + 1), ABT_IO_INSTANCE_NULL, NULL, NULL);
 
             std::string cfg = p->get_config();
 
