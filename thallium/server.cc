@@ -94,7 +94,7 @@ int main(int argc, char** argv) {
 
 
             uint8_t *buff = (uint8_t*)malloc(16074327);            
-            size_t bytes = (uint8_t*)bcl.read(bph, tid, rid, 0, buff, 16074327);
+            size_t bytes = bcl.read(bph, tid, rid, 0, buff, 16074327);
 
             std::shared_ptr<ScanResultConsumer> consumer = Scan(stub, buff).ValueOrDie();
             std::string uuid = boost::uuids::to_string(boost::uuids::random_generator()());
