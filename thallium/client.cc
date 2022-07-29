@@ -134,14 +134,16 @@ arrow::Result<std::shared_ptr<arrow::RecordBatch>> GetNextBatch(ConnCtx &conn_ct
 }
 
 arrow::Status Main(char **argv) {
+    // connection info
+    std::string uri_base = "ofi+verbs;ofi_rxm://10.0.2.50:";
+    std::string uri = uri_base + argv[1];
+
+    // query params
     auto filter = 
         cp::greater(cp::field_ref("total_amount"), cp::literal(-200));
     
     auto projection_schema = arrow::schema({arrow::field("passenger_count", arrow::int64()),
                                  arrow::field("fare_amount", arrow::float64())});
-
-    std::string uri_base = "ofi+verbs;ofi_rxm://10.0.2.50:";
-    std::string uri = uri_base + argv[1];
 
     ConnCtx conn_ctx = Init(uri);
     ARROW_ASSIGN_OR_RAISE(auto scan_req, GetScanRequest("AAAAAO0B3hifXASeECQ8AAAAAAA=", filter, projection_schema, projection_schema));
