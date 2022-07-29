@@ -101,6 +101,13 @@ int main(int argc, char** argv) {
             std::string uuid = boost::uuids::to_string(boost::uuids::random_generator()());
             consumer_map[uuid] = consumer;
 
+
+            // experimental
+            std::shared_ptr<arrow::RecordBatchReader> reader = consumer_map[uuid]->reader;
+            std::shared_ptr<arrow::RecordBatch> batch;
+            reader->ReadNext(&batch);
+            std::cout << batch->ToString() << std::endl;
+            
             return req.respond(uuid);
         };
 
