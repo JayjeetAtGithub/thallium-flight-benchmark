@@ -95,8 +95,6 @@ int main(int argc, char** argv) {
 
             void *ptr = bcl.get_data(bph, tid, rid);
 
-            std::cout << "I get here" << std::endl;
-
             std::shared_ptr<ScanResultConsumer> consumer = Scan(stub, ptr).ValueOrDie();
             std::string uuid = boost::uuids::to_string(boost::uuids::random_generator()());
             consumer_map[uuid] = consumer;
@@ -105,7 +103,11 @@ int main(int argc, char** argv) {
             // experimental
             std::shared_ptr<arrow::RecordBatchReader> reader = consumer_map[uuid]->reader;
             std::shared_ptr<arrow::RecordBatch> batch;
+                        std::cout << "I get here 2" << std::endl;
+
             reader->ReadNext(&batch);
+                        std::cout << "I get here 3" << std::endl;
+
             std::cout << batch->ToString() << std::endl;
             
             return req.respond(uuid);
