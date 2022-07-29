@@ -82,7 +82,6 @@ int main(int argc, char** argv) {
                 mid, 0, ABT_POOL_NULL, std::string(config, strlen(config) + 1), ABT_IO_INSTANCE_NULL, NULL, NULL);
 
             std::string cfg = p->get_config();
-            std::cout << cfg << std::endl;
 
             bk::client bcl(mid);
             bk::provider_handle bph(bcl, svr_addr, 0);
@@ -90,20 +89,13 @@ int main(int argc, char** argv) {
             bk::target tid = p->list_targets()[0];
 
             bk::region rid(stub.path);
-            std::cout << std::string(rid) << std::endl;
+            std::cout << "Scanning region with rid: " << std::string(rid) << std::endl;
 
             uint8_t *ptr = (uint8_t*)bcl.get_data(bph, tid, rid);
 
             std::shared_ptr<ScanResultConsumer> consumer = Scan(stub, ptr).ValueOrDie();
             std::string uuid = boost::uuids::to_string(boost::uuids::random_generator()());
             consumer_map[uuid] = consumer;
-
-            // // experimental
-            // std::shared_ptr<arrow::RecordBatchReader> reader = consumer_map[uuid]->reader;
-            // std::shared_ptr<arrow::RecordBatch> batch;
-            // reader->ReadNext(&batch);
-
-            // std::cout << batch->ToString() << std::endl;
             
             return req.respond(uuid);
         };
