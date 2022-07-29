@@ -23,37 +23,82 @@
 
 #include <parquet/arrow/reader.h>
 #include <parquet/arrow/writer.h>
+
 #include <thallium.hpp>
+#include <bake-client.hpp>
+#include <bake-server.hpp>
 
 #include "ace.h"
 
 namespace tl = thallium;
+namespace bk = bake;
 namespace cp = arrow::compute;
 
 
+static char* read_input_file(const char* filename) {
+    size_t ret;
+    FILE*  fp = fopen(filename, "r");
+    if (fp == NULL) {
+        fprintf(stderr, "Could not open %s\n", filename);
+        exit(-1);
+    }
+    fseek(fp, 0, SEEK_END);
+    size_t sz = ftell(fp);
+    fseek(fp, 0, SEEK_SET);
+    char* buf = (char*)calloc(1, sz + 1);
+    ret       = fread(buf, 1, sz, fp);
+    if (ret != sz && ferror(fp)) {
+        free(buf);
+        perror("read_input_file");
+        buf = NULL;
+    }
+    fclose(fp);
+    return buf;
+}
+
 int main(int argc, char** argv) {
     tl::engine engine("verbs://ibp130s0", THALLIUM_SERVER_MODE, true);
-    
+    margo_instance_id mid = engine.get_margo_instance();
+    hg_addr_t svr_addr;
+    hg_return_t hret = margo_addr_self(mid, &svr_addr);
+    if (hret != HG_SUCCESS) {
+        std::cerr << "Error: margo_addr_lookup()\n";
+        margo_finalize(mid);
+        return -1;
+    }
+
+    char *config = read_input_file("bake/config.json");
+    bk::provider *p = bk::provider::create(
+        mid, 0, ABT_POOL_NULL, std::string(config, strlen(config) + 1), ABT_IO_INSTANCE_NULL, NULL, NULL);
+
     tl::remote_procedure do_rdma = engine.define("do_rdma");
 
     std::unordered_map<std::string, std::shared_ptr<ScanResultConsumer>> consumer_map;
     
     std::function<void(const tl::request&, const ScanReqRPCStub&)> scan = 
-        [&consumer_map](const tl::request &req, const ScanReqRPCStub& stub) {
-            
+        [&consumer_map, &mid, &svr_addr, &p](const tl::request &req, const ScanReqRPCStub& stub) {
             arrow::dataset::internal::Initialize();
-            cp::ExecContext exec_context;
-            std::shared_ptr<ScanResultConsumer> consumer = ScanB(exec_context, stub).ValueOrDie();
 
+            bk::client bcl(mid);
+            bk::provider_handle bph(bcl, svr_addr, 0);
+            bph.set_eager_limit(0);
+            bk::target tid = p->list_targets()[0];
+
+            bk::region rid(stub.path);
+            std::cout << "Scanning region with rid: " << std::string(rid) << std::endl;
+
+            uint8_t *ptr = (uint8_t*)bcl.get_data(bph, tid, rid);
+
+            std::shared_ptr<ScanResultConsumer> consumer = Scan(stub, ptr).ValueOrDie();
             std::string uuid = boost::uuids::to_string(boost::uuids::random_generator()());
             consumer_map[uuid] = consumer;
-
+            
             return req.respond(uuid);
         };
 
     int64_t total_rows_written = 0;
     std::function<void(const tl::request&, const std::string&)> get_next_batch = 
-        [&engine, &do_rdma, &consumer_map, &total_rows_written](const tl::request &req, const std::string& uuid) {
+        [&mid, &svr_addr, &engine, &do_rdma, &consumer_map, &total_rows_written](const tl::request &req, const std::string& uuid) {
             
             std::shared_ptr<arrow::RecordBatchReader> reader = consumer_map[uuid]->reader;
             std::shared_ptr<arrow::RecordBatch> batch;
