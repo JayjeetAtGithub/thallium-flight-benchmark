@@ -92,11 +92,9 @@ int main(int argc, char** argv) {
             bk::region rid(stub.path);
             std::cout << std::string(rid) << std::endl;
 
+            uint8_t ptr = (uint8_t*)bcl.get_data(bph, tid, rid);
 
-            uint8_t *buff = (uint8_t*)malloc(16074327);            
-            size_t bytes = bcl.read(bph, tid, rid, 0, buff, 16074327);
-
-            std::shared_ptr<ScanResultConsumer> consumer = Scan(stub, buff).ValueOrDie();
+            std::shared_ptr<ScanResultConsumer> consumer = Scan(stub, ptr).ValueOrDie();
             std::string uuid = boost::uuids::to_string(boost::uuids::random_generator()());
             consumer_map[uuid] = consumer;
 
