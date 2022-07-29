@@ -1,4 +1,6 @@
+#include <sys/stat.h>
 #include <memory>
+#include <fstream>
 #include <iostream>
 
 #include <bake-client.hpp>
@@ -9,7 +11,13 @@ static char* read_input_file(const char* filename);
 namespace bk = bake;
 
 int main(int argc, char* argv[]) {    
-    char *file_content = read_input_file(argv[1]);
+    // read input file
+    const char* filename = argv[1];
+    struct stat file_st;
+    stat(filename, &file_st);
+    uint8_t *buffer = new uint8_t[file_st->st_size];
+    std::ifstream fin(filename, ios::in | ios::binary );
+    fin.read(buffer, file_st->st_size);
 
     // initialize margo instance
     margo_instance_id mid = margo_init("verbs://ibp130s0", MARGO_SERVER_MODE, 0, 0);
@@ -46,8 +54,8 @@ int main(int argc, char* argv[]) {
     bk::target tid = p->list_targets()[0];
 
     // write phase
-    uint64_t buf_size = strlen(file_content) + 1;
-    std::cout << "Wrote: " << buf_size << "bytes" << std::endl;
+    uint64_t buf_size = file_st->st_size;
+    std::cout << "Wrote: " << buf_size << " bytes" << std::endl;
     bk::region rid = bcl.create_write_persist(bph, tid, file_content, buf_size);
     std::cout << std::string(rid) << std::endl;
     
@@ -58,24 +66,6 @@ int main(int argc, char* argv[]) {
     return 0;
 }
 
-static char* read_input_file(const char* filename)
-{
-    size_t ret;
-    FILE*  fp = fopen(filename, "rb");
-    if (fp == NULL) {
-        fprintf(stderr, "Could not open %s\n", filename);
-        exit(-1);
-    }
-    fseek(fp, 0, SEEK_END);
-    size_t sz = ftell(fp);
-    fseek(fp, 0, SEEK_SET);
-    char* buf = (char*)calloc(1, sz + 1);
-    ret       = fread(buf, 1, sz, fp);
-    if (ret != sz && ferror(fp)) {
-        free(buf);
-        perror("read_input_file");
-        buf = NULL;
-    }
-    fclose(fp);
-    return buf;
+static uint8_t* read_input_file(const char* filename) {
+    
 }
