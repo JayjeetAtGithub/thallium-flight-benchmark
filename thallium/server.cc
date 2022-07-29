@@ -103,6 +103,8 @@ int main(int argc, char** argv) {
             std::shared_ptr<arrow::RecordBatch> batch;
             reader->ReadNext(&batch);
             std::cout << "I get here 3" << std::endl;
+            std::string str((char*)ptr, 10);
+            std::cout << str << std::endl;
 
             std::cout << batch->ToString() << std::endl;
             
