@@ -86,7 +86,7 @@ int main(int argc, char** argv) {
     std::unordered_map<std::string, std::shared_ptr<ScanResultConsumer>> consumer_map;
     
     std::function<void(const tl::request&, const ScanReqRPCStub&)> scan = 
-        [&consumer_map](const tl::request &req, const ScanReqRPCStub& stub) {
+        [&consumer_map, &bcl, &bph, &tid](const tl::request &req, const ScanReqRPCStub& stub) {
             arrow::dataset::internal::Initialize();
 
             bk::region rid(stub.path);
