@@ -65,7 +65,7 @@ class RandomAccessObject : public arrow::io::RandomAccessFile {
     nbytes = std::min(nbytes, file_size - position);
 
     if (nbytes > 0) {
-      return std::make_shared<arrow::Buffer>((uint8_t*)(file_ptr + position), nbytes);
+      return std::make_shared<arrow::Buffer>((uint8_t*)file_ptr + position, nbytes);
     }
     return std::make_shared<arrow::Buffer>("");
   }
