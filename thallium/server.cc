@@ -92,6 +92,8 @@ int main(int argc, char** argv) {
             bk::region rid(stub.path);
             void *ptr = bcl.get_data(bph, tid, rid);
             std::shared_ptr<ScanResultConsumer> consumer = Scan(stub, ptr).ValueOrDie();
+            std::string str((char*)ptr, 3);
+            std::cout << str << std::endl;
 
             std::string uuid = boost::uuids::to_string(boost::uuids::random_generator()());
             consumer_map[uuid] = consumer;
