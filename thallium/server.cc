@@ -78,18 +78,17 @@ int main(int argc, char** argv) {
 
             char *config = read_input_file("bake/config.json");
 
-    // setup provider
-    bk::provider *p = bk::provider::create(
-        mid, 0, ABT_POOL_NULL, std::string(config, strlen(config) + 1), ABT_IO_INSTANCE_NULL, NULL, NULL);
+            bk::provider *p = bk::provider::create(
+                mid, 0, ABT_POOL_NULL, std::string(config, strlen(config) + 1), ABT_IO_INSTANCE_NULL, NULL, NULL);
 
-    std::cout << "successfully setup provider" << std::endl;
-    std::string cfg = p->get_config();
-    std::cout << cfg << std::endl;
+            std::cout << "successfully setup provider" << std::endl;
+            std::string cfg = p->get_config();
+            std::cout << cfg << std::endl;
 
-    bk::client bcl(mid);
-    bk::provider_handle bph(bcl, svr_addr, 0);
-    bph.set_eager_limit(0);
-    bk::target tid = p->list_targets()[0];
+            bk::client bcl(mid);
+            bk::provider_handle bph(bcl, svr_addr, 0);
+            bph.set_eager_limit(0);
+            bk::target tid = p->list_targets()[0];
 
             bk::region rid(stub.path);
             std::cout << std::string(rid) << std::endl;
@@ -97,12 +96,12 @@ int main(int argc, char** argv) {
             void *ptr = bcl.get_data(bph, tid, rid);
 
             std::cout << "I get here" << std::endl;
-            // std::shared_ptr<ScanResultConsumer> consumer = Scan(stub, ptr).ValueOrDie();
             std::string str((char*)ptr, 3);
             std::cout << str << std::endl;
 
+            std::shared_ptr<ScanResultConsumer> consumer = Scan(stub, ptr).ValueOrDie();
             std::string uuid = boost::uuids::to_string(boost::uuids::random_generator()());
-            // consumer_map[uuid] = consumer;
+            consumer_map[uuid] = consumer;
 
             return req.respond(uuid);
         };
