@@ -28,7 +28,7 @@ namespace cp = arrow::compute;
 
 class RandomAccessObject : public arrow::io::RandomAccessFile {
  public:
-  explicit RandomAccessObject(void *ptr, uint64_t size) {
+  explicit RandomAccessObject(uint8_t *ptr, int64_t size) {
     file_ptr = ptr;
     file_size = size;
   }
@@ -65,7 +65,7 @@ class RandomAccessObject : public arrow::io::RandomAccessFile {
     nbytes = std::min(nbytes, file_size - position);
 
     if (nbytes > 0) {
-      return std::make_shared<arrow::Buffer>((uint8_t*)file_ptr + position, nbytes);
+      return std::make_shared<arrow::Buffer>(file_ptr + position, nbytes);
     }
     return std::make_shared<arrow::Buffer>("");
   }
@@ -110,7 +110,7 @@ class RandomAccessObject : public arrow::io::RandomAccessFile {
  private:
   bool closed_ = false;
   int64_t pos_ = 0;
-  void *file_ptr = NULL;
+  uint8_t *file_ptr = NULL;
   int64_t file_size = -1;
 };
 
