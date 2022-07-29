@@ -132,7 +132,7 @@ arrow::Result<std::shared_ptr<ScanResultConsumer>> Scan(const ScanReqRPCStub& st
                                  arrow::field("fare_amount", arrow::float64())});
 
     auto format = std::make_shared<arrow::dataset::ParquetFileFormat>();
-    auto file = std::make_shared<RandomAccessObject>(ptr, 5);
+    auto file = std::make_shared<RandomAccessObject>(ptr, 16074327);
     arrow::dataset::FileSource source(file);
     ARROW_ASSIGN_OR_RAISE(
         auto fragment, format->MakeFragment(std::move(source), arrow::compute::literal(true)));
