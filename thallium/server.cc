@@ -165,8 +165,6 @@ int main(int argc, char** argv) {
                 return req.respond(0);
             } else {
                 consumer_map.erase(uuid);
-                // margo_addr_free(mid, svr_addr);
-                // margo_finalize(mid);
                 return req.respond(1);
             }
         };
