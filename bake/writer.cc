@@ -47,6 +47,7 @@ int main(int argc, char* argv[]) {
 
     // write phase
     uint64_t buf_size = strlen(file_content) + 1;
+    std::cout << "Wrote: " << buf_size << "bytes" << std::endl;
     bk::region rid = bcl.create_write_persist(bph, tid, file_content, buf_size);
     std::cout << std::string(rid) << std::endl;
     
@@ -60,7 +61,7 @@ int main(int argc, char* argv[]) {
 static char* read_input_file(const char* filename)
 {
     size_t ret;
-    FILE*  fp = fopen(filename, "r");
+    FILE*  fp = fopen(filename, "rb");
     if (fp == NULL) {
         fprintf(stderr, "Could not open %s\n", filename);
         exit(-1);
