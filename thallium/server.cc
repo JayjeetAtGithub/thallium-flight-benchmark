@@ -89,6 +89,8 @@ int main(int argc, char** argv) {
         [&consumer_map, &bcl, &bph, &tid](const tl::request &req, const ScanReqRPCStub& stub) {
             arrow::dataset::internal::Initialize();
 
+            std::cout << std::string(rid) << std::endl;
+
             bk::region rid(stub.path);
             void *ptr = bcl.get_data(bph, tid, rid);
             std::shared_ptr<ScanResultConsumer> consumer = Scan(stub, ptr).ValueOrDie();
