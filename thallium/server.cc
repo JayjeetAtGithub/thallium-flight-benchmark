@@ -73,7 +73,7 @@ int main(int argc, char** argv) {
     std::unordered_map<std::string, std::shared_ptr<ScanResultConsumer>> consumer_map;
     
     std::function<void(const tl::request&, const ScanReqRPCStub&)> scan = 
-        [&consumer_map, &mid](const tl::request &req, const ScanReqRPCStub& stub) {
+        [&consumer_map, &mid, &svr_addr](const tl::request &req, const ScanReqRPCStub& stub) {
             arrow::dataset::internal::Initialize();
 
             char *config = read_input_file("bake/config.json");
