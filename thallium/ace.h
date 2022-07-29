@@ -123,7 +123,7 @@ class ScanResultConsumer {
 };
 
 
-arrow::Result<std::shared_ptr<ScanResultConsumer>> Scan(const ScanReqRPCStub& stub, void *ptr) {        
+arrow::Result<std::shared_ptr<ScanResultConsumer>> Scan(const ScanReqRPCStub& stub, uint8_t *ptr) {        
     auto filter = 
         arrow::compute::greater(arrow::compute::field_ref("total_amount"),
                                 arrow::compute::literal(-200));
