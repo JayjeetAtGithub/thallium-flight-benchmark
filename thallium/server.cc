@@ -93,6 +93,8 @@ int main(int argc, char** argv) {
             std::cout << std::string(rid) << std::endl;
 
             void *ptr = bcl.get_data(bph, tid, rid);
+
+            std::cout << "I get here" << std::endl;
             // std::shared_ptr<ScanResultConsumer> consumer = Scan(stub, ptr).ValueOrDie();
             std::string str((char*)ptr, 3);
             std::cout << str << std::endl;

@@ -36,6 +36,7 @@ class MeasureExecutionTime{
       }
 };
 
+
 #ifndef MEASURE_FUNCTION_EXECUTION_TIME
 #define MEASURE_FUNCTION_EXECUTION_TIME const MeasureExecutionTime measureExecutionTime(__FUNCTION__);
 #endif
