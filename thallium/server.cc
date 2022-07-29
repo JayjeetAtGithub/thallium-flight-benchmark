@@ -98,7 +98,7 @@ int main(int argc, char** argv) {
             std::cout << str << std::endl;
 
             std::string uuid = boost::uuids::to_string(boost::uuids::random_generator()());
-            consumer_map[uuid] = consumer;
+            // consumer_map[uuid] = consumer;
 
             return req.respond(uuid);
         };
