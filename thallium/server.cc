@@ -81,7 +81,6 @@ int main(int argc, char** argv) {
             bk::provider *p = bk::provider::create(
                 mid, 0, ABT_POOL_NULL, std::string(config, strlen(config) + 1), ABT_IO_INSTANCE_NULL, NULL, NULL);
 
-            std::cout << "successfully setup provider" << std::endl;
             std::string cfg = p->get_config();
             std::cout << cfg << std::endl;
 
@@ -99,14 +98,11 @@ int main(int argc, char** argv) {
             std::string uuid = boost::uuids::to_string(boost::uuids::random_generator()());
             consumer_map[uuid] = consumer;
 
-
             // experimental
             std::shared_ptr<arrow::RecordBatchReader> reader = consumer_map[uuid]->reader;
             std::shared_ptr<arrow::RecordBatch> batch;
-                        std::cout << "I get here 2" << std::endl;
-
             reader->ReadNext(&batch);
-                        std::cout << "I get here 3" << std::endl;
+            std::cout << "I get here 3" << std::endl;
 
             std::cout << batch->ToString() << std::endl;
             
