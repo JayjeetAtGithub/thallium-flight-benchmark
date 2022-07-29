@@ -106,7 +106,7 @@ int main(int argc, char** argv) {
 
     int64_t total_rows_written = 0;
     std::function<void(const tl::request&, const std::string&)> get_next_batch = 
-        [&engine, &do_rdma, &consumer_map, &total_rows_written](const tl::request &req, const std::string& uuid) {
+        [&mid, &svr_addr, &engine, &do_rdma, &consumer_map, &total_rows_written](const tl::request &req, const std::string& uuid) {
             
             std::shared_ptr<arrow::RecordBatchReader> reader = consumer_map[uuid]->reader;
             std::shared_ptr<arrow::RecordBatch> batch;
@@ -161,6 +161,8 @@ int main(int argc, char** argv) {
                 return req.respond(0);
             } else {
                 consumer_map.erase(uuid);
+                margo_addr_free(mid, svr_addr);
+                margo_finalize(mid);
                 return req.respond(1);
             }
         };
