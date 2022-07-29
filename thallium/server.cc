@@ -66,7 +66,17 @@ int main(int argc, char** argv) {
         margo_finalize(mid);
         return -1;
     }
-    char *config = read_input_file("bake/config.json");
+
+
+    tl::remote_procedure do_rdma = engine.define("do_rdma");
+
+    std::unordered_map<std::string, std::shared_ptr<ScanResultConsumer>> consumer_map;
+    
+    std::function<void(const tl::request&, const ScanReqRPCStub&)> scan = 
+        [&consumer_map](const tl::request &req, const ScanReqRPCStub& stub) {
+            arrow::dataset::internal::Initialize();
+
+            char *config = read_input_file("bake/config.json");
 
     // setup provider
     bk::provider *p = bk::provider::create(
@@ -80,14 +90,6 @@ int main(int argc, char** argv) {
     bk::provider_handle bph(bcl, svr_addr, 0);
     bph.set_eager_limit(0);
     bk::target tid = p->list_targets()[0];
-
-    tl::remote_procedure do_rdma = engine.define("do_rdma");
-
-    std::unordered_map<std::string, std::shared_ptr<ScanResultConsumer>> consumer_map;
-    
-    std::function<void(const tl::request&, const ScanReqRPCStub&)> scan = 
-        [&consumer_map, &bcl, &bph, &tid](const tl::request &req, const ScanReqRPCStub& stub) {
-            arrow::dataset::internal::Initialize();
 
             bk::region rid(stub.path);
             std::cout << std::string(rid) << std::endl;
