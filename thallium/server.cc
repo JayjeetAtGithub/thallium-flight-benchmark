@@ -79,8 +79,6 @@ int main(int argc, char** argv) {
         [&consumer_map, &mid, &svr_addr, &p](const tl::request &req, const ScanReqRPCStub& stub) {
             arrow::dataset::internal::Initialize();
 
-            // std::string cfg = p->get_config();
-
             bk::client bcl(mid);
             bk::provider_handle bph(bcl, svr_addr, 0);
             bph.set_eager_limit(0);
