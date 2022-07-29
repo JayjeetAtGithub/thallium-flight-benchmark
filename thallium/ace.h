@@ -115,24 +115,27 @@ class RandomAccessObject : public arrow::io::RandomAccessFile {
 };
 
 
-class ScanResultConsumer {
-    public:
-        ScanResultConsumer(
-            std::shared_ptr<arrow::RecordBatchReader> reader): reader(reader) {}
-        std::shared_ptr<arrow::RecordBatchReader> reader;
-};
+arrow::Result<std::shared_ptr<arrow::RecordBatchReader>> Scan(const ScanReqRPCStub& stub, uint8_t *ptr) {   
+    // deserialize filter
+    ARROW_ASSIGN_OR_RAISE(auto filter,
+      arrow::compute::Deserialize(std::make_shared<arrow::Buffer>(
+      stub.filter_buffer, stub.filter_buffer_size))
+    );
 
+    // deserialize schemas
+    arrow::ipc::DictionaryMemo empty_memo;
+    arrow::io::BufferReader projection_schema_reader(stub.projection_schema_buffer,
+                                                     stub.projection_schema_buffer_size);
+    arrow::io::BufferReader dataset_schema_reader(stub.dataset_schema_buffer,
+                                                  stub.dataset_schema_buffer_size);
 
-arrow::Result<std::shared_ptr<ScanResultConsumer>> Scan(const ScanReqRPCStub& stub, uint8_t *ptr) {        
-    auto filter = 
-        arrow::compute::greater(arrow::compute::field_ref("total_amount"),
-                                arrow::compute::literal(-200));
+    ARROW_ASSIGN_OR_RAISE(auto projection_schema,
+                          arrow::ipc::ReadSchema(&projection_schema_reader, &empty_memo));
 
-    auto dataset_schema = arrow::schema({arrow::field("passenger_count", arrow::int64()),
-                                 arrow::field("fare_amount", arrow::float64())});
+    ARROW_ASSIGN_OR_RAISE(auto dataset_schema,
+                          arrow::ipc::ReadSchema(&dataset_schema_reader, &empty_memo));
 
     auto format = std::make_shared<arrow::dataset::ParquetFileFormat>();
-    // auto file_buffer = std::make_shared<arrow::Buffer>(ptr, 16074327);
     auto file = std::make_shared<RandomAccessObject>(ptr, 16074327);
     arrow::dataset::FileSource source(file);
     ARROW_ASSIGN_OR_RAISE(
@@ -142,12 +145,10 @@ arrow::Result<std::shared_ptr<ScanResultConsumer>> Scan(const ScanReqRPCStub& st
     auto scanner_builder = std::make_shared<arrow::dataset::ScannerBuilder>(
         dataset_schema, std::move(fragment), std::move(options));
 
-    // ARROW_RETURN_NOT_OK(scanner_builder->Filter(filter));
-    // ARROW_RETURN_NOT_OK(scanner_builder->Project({"passenger_count", "fare_amount"}));
+    ARROW_RETURN_NOT_OK(scanner_builder->Filter(filter));
+    ARROW_RETURN_NOT_OK(scanner_builder->Project(projection_schema->field_names()));
 
     ARROW_ASSIGN_OR_RAISE(auto scanner, scanner_builder->Finish());
     ARROW_ASSIGN_OR_RAISE(auto reader, scanner->ToRecordBatchReader());
-
-    auto consumer = std::make_shared<ScanResultConsumer>(reader);
-    return consumer;
+    return reader;
 }

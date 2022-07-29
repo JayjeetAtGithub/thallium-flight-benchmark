@@ -77,6 +77,5 @@ class ScanReqRPCStub {
 
 struct ScanReq {
     ScanReqRPCStub stub;
-    arrow::compute::Expression filter;
     std::shared_ptr<arrow::Schema> schema;
 };

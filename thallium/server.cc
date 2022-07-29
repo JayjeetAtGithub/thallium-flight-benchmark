@@ -73,10 +73,10 @@ int main(int argc, char** argv) {
 
     tl::remote_procedure do_rdma = engine.define("do_rdma");
 
-    std::unordered_map<std::string, std::shared_ptr<ScanResultConsumer>> consumer_map;
+    std::unordered_map<std::string, std::shared_ptr<arrow::RecordBatchReader>> reader_map;
     
     std::function<void(const tl::request&, const ScanReqRPCStub&)> scan = 
-        [&consumer_map, &mid, &svr_addr, &p](const tl::request &req, const ScanReqRPCStub& stub) {
+        [&reader_map, &mid, &svr_addr, &p](const tl::request &req, const ScanReqRPCStub& stub) {
             arrow::dataset::internal::Initialize();
 
             bk::client bcl(mid);
@@ -89,18 +89,18 @@ int main(int argc, char** argv) {
 
             uint8_t *ptr = (uint8_t*)bcl.get_data(bph, tid, rid);
 
-            std::shared_ptr<ScanResultConsumer> consumer = Scan(stub, ptr).ValueOrDie();
+            std::shared_ptr<arrow::RecordBatchReader> reader = Scan(stub, ptr).ValueOrDie();
             std::string uuid = boost::uuids::to_string(boost::uuids::random_generator()());
-            consumer_map[uuid] = consumer;
+            reader_map[uuid] = reader;
             
             return req.respond(uuid);
         };
 
     int64_t total_rows_written = 0;
     std::function<void(const tl::request&, const std::string&)> get_next_batch = 
-        [&mid, &svr_addr, &engine, &do_rdma, &consumer_map, &total_rows_written](const tl::request &req, const std::string& uuid) {
+        [&mid, &svr_addr, &engine, &do_rdma, &reader_map, &total_rows_written](const tl::request &req, const std::string& uuid) {
             
-            std::shared_ptr<arrow::RecordBatchReader> reader = consumer_map[uuid]->reader;
+            std::shared_ptr<arrow::RecordBatchReader> reader = reader_map[uuid];
             std::shared_ptr<arrow::RecordBatch> batch;
 
             if (reader->ReadNext(&batch).ok() && batch != nullptr) {
@@ -152,7 +152,7 @@ int main(int argc, char** argv) {
                 do_rdma.on(req.get_endpoint())(num_rows, data_buff_sizes, offset_buff_sizes, arrow_bulk);
                 return req.respond(0);
             } else {
-                consumer_map.erase(uuid);
+                reader_map.erase(uuid);
                 return req.respond(1);
             }
         };

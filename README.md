@@ -20,10 +20,16 @@ cd ~/spack
 git checkout releases/v0.18
 . share/spack/setup-env.sh
 
+# setup mochi namespace
+git clone https://github.com/mochi-hpc/mochi-spack-packages.git
+spack repo add mochi-spack-packages
+
 # install mochi-thallium
 spack install libfabric fabrics=tcp,udp,sockets,verbs,rxm
 spack install --reuse mochi-thallium
 spack load mochi-thallium
+spack install --reuse mochi-bake
+spack load mochi-bake
 ```
 
 2. Load RDMA kernel modules.
