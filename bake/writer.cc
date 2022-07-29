@@ -6,7 +6,6 @@
 #include <bake-client.hpp>
 #include <bake-server.hpp>
 
-static char* read_input_file(const char* filename);
 
 namespace bk = bake;
 
@@ -64,8 +63,4 @@ int main(int argc, char* argv[]) {
     margo_addr_free(mid, svr_addr);
     margo_finalize(mid);
     return 0;
-}
-
-static uint8_t* read_input_file(const char* filename) {
-    
 }
