@@ -67,6 +67,7 @@ class RandomAccessObject : public arrow::io::RandomAccessFile {
     if (nbytes > 0) {
         std::cout << "here" << std::endl;
         std::string str((char*)ptr, 10000);
+        std::cout << str << std::endl;
         auto b = std::make_shared<arrow::Buffer>(file_ptr + position, nbytes);
         std::cout << b->ToString() << std::endl;
         return b;
