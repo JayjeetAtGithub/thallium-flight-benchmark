@@ -81,21 +81,17 @@ int main(int argc, char** argv) {
     bph.set_eager_limit(0);
     bk::target tid = p->list_targets()[0];
 
-    bk::region rid("AAAAAO0B3hifXASe0Ag8AAAAAAA=");
-    char* zero_copy_pointer = (char*)bcl.get_data(bph, tid, rid);
-    std::string str((char*)zero_copy_pointer, 3);
-    std::cout << str << std::endl;
-
-
     tl::remote_procedure do_rdma = engine.define("do_rdma");
 
     std::unordered_map<std::string, std::shared_ptr<ScanResultConsumer>> consumer_map;
     
     std::function<void(const tl::request&, const ScanReqRPCStub&)> scan = 
         [&consumer_map](const tl::request &req, const ScanReqRPCStub& stub) {
-            
             arrow::dataset::internal::Initialize();
-            std::shared_ptr<ScanResultConsumer> consumer = Scan(stub, NULL).ValueOrDie();
+
+            bk::region rid(stub.path);
+            void *ptr = bcl.get_data(bph, tid, rid);
+            std::shared_ptr<ScanResultConsumer> consumer = Scan(stub, ptr).ValueOrDie();
 
             std::string uuid = boost::uuids::to_string(boost::uuids::random_generator()());
             consumer_map[uuid] = consumer;
