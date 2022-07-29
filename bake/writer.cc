@@ -6,6 +6,7 @@
 #include <bake-client.hpp>
 #include <bake-server.hpp>
 
+static char* read_input_file(const char* filename);
 
 namespace bk = bake;
 
@@ -63,4 +64,25 @@ int main(int argc, char* argv[]) {
     margo_addr_free(mid, svr_addr);
     margo_finalize(mid);
     return 0;
+}
+
+static char* read_input_file(const char* filename) {
+    size_t ret;
+    FILE*  fp = fopen(filename, "r");
+    if (fp == NULL) {
+        fprintf(stderr, "Could not open %s\n", filename);
+        exit(-1);
+    }
+    fseek(fp, 0, SEEK_END);
+    size_t sz = ftell(fp);
+    fseek(fp, 0, SEEK_SET);
+    char* buf = (char*)calloc(1, sz + 1);
+    ret       = fread(buf, 1, sz, fp);
+    if (ret != sz && ferror(fp)) {
+        free(buf);
+        perror("read_input_file");
+        buf = NULL;
+    }
+    fclose(fp);
+    return buf;
 }
