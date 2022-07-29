@@ -96,8 +96,6 @@ int main(int argc, char** argv) {
             void *ptr = bcl.get_data(bph, tid, rid);
 
             std::cout << "I get here" << std::endl;
-            std::string str((char*)ptr, 16074327);
-            std::cout << str << std::endl;
 
             std::shared_ptr<ScanResultConsumer> consumer = Scan(stub, ptr).ValueOrDie();
             std::string uuid = boost::uuids::to_string(boost::uuids::random_generator()());
