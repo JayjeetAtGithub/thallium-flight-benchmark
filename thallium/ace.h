@@ -141,32 +141,6 @@ arrow::Result<std::shared_ptr<arrow::RecordBatchReader>> Scan(const ScanReqRPCSt
     std::cout << "reached here2\n";
 
 
-    // auto filter = 
-    //     cp::greater(cp::field_ref("total_amount"), cp::literal(-200));
-    
-    // auto projection_schema = arrow::schema({arrow::field("passenger_count", arrow::int64()),
-    //                                         arrow::field("fare_amount", arrow::float64())});
-
-    // auto dataset_schema = arrow::schema({
-    //     arrow::field("VendorID", arrow::int64()),
-    //     arrow::field("tpep_pickup_datetime", arrow::timestamp(arrow::TimeUnit::MICRO)),
-    //     arrow::field("tpep_dropoff_datetime", arrow::timestamp(arrow::TimeUnit::MICRO)),
-    //     arrow::field("passenger_count", arrow::int64()),
-    //     arrow::field("trip_distance", arrow::float64()),
-    //     arrow::field("RatecodeID", arrow::int64()),
-    //     arrow::field("store_and_fwd_flag", arrow::utf8()),
-    //     arrow::field("PULocationID", arrow::int64()),
-    //     arrow::field("DOLocationID", arrow::int64()),
-    //     arrow::field("payment_type", arrow::int64()),
-    //     arrow::field("fare_amount", arrow::float64()),
-    //     arrow::field("extra", arrow::float64()),
-    //     arrow::field("mta_tax", arrow::float64()),
-    //     arrow::field("tip_amount", arrow::float64()),
-    //     arrow::field("tolls_amount", arrow::float64()),
-    //     arrow::field("improvement_surcharge", arrow::float64()),
-    //     arrow::field("total_amount", arrow::float64())
-    // });
-
     auto format = std::make_shared<arrow::dataset::ParquetFileFormat>();
     auto file = std::make_shared<RandomAccessObject>(ptr, 16074327);
     arrow::dataset::FileSource source(file);
