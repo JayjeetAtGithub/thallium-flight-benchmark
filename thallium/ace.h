@@ -125,47 +125,47 @@ arrow::Result<std::shared_ptr<arrow::RecordBatchReader>> Scan(const ScanReqRPCSt
     // );
     // std::cout << "reached here4\n";
 
-    // // deserialize schemas
-    // arrow::ipc::DictionaryMemo empty_memo;
-    // arrow::io::BufferReader projection_schema_reader(stub.projection_schema_buffer,
-    //                                                  stub.projection_schema_buffer_size);
-    // arrow::io::BufferReader dataset_schema_reader(stub.dataset_schema_buffer,
-    //                                               stub.dataset_schema_buffer_size);
-    // std::cout << "reached here3\n";
+    // deserialize schemas
+    arrow::ipc::DictionaryMemo empty_memo;
+    arrow::io::BufferReader projection_schema_reader(stub.projection_schema_buffer,
+                                                     stub.projection_schema_buffer_size);
+    arrow::io::BufferReader dataset_schema_reader(stub.dataset_schema_buffer,
+                                                  stub.dataset_schema_buffer_size);
+    std::cout << "reached here3\n";
 
-    // ARROW_ASSIGN_OR_RAISE(auto projection_schema,
-    //                       arrow::ipc::ReadSchema(&projection_schema_reader, &empty_memo));
+    ARROW_ASSIGN_OR_RAISE(auto projection_schema,
+                          arrow::ipc::ReadSchema(&projection_schema_reader, &empty_memo));
 
-    // ARROW_ASSIGN_OR_RAISE(auto dataset_schema,
-    //                       arrow::ipc::ReadSchema(&dataset_schema_reader, &empty_memo));
-    // std::cout << "reached here2\n";
+    ARROW_ASSIGN_OR_RAISE(auto dataset_schema,
+                          arrow::ipc::ReadSchema(&dataset_schema_reader, &empty_memo));
+    std::cout << "reached here2\n";
 
 
     auto filter = 
         cp::greater(cp::field_ref("total_amount"), cp::literal(-200));
     
-    auto projection_schema = arrow::schema({arrow::field("passenger_count", arrow::int64()),
-                                            arrow::field("fare_amount", arrow::float64())});
+    // auto projection_schema = arrow::schema({arrow::field("passenger_count", arrow::int64()),
+    //                                         arrow::field("fare_amount", arrow::float64())});
 
-    auto dataset_schema = arrow::schema({
-        arrow::field("VendorID", arrow::int64()),
-        arrow::field("tpep_pickup_datetime", arrow::timestamp(arrow::TimeUnit::MICRO)),
-        arrow::field("tpep_dropoff_datetime", arrow::timestamp(arrow::TimeUnit::MICRO)),
-        arrow::field("passenger_count", arrow::int64()),
-        arrow::field("trip_distance", arrow::float64()),
-        arrow::field("RatecodeID", arrow::int64()),
-        arrow::field("store_and_fwd_flag", arrow::utf8()),
-        arrow::field("PULocationID", arrow::int64()),
-        arrow::field("DOLocationID", arrow::int64()),
-        arrow::field("payment_type", arrow::int64()),
-        arrow::field("fare_amount", arrow::float64()),
-        arrow::field("extra", arrow::float64()),
-        arrow::field("mta_tax", arrow::float64()),
-        arrow::field("tip_amount", arrow::float64()),
-        arrow::field("tolls_amount", arrow::float64()),
-        arrow::field("improvement_surcharge", arrow::float64()),
-        arrow::field("total_amount", arrow::float64())
-    });
+    // auto dataset_schema = arrow::schema({
+    //     arrow::field("VendorID", arrow::int64()),
+    //     arrow::field("tpep_pickup_datetime", arrow::timestamp(arrow::TimeUnit::MICRO)),
+    //     arrow::field("tpep_dropoff_datetime", arrow::timestamp(arrow::TimeUnit::MICRO)),
+    //     arrow::field("passenger_count", arrow::int64()),
+    //     arrow::field("trip_distance", arrow::float64()),
+    //     arrow::field("RatecodeID", arrow::int64()),
+    //     arrow::field("store_and_fwd_flag", arrow::utf8()),
+    //     arrow::field("PULocationID", arrow::int64()),
+    //     arrow::field("DOLocationID", arrow::int64()),
+    //     arrow::field("payment_type", arrow::int64()),
+    //     arrow::field("fare_amount", arrow::float64()),
+    //     arrow::field("extra", arrow::float64()),
+    //     arrow::field("mta_tax", arrow::float64()),
+    //     arrow::field("tip_amount", arrow::float64()),
+    //     arrow::field("tolls_amount", arrow::float64()),
+    //     arrow::field("improvement_surcharge", arrow::float64()),
+    //     arrow::field("total_amount", arrow::float64())
+    // });
 
     auto format = std::make_shared<arrow::dataset::ParquetFileFormat>();
     auto file = std::make_shared<RandomAccessObject>(ptr, 16074327);
