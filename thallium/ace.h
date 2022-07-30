@@ -134,12 +134,14 @@ arrow::Result<std::shared_ptr<arrow::RecordBatchReader>> Scan(const ScanReqRPCSt
 
     ARROW_ASSIGN_OR_RAISE(auto dataset_schema,
                           arrow::ipc::ReadSchema(&dataset_schema_reader, &empty_memo));
+    std::cout << "reached here2\n";
 
     auto format = std::make_shared<arrow::dataset::ParquetFileFormat>();
     auto file = std::make_shared<RandomAccessObject>(ptr, 16074327);
     arrow::dataset::FileSource source(file);
     ARROW_ASSIGN_OR_RAISE(
         auto fragment, format->MakeFragment(std::move(source), arrow::compute::literal(true)));
+    std::cout << "reached here1\n";
     
     auto options = std::make_shared<arrow::dataset::ScanOptions>();
     auto scanner_builder = std::make_shared<arrow::dataset::ScannerBuilder>(
@@ -147,9 +149,9 @@ arrow::Result<std::shared_ptr<arrow::RecordBatchReader>> Scan(const ScanReqRPCSt
 
     ARROW_RETURN_NOT_OK(scanner_builder->Filter(filter));
     ARROW_RETURN_NOT_OK(scanner_builder->Project(projection_schema->field_names()));
+    std::cout << "reached here\n";
 
     ARROW_ASSIGN_OR_RAISE(auto scanner, scanner_builder->Finish());
     ARROW_ASSIGN_OR_RAISE(auto reader, scanner->ToRecordBatchReader());
-    std::cout << "reached here\n";
     return reader;
 }
