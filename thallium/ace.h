@@ -116,14 +116,14 @@ class RandomAccessObject : public arrow::io::RandomAccessFile {
 
 
 arrow::Result<std::shared_ptr<arrow::RecordBatchReader>> Scan(const ScanReqRPCStub& stub, uint8_t *ptr) {   
-    // // deserialize filter
-    //     std::cout << "reached here5\n";
+    // deserialize filter
+        std::cout << "reached here5\n";
 
-    // ARROW_ASSIGN_OR_RAISE(auto filter,
-    //   arrow::compute::Deserialize(std::make_shared<arrow::Buffer>(
-    //   stub.filter_buffer, stub.filter_buffer_size))
-    // );
-    // std::cout << "reached here4\n";
+    ARROW_ASSIGN_OR_RAISE(auto filter,
+      arrow::compute::Deserialize(std::make_shared<arrow::Buffer>(
+      stub.filter_buffer, stub.filter_buffer_size))
+    );
+    std::cout << "reached here4\n";
 
     // deserialize schemas
     arrow::ipc::DictionaryMemo empty_memo;
@@ -141,8 +141,8 @@ arrow::Result<std::shared_ptr<arrow::RecordBatchReader>> Scan(const ScanReqRPCSt
     std::cout << "reached here2\n";
 
 
-    auto filter = 
-        cp::greater(cp::field_ref("total_amount"), cp::literal(-200));
+    // auto filter = 
+    //     cp::greater(cp::field_ref("total_amount"), cp::literal(-200));
     
     // auto projection_schema = arrow::schema({arrow::field("passenger_count", arrow::int64()),
     //                                         arrow::field("fare_amount", arrow::float64())});
