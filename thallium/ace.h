@@ -117,10 +117,13 @@ class RandomAccessObject : public arrow::io::RandomAccessFile {
 
 arrow::Result<std::shared_ptr<arrow::RecordBatchReader>> Scan(const ScanReqRPCStub& stub, uint8_t *ptr) {   
     // deserialize filter
+        std::cout << "reached here5\n";
+
     ARROW_ASSIGN_OR_RAISE(auto filter,
       arrow::compute::Deserialize(std::make_shared<arrow::Buffer>(
       stub.filter_buffer, stub.filter_buffer_size))
     );
+    std::cout << "reached here4\n";
 
     // deserialize schemas
     arrow::ipc::DictionaryMemo empty_memo;
@@ -128,6 +131,7 @@ arrow::Result<std::shared_ptr<arrow::RecordBatchReader>> Scan(const ScanReqRPCSt
                                                      stub.projection_schema_buffer_size);
     arrow::io::BufferReader dataset_schema_reader(stub.dataset_schema_buffer,
                                                   stub.dataset_schema_buffer_size);
+    std::cout << "reached here3\n";
 
     ARROW_ASSIGN_OR_RAISE(auto projection_schema,
                           arrow::ipc::ReadSchema(&projection_schema_reader, &empty_memo));
