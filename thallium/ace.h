@@ -150,5 +150,6 @@ arrow::Result<std::shared_ptr<arrow::RecordBatchReader>> Scan(const ScanReqRPCSt
 
     ARROW_ASSIGN_OR_RAISE(auto scanner, scanner_builder->Finish());
     ARROW_ASSIGN_OR_RAISE(auto reader, scanner->ToRecordBatchReader());
+    std::cout << "reached here\n";
     return reader;
 }
