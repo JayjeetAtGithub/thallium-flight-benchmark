@@ -73,13 +73,13 @@ int main(int argc, char** argv) {
 
     // start bake provider
     char *bake_config = read_input_file("bake/bake_config.json");
-    bk::provider *p = bk::provider::create(
+    bk::provider *bp = bk::provider::create(
         mid, 0, ABT_POOL_NULL, std::string(bake_config, strlen(bake_config) + 1), ABT_IO_INSTANCE_NULL, NULL, NULL
     );
 
     // start yokan provider, create a database, and initialize the db handle
     char *yokan_config = read_input_file("bake/yokan_config.json");
-    yk::Provider p(mid, 0, "ABCD", yokan_config, ABT_POOL_NULL, nullptr);
+    yk::Provider yp(mid, 0, "ABCD", yokan_config, ABT_POOL_NULL, nullptr);
     yk::Client ycl(mid);
     yk::Admin admin(mid);
     yk_database_id_t db_id = admin.openDatabase(svr_addr, 0, "ABCD", "map", yokan_config);
