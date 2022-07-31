@@ -91,13 +91,13 @@ int main(int argc, char** argv) {
     std::unordered_map<std::string, std::shared_ptr<arrow::RecordBatchReader>> reader_map;
     
     std::function<void(const tl::request&, const ScanReqRPCStub&)> scan = 
-        [&reader_map, &mid, &svr_addr, &p](const tl::request &req, const ScanReqRPCStub& stub) {
+        [&reader_map, &mid, &svr_addr, &bp](const tl::request &req, const ScanReqRPCStub& stub) {
             arrow::dataset::internal::Initialize();
 
             bk::client bcl(mid);
             bk::provider_handle bph(bcl, svr_addr, 0);
             bph.set_eager_limit(0);
-            bk::target tid = p->list_targets()[0];
+            bk::target tid = bp->list_targets()[0];
 
             bk::region rid(stub.path);
             std::cout << "Scanning region with rid: " << std::string(rid) << std::endl;
