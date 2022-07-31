@@ -83,7 +83,7 @@ int main(int argc, char** argv) {
     yk::Client ycl(mid);
     yk::Admin admin(mid);
     yk_database_id_t db_id = admin.openDatabase(svr_addr, 0, "ABCD", "map", yokan_config);
-    yk::Database db(ycl, svr_addr, 0, db_id);
+    yk::Database db(ycl.handle(), svr_addr, 0, db_id);
 
 
     tl::remote_procedure do_rdma = engine.define("do_rdma");
