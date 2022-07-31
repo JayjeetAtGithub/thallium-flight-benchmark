@@ -88,7 +88,7 @@ int main(int argc, char** argv) {
     // experiment with yokan
     std::string key = "foo";
     std::string value = "bar";
-    db->put((void*)key.c_str(), key.length(), (void*)value.c_str(), value.length());
+    db.put((void*)key.c_str(), key.length(), (void*)value.c_str(), value.length());
 
 
     tl::remote_procedure do_rdma = engine.define("do_rdma");
