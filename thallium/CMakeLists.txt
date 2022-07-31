@@ -19,4 +19,4 @@ add_executable(tc client.cc)
 target_link_libraries(tc thallium arrow arrow_dataset)
 
 add_executable(ts server.cc)
-target_link_libraries(ts thallium yokan yokan-client yokan-server arrow arrow_dataset PkgConfig::BAKECLIENT PkgConfig::BAKESERVER)
+target_link_libraries(ts thallium yokan-admin yokan-client yokan-server arrow arrow_dataset PkgConfig::BAKECLIENT PkgConfig::BAKESERVER)
