@@ -176,7 +176,6 @@ arrow::Status Main(char **argv) {
             int64_t total_rows = 0;
             std::shared_ptr<arrow::RecordBatch> batch;
             while ((batch = GetNextBatch(conn_ctx, scan_ctx).ValueOrDie()) != nullptr) {
-                std::cout << batch->ToString() << std::endl;
                 total_rows += batch->num_rows();
             }
         }
