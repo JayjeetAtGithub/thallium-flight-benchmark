@@ -28,12 +28,16 @@
 #include <bake-client.hpp>
 #include <bake-server.hpp>
 
+#include <yokan/cxx/server.hpp>
+#include <yokan/cxx/admin.hpp>
+#include <yokan/cxx/client.hpp>
+
 #include "ace.h"
 
 namespace tl = thallium;
 namespace bk = bake;
 namespace cp = arrow::compute;
-
+namespace yk = yokan;
 
 static char* read_input_file(const char* filename) {
     size_t ret;
@@ -67,9 +71,20 @@ int main(int argc, char** argv) {
         return -1;
     }
 
-    char *config = read_input_file("bake/config.json");
+    // start bake provider
+    char *bake_config = read_input_file("bake/bake_config.json");
     bk::provider *p = bk::provider::create(
-        mid, 0, ABT_POOL_NULL, std::string(config, strlen(config) + 1), ABT_IO_INSTANCE_NULL, NULL, NULL);
+        mid, 0, ABT_POOL_NULL, std::string(bake_config, strlen(bake_config) + 1), ABT_IO_INSTANCE_NULL, NULL, NULL
+    );
+
+    // start yokan provider, create a database, and initialize the db handle
+    char *yokan_config = read_input_file("bake/yokan_config.json")
+    yk::Provider p(mid, 0, "ABCD", yokan_config, ABT_POOL_NULL, nullptr);
+    yk::Client ycl(mid);
+    yk::Admin admin(mid);
+    yk_database_id_t db_id = admin.openDatabase(svr_addr, 0, "ABCD", "map", yokan_config);
+    yk::Database db(ycl, svr_addr, 0, db_id);
+
 
     tl::remote_procedure do_rdma = engine.define("do_rdma");
 
