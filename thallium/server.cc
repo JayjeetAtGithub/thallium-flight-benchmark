@@ -85,6 +85,11 @@ int main(int argc, char** argv) {
     yk_database_id_t db_id = admin.openDatabase(svr_addr, 0, "ABCD", "map", yokan_config);
     yk::Database db(ycl.handle(), svr_addr, 0, db_id);
 
+    // experiment with yokan
+    std::string key = "foo";
+    std::string value = "bar";
+    db->put((void*)key.c_str(), key.length(), (void*)value.c_str(), value.length());
+
 
     tl::remote_procedure do_rdma = engine.define("do_rdma");
 
