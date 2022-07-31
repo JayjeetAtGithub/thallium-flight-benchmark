@@ -35,7 +35,6 @@ arrow::Result<std::unique_ptr<arrow::flight::FlightClient>> ConnectToFlightServe
 
   std::unique_ptr<arrow::flight::FlightClient> client;
   ARROW_RETURN_NOT_OK(arrow::flight::FlightClient::Connect(location, &client));
-  //std::cout << "Connected to " << location.ToString() << std::endl;
   return client;
 }
 

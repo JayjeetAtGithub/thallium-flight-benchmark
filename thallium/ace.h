@@ -128,7 +128,6 @@ arrow::Result<std::shared_ptr<arrow::RecordBatchReader>> Scan(const ScanReqRPCSt
                                                      stub.projection_schema_buffer_size);
     arrow::io::BufferReader dataset_schema_reader(stub.dataset_schema_buffer,
                                                   stub.dataset_schema_buffer_size);
-
     ARROW_ASSIGN_OR_RAISE(auto projection_schema,
                           arrow::ipc::ReadSchema(&projection_schema_reader, &empty_memo));
 
