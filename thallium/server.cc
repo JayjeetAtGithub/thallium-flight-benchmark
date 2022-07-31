@@ -91,8 +91,8 @@ int main(int argc, char** argv) {
     db.put((void*)key.c_str(), key.length(), (void*)value.c_str(), value.length());
 
     size_t size;
-    void *value;
-    db.get((void*)key.c_str(), key.length(), value, &size);
+    void *value_buf;
+    db.get((void*)key.c_str(), key.length(), value_buf, &size);
 
     std::cout << "got the value" << std::endl;
 
