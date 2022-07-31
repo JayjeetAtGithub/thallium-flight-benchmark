@@ -168,7 +168,7 @@ arrow::Status Main(char **argv) {
     // scan
     ConnCtx conn_ctx = Init(uri);
 
-    for (int i = 0; i < 20; i++) {
+    for (int i = 0; i < 10; i++) {
         ARROW_ASSIGN_OR_RAISE(auto scan_req, GetScanRequest("AAAAAO0B3hifXASeECQ0AQAAAAA=", filter, projection_schema, dataset_schema));
         {
             MEASURE_FUNCTION_EXECUTION_TIME
