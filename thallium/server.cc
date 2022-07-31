@@ -78,7 +78,7 @@ int main(int argc, char** argv) {
     );
 
     // start yokan provider, create a database, and initialize the db handle
-    char *yokan_config = read_input_file("bake/yokan_config.json")
+    char *yokan_config = read_input_file("bake/yokan_config.json");
     yk::Provider p(mid, 0, "ABCD", yokan_config, ABT_POOL_NULL, nullptr);
     yk::Client ycl(mid);
     yk::Admin admin(mid);
