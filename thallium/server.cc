@@ -90,6 +90,11 @@ int main(int argc, char** argv) {
     std::string value = "bar";
     db.put((void*)key.c_str(), key.length(), (void*)value.c_str(), value.length());
 
+    size_t size;
+    void *value;
+    db.get((void*)key.c_str(), key.length(), value, &size);
+
+    std::cout << "got the value" << std::endl;
 
     tl::remote_procedure do_rdma = engine.define("do_rdma");
 
