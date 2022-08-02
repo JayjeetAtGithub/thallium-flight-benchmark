@@ -90,6 +90,7 @@ int main(int argc, char** argv) {
     std::string value = "bar";
     db.put((void*)key.c_str(), key.length(), (void*)value.c_str(), value.length());
 
+    std::cout << db.count() << "\n";
     std::cout << "reached here" << key.length() << "\n";
 
 
