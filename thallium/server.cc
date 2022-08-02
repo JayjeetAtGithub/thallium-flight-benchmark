@@ -94,7 +94,7 @@ int main(int argc, char** argv) {
 
     size_t size = -1;
     void *value_buf = malloc(value.size());
-    db.get((void*)key.c_str(), key.length(), value_buf, &size);
+    db.get((void*)key.c_str(), strlen(key), value_buf, &size);
 
     std::cout << "got the value" << std::endl;
 
