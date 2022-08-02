@@ -98,6 +98,8 @@ int main(int argc, char** argv) {
     void *value_buf = malloc(value.size());
     db.get((void*)key.c_str(), key.length(), value_buf, &size);
 
+    std::cout << std::string((char*)value_buf) << std::endl;
+
     std::cout << "got the value" << std::endl;
 
     tl::remote_procedure do_rdma = engine.define("do_rdma");
