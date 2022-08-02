@@ -90,7 +90,8 @@ int main(int argc, char** argv) {
     std::string value = "bar";
     db.put((void*)key.c_str(), key.length(), (void*)value.c_str(), value.length());
 
-    std::cout << "reached here\n";
+    std::cout << "reached here" << key.length() << "\n";
+
 
     size_t size = -1;
     void *value_buf = malloc(value.size());
