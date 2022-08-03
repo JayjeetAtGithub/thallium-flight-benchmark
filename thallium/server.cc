@@ -94,8 +94,7 @@ int main(int argc, char** argv) {
     std::cout << "reached here" << key.length() << "\n";
 
 
-    size_t size = key.length();
-    void *value_buf = malloc(value.size());
+
     
     std::cout << "got the value" << std::endl;
 
@@ -106,7 +105,8 @@ int main(int argc, char** argv) {
     std::function<void(const tl::request&, const ScanReqRPCStub&)> scan = 
         [&reader_map, &mid, &svr_addr, &bp, &dp](const tl::request &req, const ScanReqRPCStub& stub) {
             arrow::dataset::internal::Initialize();
-
+    size_t size = key.length();
+    void *value_buf = malloc(value.size());
             db.get((void*)key.c_str(), key.length(), value_buf, &size);
 
             std::cout << std::string((char*)value_buf, size) << std::endl;
