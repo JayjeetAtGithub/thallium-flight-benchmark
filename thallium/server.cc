@@ -108,7 +108,6 @@ int main(int argc, char** argv) {
     size_t size = 6;
     void *value_buf = malloc(6);
     std::cout << "just before db.get()" << std::endl;
-    bool is_null = (db == NULL);
     std::cout << key << std::endl;
     std::cout << "db is NULL" << std::endl;
             db.get((void*)key.c_str(), key.length(), value_buf, &size);
