@@ -103,10 +103,10 @@ int main(int argc, char** argv) {
     std::unordered_map<std::string, std::shared_ptr<arrow::RecordBatchReader>> reader_map;
     
     std::function<void(const tl::request&, const ScanReqRPCStub&)> scan = 
-        [&reader_map, &mid, &svr_addr, &bp, &dp, &key](const tl::request &req, const ScanReqRPCStub& stub) {
+        [&reader_map, &mid, &svr_addr, &bp, &db, &key](const tl::request &req, const ScanReqRPCStub& stub) {
             arrow::dataset::internal::Initialize();
-    size_t size = key.length();
-    void *value_buf = malloc(value.size());
+    size_t size = 6;
+    void *value_buf = malloc(6);
             db.get((void*)key.c_str(), key.length(), value_buf, &size);
 
             std::cout << std::string((char*)value_buf, size) << std::endl;
