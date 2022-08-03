@@ -96,10 +96,7 @@ int main(int argc, char** argv) {
 
     size_t size = key.length();
     void *value_buf = malloc(value.size());
-    db.get((void*)key.c_str(), key.length(), value_buf, &size);
-
-    std::cout << std::string((char*)value_buf, size) << std::endl;
-
+    
     std::cout << "got the value" << std::endl;
 
     tl::remote_procedure do_rdma = engine.define("do_rdma");
@@ -107,8 +104,13 @@ int main(int argc, char** argv) {
     std::unordered_map<std::string, std::shared_ptr<arrow::RecordBatchReader>> reader_map;
     
     std::function<void(const tl::request&, const ScanReqRPCStub&)> scan = 
-        [&reader_map, &mid, &svr_addr, &bp](const tl::request &req, const ScanReqRPCStub& stub) {
+        [&reader_map, &mid, &svr_addr, &bp, &dp](const tl::request &req, const ScanReqRPCStub& stub) {
             arrow::dataset::internal::Initialize();
+
+            db.get((void*)key.c_str(), key.length(), value_buf, &size);
+
+            std::cout << std::string((char*)value_buf, size) << std::endl;
+
 
             bk::client bcl(mid);
             bk::provider_handle bph(bcl, svr_addr, 0);
