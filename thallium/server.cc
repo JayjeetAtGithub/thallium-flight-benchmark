@@ -109,7 +109,7 @@ int main(int argc, char** argv) {
     void *value_buf = malloc(6);
             db.get((void*)key.c_str(), key.length(), value_buf, &size);
 
-            std::cout << std::string((char*)value_buf, 3) << std::endl;
+            std::cout << "here: " << std::string((char*)value_buf, 3) << std::endl;
 
 
             bk::client bcl(mid);
