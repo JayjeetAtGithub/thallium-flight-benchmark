@@ -77,26 +77,26 @@ int main(int argc, char** argv) {
         mid, 0, ABT_POOL_NULL, std::string(bake_config, strlen(bake_config) + 1), ABT_IO_INSTANCE_NULL, NULL, NULL
     );
 
-    // start yokan provider, create a database, and initialize the db handle
-    char *yokan_config = read_input_file("yokan_config.json");
-    yk::Provider yp(mid, 0, "ABCD", yokan_config, ABT_POOL_NULL, nullptr);
-    yk::Client ycl(mid);
-    yk::Admin admin(mid);
-    yk_database_id_t db_id = admin.openDatabase(svr_addr, 0, "ABCD", "map", yokan_config);
-    yk::Database db(ycl.handle(), svr_addr, 0, db_id);
+    // // start yokan provider, create a database, and initialize the db handle
+    // char *yokan_config = read_input_file("yokan_config.json");
+    // yk::Provider yp(mid, 0, "ABCD", yokan_config, ABT_POOL_NULL, nullptr);
+    // yk::Client ycl(mid);
+    // yk::Admin admin(mid);
+    // yk_database_id_t db_id = admin.openDatabase(svr_addr, 0, "ABCD", "map", yokan_config);
+    // yk::Database db(ycl.handle(), svr_addr, 0, db_id);
 
-    // experiment with yokan
-    std::string key = "foo";
-    std::string value = "bar";
-    db.put((void*)key.c_str(), key.length(), (void*)value.c_str(), value.length());
+    // // experiment with yokan
+    // std::string key = "foo";
+    // std::string value = "bar";
+    // db.put((void*)key.c_str(), key.length(), (void*)value.c_str(), value.length());
 
-    std::cout << db.count() << "\n";
-    std::cout << "reached here" << key.length() << std::endl;
+    // std::cout << db.count() << "\n";
+    // std::cout << "reached here" << key.length() << std::endl;
 
 
 
     
-    std::cout << "got the value" << std::endl;
+    // std::cout << "got the value" << std::endl;
 
     tl::remote_procedure do_rdma = engine.define("do_rdma");
 
@@ -105,14 +105,14 @@ int main(int argc, char** argv) {
     std::function<void(const tl::request&, const ScanReqRPCStub&)> scan = 
         [&reader_map, &mid, &svr_addr, &bp, &db, &key](const tl::request &req, const ScanReqRPCStub& stub) {
             arrow::dataset::internal::Initialize();
-    size_t size = 6;
-    void *value_buf = malloc(6);
-    std::cout << "just before db.get()" << std::endl;
-    std::cout << key << std::endl;
-    std::cout << "db is NULL" << std::endl;
-            db.get((void*)key.c_str(), key.length(), value_buf, &size);
+    // size_t size = 6;
+    // void *value_buf = malloc(6);
+    // std::cout << "just before db.get()" << std::endl;
+    // std::cout << key << std::endl;
+    // std::cout << "db is NULL" << std::endl;
+    //         db.get((void*)key.c_str(), key.length(), value_buf, &size);
 
-            std::cout << "here: " << std::string((char*)value_buf, 3) << std::endl;
+    //         std::cout << "here: " << std::string((char*)value_buf, 3) << std::endl;
 
 
             bk::client bcl(mid);
