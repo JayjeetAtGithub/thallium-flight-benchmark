@@ -6,6 +6,10 @@
 #include <bake-client.hpp>
 #include <bake-server.hpp>
 
+#include <yokan/cxx/server.hpp>
+#include <yokan/cxx/admin.hpp>
+#include <yokan/cxx/client.hpp>
+
 static char* read_input_file(const char* filename);
 
 namespace bk = bake;
