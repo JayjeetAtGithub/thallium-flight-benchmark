@@ -28,12 +28,16 @@
 #include <bake-client.hpp>
 #include <bake-server.hpp>
 
+#include <yokan/cxx/server.hpp>
+#include <yokan/cxx/admin.hpp>
+#include <yokan/cxx/client.hpp>
+
 #include "ace.h"
 
 namespace tl = thallium;
 namespace bk = bake;
 namespace cp = arrow::compute;
-
+namespace yk = yokan;
 
 static char* read_input_file(const char* filename) {
     size_t ret;
@@ -57,6 +61,16 @@ static char* read_input_file(const char* filename) {
 }
 
 int main(int argc, char** argv) {
+
+    if (argc < 2) {
+        std::cout << "./ts <mode>\n";
+        std::cout << "\nmode: \n\n1: in-memory\n2: ext4\n3: bake\n";
+        exit(0);
+    }
+
+    int mode = atoi(argv[1]);
+    std::cout << "Using mode " << mode << std::endl;
+
     tl::engine engine("verbs://ibp130s0", THALLIUM_SERVER_MODE, true);
     margo_instance_id mid = engine.get_margo_instance();
     hg_addr_t svr_addr;
@@ -67,25 +81,38 @@ int main(int argc, char** argv) {
         return -1;
     }
 
-    char *config = read_input_file("bake/config.json");
-    bk::provider *p = bk::provider::create(
-        mid, 0, ABT_POOL_NULL, std::string(config, strlen(config) + 1), ABT_IO_INSTANCE_NULL, NULL, NULL);
+    // start bake provider
+    char *bake_config = read_input_file("bake_config.json");
+    bk::provider *bp = bk::provider::create(
+        mid, 0, ABT_POOL_NULL, std::string(bake_config, strlen(bake_config) + 1), ABT_IO_INSTANCE_NULL, NULL, NULL
+    );
+
+    // start yokan provider, create a database, and initialize the db handle
+    char *yokan_config = read_input_file("yokan_config.json");
+    yk::Provider yp(mid, 0, "ABCD", yokan_config, ABT_POOL_NULL, nullptr);
+    yk::Client ycl(mid);
+    yk::Admin admin(mid);
+    yk_database_id_t db_id = admin.openDatabase(svr_addr, 0, "ABCD", "rocksdb", yokan_config);
+    yk::Database db(ycl.handle(), svr_addr, 0, db_id);
 
     tl::remote_procedure do_rdma = engine.define("do_rdma");
 
     std::unordered_map<std::string, std::shared_ptr<arrow::RecordBatchReader>> reader_map;
-    
+    bk::client bcl(mid);
+    bk::provider_handle bph(bcl, svr_addr, 0);
+    bph.set_eager_limit(0);
+    bk::target tid = bp->list_targets()[0];
+
     std::function<void(const tl::request&, const ScanReqRPCStub&)> scan = 
-        [&reader_map, &mid, &svr_addr, &p](const tl::request &req, const ScanReqRPCStub& stub) {
+        [&reader_map, &mid, &svr_addr, &bp, &bcl, &bph, &tid, &db](const tl::request &req, const ScanReqRPCStub& stub) {
             arrow::dataset::internal::Initialize();
+            size_t value_size = 28;
+            void *value_buf = malloc(28);
+            db.get((void*)stub.path.c_str(), stub.path.length(), value_buf, &value_size);
 
-            bk::client bcl(mid);
-            bk::provider_handle bph(bcl, svr_addr, 0);
-            bph.set_eager_limit(0);
-            bk::target tid = p->list_targets()[0];
-
-            bk::region rid(stub.path);
-            std::cout << "Scanning region with rid: " << std::string(rid) << std::endl;
+            std::string rid_str = std::string((char*)value_buf, value_size); 
+            std::cout << "Scanning region with rid: " << rid_str << std::endl;
+            bk::region rid(rid_str);
 
             uint8_t *ptr = (uint8_t*)bcl.get_data(bph, tid, rid);
 
@@ -160,5 +187,6 @@ int main(int argc, char** argv) {
     engine.define("scan", scan);
     engine.define("get_next_batch", get_next_batch);
 
-    std::cout << "Server running at address " << engine.self() << std::endl;            
+    std::cout << "Server running at address " << engine.self() << std::endl;    
+    engine.wait_for_finalize();        
 };
