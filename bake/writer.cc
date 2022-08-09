@@ -53,6 +53,23 @@ int main(int argc, char* argv[]) {
     bph.set_eager_limit(0);
     bk::target tid = p->list_targets()[0];
 
+    // start yokan provider, create a database, and initialize the db handle
+    char *yokan_config = read_input_file("yokan_config.json");
+    yk::Provider yp(mid, 0, "ABCD", yokan_config, ABT_POOL_NULL, nullptr);
+    yk::Client ycl(mid);
+    yk::Admin admin(mid);
+    yk_database_id_t db_id = admin.openDatabase(svr_addr, 0, "ABCD", "map", yokan_config);
+    yk::Database db(ycl.handle(), svr_addr, 0, db_id);
+
+    // experiment with yokan
+    std::string key = "foo";
+    std::string value = "bar";
+    db.put((void*)key.c_str(), key.length(), (void*)value.c_str(), value.length());
+
+    std::cout << db.count() << "\n";
+    std::cout << "reached here" << key.length() << std::endl;
+
+
     // write phase
     uint64_t buffer_size = file_st.st_size;
     std::cout << "Wrote: " << buffer_size << " bytes" << std::endl;
