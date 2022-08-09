@@ -106,14 +106,13 @@ int main(int argc, char** argv) {
     std::function<void(const tl::request&, const ScanReqRPCStub&)> scan = 
         [&reader_map, &mid, &svr_addr, &bp, &bcl, &bph, &tid](const tl::request &req, const ScanReqRPCStub& stub) {
             arrow::dataset::internal::Initialize();
-            size_t value_size = 6;
-            void *value_buf = malloc(6);
+            size_t value_size = 28;
+            void *value_buf = malloc(28);
             db.get((void*)stub.path.c_str(), stub.path.length(), value_buf, &value_size);
 
-            std::cout << "here: " << std::string((char*)value_buf, value_size) << std::endl;    
-
-            bk::region rid(stub.path);
-            std::cout << "Scanning region with rid: " << std::string(rid) << std::endl;
+            std::string rid_str = std::string((char*)value_buf, value_size); 
+            std::cout << "Scanning region with rid: " << rid_str << std::endl;
+            bk::region rid(rid_str);
 
             uint8_t *ptr = (uint8_t*)bcl.get_data(bph, tid, rid);
 
