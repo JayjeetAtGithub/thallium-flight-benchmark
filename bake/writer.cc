@@ -66,7 +66,7 @@ int main(int argc, char* argv[]) {
     yk_database_id_t db_id = admin.openDatabase(svr_addr, 0, "ABCD", "rocksdb", yokan_config);
     yk::Database db(ycl.handle(), svr_addr, 0, db_id);
 
-    std::cout << db.count() << "\n";
+    // std::cout << db.count() << "\n";
 
     // write the data to bake
     uint64_t buffer_size = file_st.st_size;
