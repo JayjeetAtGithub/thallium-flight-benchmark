@@ -64,7 +64,7 @@ int main(int argc, char** argv) {
 
     if (argc < 2) {
         std::cout << "./ts <mode>\n";
-        std::cout << "mode: \n\n 1: in-memory\n2: ext4\n3: bake\n";
+        std::cout << "\nmode: \n\n1: in-memory\n2: ext4\n3: bake\n";
         exit(0);
     }
 
