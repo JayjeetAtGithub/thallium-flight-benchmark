@@ -63,11 +63,10 @@ int main(int argc, char* argv[]) {
     yk::Provider yp(mid, 0, "ABCD", yokan_config, ABT_POOL_NULL, nullptr);
     yk::Client ycl(mid);
     yk::Admin admin(mid);
-    yk_database_id_t db_id = admin.openDatabase(svr_addr, 0, "ABCD", "map", yokan_config);
+    yk_database_id_t db_id = admin.openDatabase(svr_addr, 0, "ABCD", "rocksdb", yokan_config);
     yk::Database db(ycl.handle(), svr_addr, 0, db_id);
 
     std::cout << db.count() << "\n";
-    // std::cout << "reached here" << key.length() << std::endl;
 
     // write the data to bake
     uint64_t buffer_size = file_st.st_size;
