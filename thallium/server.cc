@@ -99,12 +99,12 @@ int main(int argc, char** argv) {
 
     std::unordered_map<std::string, std::shared_ptr<arrow::RecordBatchReader>> reader_map;
     bk::client bcl(mid);
-            bk::provider_handle bph(bcl, svr_addr, 0);
-            bph.set_eager_limit(0);
-            bk::target tid = bp->list_targets()[0];
+    bk::provider_handle bph(bcl, svr_addr, 0);
+    bph.set_eager_limit(0);
+    bk::target tid = bp->list_targets()[0];
 
     std::function<void(const tl::request&, const ScanReqRPCStub&)> scan = 
-        [&reader_map, &mid, &svr_addr, &bp, &bcl, &bph, &tid](const tl::request &req, const ScanReqRPCStub& stub) {
+        [&reader_map, &mid, &svr_addr, &bp, &bcl, &bph, &tid, &db](const tl::request &req, const ScanReqRPCStub& stub) {
             arrow::dataset::internal::Initialize();
             size_t value_size = 28;
             void *value_buf = malloc(28);
