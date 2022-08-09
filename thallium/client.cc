@@ -170,10 +170,10 @@ arrow::Status Main(char **argv) {
 
     for (int i = 0; i < 10; i++) {
         ARROW_ASSIGN_OR_RAISE(auto scan_req, GetScanRequest("file.parquet", filter, projection_schema, dataset_schema));
+        ScanCtx scan_ctx = Scan(conn_ctx, scan_req);
+        int64_t total_rows = 0;
         {
             MEASURE_FUNCTION_EXECUTION_TIME
-            ScanCtx scan_ctx = Scan(conn_ctx, scan_req);
-            int64_t total_rows = 0;
             std::shared_ptr<arrow::RecordBatch> batch;
             while ((batch = GetNextBatch(conn_ctx, scan_ctx).ValueOrDie()) != nullptr) {
                 total_rows += batch->num_rows();

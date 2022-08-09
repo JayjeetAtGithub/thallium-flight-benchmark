@@ -104,19 +104,30 @@ int main(int argc, char** argv) {
     bk::target tid = bp->list_targets()[0];
 
     std::function<void(const tl::request&, const ScanReqRPCStub&)> scan = 
-        [&reader_map, &mid, &svr_addr, &bp, &bcl, &bph, &tid, &db](const tl::request &req, const ScanReqRPCStub& stub) {
+        [&reader_map, &mid, &svr_addr, &bp, &bcl, &bph, &tid, &db, &mode](const tl::request &req, const ScanReqRPCStub& stub) {
             arrow::dataset::internal::Initialize();
-            size_t value_size = 28;
-            void *value_buf = malloc(28);
-            db.get((void*)stub.path.c_str(), stub.path.length(), value_buf, &value_size);
+            std::shared_ptr<arrow::RecordBatchReader> reader;
 
-            std::string rid_str = std::string((char*)value_buf, value_size); 
-            std::cout << "Scanning region with rid: " << rid_str << std::endl;
-            bk::region rid(rid_str);
+            if (mode == 1) {
+                std::cout << "running transport benchmark\n";
+                cp::ExecContext exec_ctx;
+                reader = ScanBenchmark(exec_ctx, stub).ValueOrDie();
+            } else if (mode == 2) {
+                std::cout << "scanning data from ext4\n";
+                reader = ScanEXT4(stub).ValueOrDie();
+            } else if (mode == 3) {
+                std::cout << "scanning data from bake\n";
+                // get the rid from pathname
+                size_t value_size = 28;
+                void *value_buf = malloc(28);
+                db.get((void*)stub.path.c_str(), stub.path.length(), value_buf, &value_size);
+                bk::region rid(std::string((char*)value_buf, value_size));
 
-            uint8_t *ptr = (uint8_t*)bcl.get_data(bph, tid, rid);
+                // scan data from bake
+                uint8_t *ptr = (uint8_t*)bcl.get_data(bph, tid, rid);
+                reader = ScanBake(stub, ptr).ValueOrDie();
+            }
 
-            std::shared_ptr<arrow::RecordBatchReader> reader = Scan(stub, ptr).ValueOrDie();
             std::string uuid = boost::uuids::to_string(boost::uuids::random_generator()());
             reader_map[uuid] = reader;
             
