@@ -169,7 +169,7 @@ arrow::Status Main(char **argv) {
     ConnCtx conn_ctx = Init(uri);
 
     for (int i = 0; i < 10; i++) {
-        ARROW_ASSIGN_OR_RAISE(auto scan_req, GetScanRequest("AAAAAHO7RQaWwtW6ECQ8AAAAAAA==", filter, projection_schema, dataset_schema));
+        ARROW_ASSIGN_OR_RAISE(auto scan_req, GetScanRequest("file.parquet", filter, projection_schema, dataset_schema));
         {
             MEASURE_FUNCTION_EXECUTION_TIME
             ScanCtx scan_ctx = Scan(conn_ctx, scan_req);

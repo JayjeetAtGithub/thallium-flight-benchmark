@@ -87,12 +87,13 @@ int main(int argc, char** argv) {
         mid, 0, ABT_POOL_NULL, std::string(bake_config, strlen(bake_config) + 1), ABT_IO_INSTANCE_NULL, NULL, NULL
     );
 
-    
-
-
-
-    
-    // std::cout << "got the value" << std::endl;
+    // start yokan provider, create a database, and initialize the db handle
+    char *yokan_config = read_input_file("yokan_config.json");
+    yk::Provider yp(mid, 0, "ABCD", yokan_config, ABT_POOL_NULL, nullptr);
+    yk::Client ycl(mid);
+    yk::Admin admin(mid);
+    yk_database_id_t db_id = admin.openDatabase(svr_addr, 0, "ABCD", "rocksdb", yokan_config);
+    yk::Database db(ycl.handle(), svr_addr, 0, db_id);
 
     tl::remote_procedure do_rdma = engine.define("do_rdma");
 
@@ -105,9 +106,12 @@ int main(int argc, char** argv) {
     std::function<void(const tl::request&, const ScanReqRPCStub&)> scan = 
         [&reader_map, &mid, &svr_addr, &bp, &bcl, &bph, &tid](const tl::request &req, const ScanReqRPCStub& stub) {
             arrow::dataset::internal::Initialize();
-    
+            size_t value_size = 6;
+            void *value_buf = malloc(6);
+            db.get((void*)stub.path.c_str(), stub.path.length(), value_buf, &value_size);
 
-            
+            std::cout << "here: " << std::string((char*)value_buf, value_size) << std::endl;    
+
             bk::region rid(stub.path);
             std::cout << "Scanning region with rid: " << std::string(rid) << std::endl;
 
