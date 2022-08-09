@@ -67,7 +67,7 @@ int main(int argc, char* argv[]) {
     yk::Database db(ycl.handle(), svr_addr, 0, db_id);
 
     std::cout << db.count() << "\n";
-    std::cout << "reached here" << key.length() << std::endl;
+    // std::cout << "reached here" << key.length() << std::endl;
 
     // write the data to bake
     uint64_t buffer_size = file_st.st_size;
