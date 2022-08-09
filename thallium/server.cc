@@ -68,6 +68,9 @@ int main(int argc, char** argv) {
         exit(0);
     }
 
+    int mode = atoi(argv[1]);
+    std::cout << "Using mode " << mode << std::endl;
+
     tl::engine engine("verbs://ibp130s0", THALLIUM_SERVER_MODE, true);
     margo_instance_id mid = engine.get_margo_instance();
     hg_addr_t svr_addr;
