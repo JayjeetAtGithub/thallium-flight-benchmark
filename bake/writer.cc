@@ -13,6 +13,7 @@
 static char* read_input_file(const char* filename);
 
 namespace bk = bake;
+namespace yk = yokan;
 
 int main(int argc, char* argv[]) {    
     // read input file
