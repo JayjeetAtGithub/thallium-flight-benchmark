@@ -66,20 +66,17 @@ int main(int argc, char* argv[]) {
     yk_database_id_t db_id = admin.openDatabase(svr_addr, 0, "ABCD", "map", yokan_config);
     yk::Database db(ycl.handle(), svr_addr, 0, db_id);
 
-    // experiment with yokan
-    std::string key = "foo";
-    std::string value = "bar";
-    db.put((void*)key.c_str(), key.length(), (void*)value.c_str(), value.length());
-
     std::cout << db.count() << "\n";
     std::cout << "reached here" << key.length() << std::endl;
 
-
-    // write phase
+    // write the data to bake
     uint64_t buffer_size = file_st.st_size;
     std::cout << "Wrote: " << buffer_size << " bytes" << std::endl;
     bk::region rid = bcl.create_write_persist(bph, tid, buffer, buffer_size);
-    std::cout << std::string(rid) << std::endl;
+    std::string rid_str = std::string(rid);
+
+    // write file metadata to yokan
+    db.put((void*)filename, strlen(filename) + 1, (void*)rid_str.c_str(), rid_str.length());
     
     // free resources
     free(buffer);
