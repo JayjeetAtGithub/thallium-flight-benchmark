@@ -61,6 +61,13 @@ static char* read_input_file(const char* filename) {
 }
 
 int main(int argc, char** argv) {
+
+    if (argc < 3) {
+        std::cout << "./ts <mode>\n";
+        std::cout << "mode: \n\n 1: in-memory\n2: ext4\n3: bake\n";
+        exit(0);
+    }
+
     tl::engine engine("verbs://ibp130s0", THALLIUM_SERVER_MODE, true);
     margo_instance_id mid = engine.get_margo_instance();
     hg_addr_t svr_addr;
