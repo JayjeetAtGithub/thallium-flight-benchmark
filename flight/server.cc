@@ -86,6 +86,7 @@ class ParquetStorageService : public arrow::flight::FlightServerBase {
         arrow::field("total_amount", arrow::float64())
     });
 
+    std::cout << request.ticket << std::endl;
 
     auto format = std::make_shared<arrow::dataset::ParquetFileFormat>();
     ARROW_ASSIGN_OR_RAISE(auto file, arrow::io::MemoryMappedFile::Open(request.ticket, arrow::io::FileMode::READ));
