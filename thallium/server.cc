@@ -120,6 +120,8 @@ int main(int argc, char** argv) {
                 // get the rid from pathname
                 size_t value_size = 28;
                 void *value_buf = malloc(28);
+                std::cout << stub.path.c_str() << std::endl;
+                std::cout << stub.path.length() << std::endl;
                 db.get((void*)stub.path.c_str(), stub.path.length(), value_buf, &value_size);
                 bk::region rid(std::string((char*)value_buf, value_size));
 
