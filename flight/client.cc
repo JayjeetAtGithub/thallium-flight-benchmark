@@ -51,7 +51,7 @@ int main(int argc, char *argv[]) {
 
   {
     MEASURE_FUNCTION_EXECUTION_TIME
-    for (int i = 1; i <= 400; i++) {
+    for (int i = 1; i <= 200; i++) {
       std::string filepath = "/mnt/cephfs/dataset/16MB.uncompressed.parquet." + std::to_string(i);
       auto descriptor = arrow::flight::FlightDescriptor::Path({filepath});
 

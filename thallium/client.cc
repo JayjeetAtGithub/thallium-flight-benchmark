@@ -169,7 +169,7 @@ arrow::Status Main(char **argv) {
     ConnCtx conn_ctx = Init(uri);
     {
         MEASURE_FUNCTION_EXECUTION_TIME
-        for (int i = 1; i <= 400; i++) {
+        for (int i = 1; i <= 200; i++) {
             std::string filepath = "/mnt/cephfs/dataset/16MB.uncompressed.parquet." + std::to_string(i);
             ARROW_ASSIGN_OR_RAISE(auto scan_req, GetScanRequest(filepath, filter, projection_schema, dataset_schema));
             ScanCtx scan_ctx = Scan(conn_ctx, scan_req);
