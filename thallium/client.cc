@@ -167,20 +167,18 @@ arrow::Status Main(char **argv) {
 
     // scan
     ConnCtx conn_ctx = Init(uri);
-
-    for (int i = 1; i <= 100; i++) {
-        std::string filepath = "/users/noobjc/thallium-flight-benchmark/yellow_tripdata_2022-01.parquet." + std::to_string(i);
-        ARROW_ASSIGN_OR_RAISE(auto scan_req, GetScanRequest(filepath, filter, projection_schema, dataset_schema));
-        ScanCtx scan_ctx = Scan(conn_ctx, scan_req);
-        int64_t total_rows = 0;
-        {
-            MEASURE_FUNCTION_EXECUTION_TIME
-            std::shared_ptr<arrow::RecordBatch> batch;
-            while ((batch = GetNextBatch(conn_ctx, scan_ctx).ValueOrDie()) != nullptr) {
-                total_rows += batch->num_rows();
-            }
+    {
+        MEASURE_FUNCTION_EXECUTION_TIME
+        for (int i = 1; i <= 50; i++) {
+            std::string filepath = "/users/noobjc/thallium-flight-benchmark/yellow_tripdata_2022-01.parquet." + std::to_string(i);
+            ARROW_ASSIGN_OR_RAISE(auto scan_req, GetScanRequest(filepath, filter, projection_schema, dataset_schema));
+            ScanCtx scan_ctx = Scan(conn_ctx, scan_req);
+            int64_t total_rows = 0;
+                std::shared_ptr<arrow::RecordBatch> batch;
+                while ((batch = GetNextBatch(conn_ctx, scan_ctx).ValueOrDie()) != nullptr) {
+                    total_rows += batch->num_rows();
+                }
         }
-        std::this_thread::sleep_for(std::chrono::milliseconds(2000));
     }
 
     conn_ctx.engine.finalize();
