@@ -168,8 +168,9 @@ arrow::Status Main(char **argv) {
     // scan
     ConnCtx conn_ctx = Init(uri);
 
-    for (int i = 0; i < 10; i++) {
-        ARROW_ASSIGN_OR_RAISE(auto scan_req, GetScanRequest("file.parquet", filter, projection_schema, dataset_schema));
+    for (int i = 1; i <= 400; i++) {
+        std::string filepath = "/users/noobjc/thallium-flight-benchmark/yellow_tripdata_2022-01.parquet." + i;
+        ARROW_ASSIGN_OR_RAISE(auto scan_req, GetScanRequest(filepath, filter, projection_schema, dataset_schema));
         ScanCtx scan_ctx = Scan(conn_ctx, scan_req);
         int64_t total_rows = 0;
         {
