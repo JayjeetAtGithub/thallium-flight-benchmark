@@ -49,7 +49,6 @@ int main(int argc, char *argv[]) {
    // Connect to flight server
   auto client = ConnectToFlightServer(info).ValueOrDie();
 
-
   {
     MEASURE_FUNCTION_EXECUTION_TIME
     for (int i = 1; i <= 400; i++) {
