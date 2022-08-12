@@ -62,11 +62,9 @@ int main(int argc, char *argv[]) {
       // Read table from flight server
       std::shared_ptr<arrow::Table> table;
       std::unique_ptr<arrow::flight::FlightStreamReader> stream;
-      std::cout << "about to DoGet\n";
       client->DoGet(flight_info->endpoints()[0].ticket, &stream);
-            std::cout << "about to DoGet\n";
-
       stream->ReadAll(&table);
+      std::cout << "Finished reading\n";
     }
   }
 }
