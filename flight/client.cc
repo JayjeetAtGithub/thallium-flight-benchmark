@@ -53,7 +53,7 @@ int main(int argc, char *argv[]) {
     MEASURE_FUNCTION_EXECUTION_TIME
     for (int i = 1; i <= 400; i++) {
       std::string filepath = "/mnt/cephfs/dataset/16MB.uncompressed.parquet." + std::to_string(i);
-      auto descriptor = arrow::flight::FlightDescriptor::Path({path});
+      auto descriptor = arrow::flight::FlightDescriptor::Path({filepath});
 
       // Get flight info
       std::unique_ptr<arrow::flight::FlightInfo> flight_info;
