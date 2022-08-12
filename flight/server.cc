@@ -32,35 +32,58 @@ class ParquetStorageService : public arrow::flight::FlightServerBase {
   arrow::Status DoGet(const arrow::flight::ServerCallContext&,
                       const arrow::flight::Ticket& request,
                       std::unique_ptr<arrow::flight::FlightDataStream>* stream) {
-    std::string path;
-    ARROW_ASSIGN_OR_RAISE(auto fs, arrow::fs::FileSystemFromUri(request.ticket, &path)); 
-    auto format = std::make_shared<arrow::dataset::ParquetFileFormat>();
+    // std::string path;
+    // ARROW_ASSIGN_OR_RAISE(auto fs, arrow::fs::FileSystemFromUri(request.ticket, &path)); 
+    // auto format = std::make_shared<arrow::dataset::ParquetFileFormat>();
       
-    arrow::fs::FileSelector s;
-    s.base_dir = std::move(path);
-    s.recursive = true;
+    // arrow::fs::FileSelector s;
+    // s.base_dir = std::move(path);
+    // s.recursive = true;
 
     auto filter = 
         arrow::compute::greater(arrow::compute::field_ref("total_amount"),
                                 arrow::compute::literal(-200));
 
-    arrow::dataset::FileSystemFactoryOptions options;
-    ARROW_ASSIGN_OR_RAISE(auto factory, 
-      arrow::dataset::FileSystemDatasetFactory::Make(std::move(fs), s, std::move(format), options));
-    arrow::dataset::FinishOptions finish_options;
-    ARROW_ASSIGN_OR_RAISE(auto dataset,factory->Finish(finish_options));
+    // arrow::dataset::FileSystemFactoryOptions options;
+    // ARROW_ASSIGN_OR_RAISE(auto factory, 
+    //   arrow::dataset::FileSystemDatasetFactory::Make(std::move(fs), s, std::move(format), options));
+    // arrow::dataset::FinishOptions finish_options;
+    // ARROW_ASSIGN_OR_RAISE(auto dataset,factory->Finish(finish_options));
 
-    ARROW_ASSIGN_OR_RAISE(auto scanner_builder, dataset->NewScan());
+    // ARROW_ASSIGN_OR_RAISE(auto scanner_builder, dataset->NewScan());
+    // ARROW_RETURN_NOT_OK(scanner_builder->Filter(filter));
+    // ARROW_RETURN_NOT_OK(scanner_builder->Project({"passenger_count", "fare_amount"}));
+
+    // ARROW_ASSIGN_OR_RAISE(auto scanner, scanner_builder->Finish());
+    // ARROW_ASSIGN_OR_RAISE(auto table, scanner->ToTable());
+
+    // auto im_ds = std::make_shared<arrow::dataset::InMemoryDataset>(table);
+    // ARROW_ASSIGN_OR_RAISE(auto im_ds_scanner_builder, im_ds->NewScan());
+    // ARROW_ASSIGN_OR_RAISE(auto im_ds_scanner, im_ds_scanner_builder->Finish());
+    // ARROW_ASSIGN_OR_RAISE(auto reader, im_ds_scanner->ToRecordBatchReader());
+
+    // *stream = std::unique_ptr<arrow::flight::FlightDataStream>(
+    //     new arrow::flight::RecordBatchStream(reader));
+  
+    // return arrow::Status::OK();
+
+
+
+    auto format = std::make_shared<arrow::dataset::ParquetFileFormat>();
+    ARROW_ASSIGN_OR_RAISE(auto file, arrow::io::MemoryMappedFile::Open(stub.path, arrow::io::FileMode::READ));
+    arrow::dataset::FileSource source(file);
+    ARROW_ASSIGN_OR_RAISE(
+        auto fragment, format->MakeFragment(std::move(source), arrow::compute::literal(true)));
+    
+    auto options = std::make_shared<arrow::dataset::ScanOptions>();
+    auto scanner_builder = std::make_shared<arrow::dataset::ScannerBuilder>(
+        dataset_schema, std::move(fragment), std::move(options));
+
     ARROW_RETURN_NOT_OK(scanner_builder->Filter(filter));
     ARROW_RETURN_NOT_OK(scanner_builder->Project({"passenger_count", "fare_amount"}));
 
     ARROW_ASSIGN_OR_RAISE(auto scanner, scanner_builder->Finish());
-    ARROW_ASSIGN_OR_RAISE(auto table, scanner->ToTable());
-
-    auto im_ds = std::make_shared<arrow::dataset::InMemoryDataset>(table);
-    ARROW_ASSIGN_OR_RAISE(auto im_ds_scanner_builder, im_ds->NewScan());
-    ARROW_ASSIGN_OR_RAISE(auto im_ds_scanner, im_ds_scanner_builder->Finish());
-    ARROW_ASSIGN_OR_RAISE(auto reader, im_ds_scanner->ToRecordBatchReader());
+    ARROW_ASSIGN_OR_RAISE(auto reader, scanner->ToRecordBatchReader());
 
     *stream = std::unique_ptr<arrow::flight::FlightDataStream>(
         new arrow::flight::RecordBatchStream(reader));
