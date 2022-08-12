@@ -10,18 +10,19 @@
 #include <yokan/cxx/admin.hpp>
 #include <yokan/cxx/client.hpp>
 
-static char* read_input_file(const char* filename);
+static char* read_input_file(const char* path);
 
 namespace bk = bake;
 namespace yk = yokan;
 
 int main(int argc, char* argv[]) {    
     // read input file
-    const char* filename = argv[1];
+    const char* path = argv[1];
+    const char* filename = argv[2];
     struct stat file_st;
-    stat(filename, &file_st);
+    stat(path, &file_st);
     uint8_t *buffer = new uint8_t[file_st.st_size];
-    std::ifstream fin(filename, std::ios::in | std::ios::binary );
+    std::ifstream fin(path, std::ios::in | std::ios::binary );
     fin.read((char*)buffer, file_st.st_size);
 
     // initialize margo instance
@@ -82,11 +83,11 @@ int main(int argc, char* argv[]) {
     return 0;
 }
 
-static char* read_input_file(const char* filename) {
+static char* read_input_file(const char* path) {
     size_t ret;
-    FILE*  fp = fopen(filename, "r");
+    FILE*  fp = fopen(path, "r");
     if (fp == NULL) {
-        fprintf(stderr, "Could not open %s\n", filename);
+        fprintf(stderr, "Could not open %s\n", path);
         exit(-1);
     }
     fseek(fp, 0, SEEK_END);
