@@ -74,7 +74,6 @@ int main(int argc, char* argv[]) {
     std::string rid_str = std::string(rid);
 
     // write file metadata to yokan
-    std::cout << strlen(filename) << std::endl;
     db.put((void*)filename, strlen(filename), (void*)rid_str.c_str(), rid_str.length());
     
     // free resources
