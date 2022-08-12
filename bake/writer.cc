@@ -41,7 +41,7 @@ int main(int argc, char* argv[]) {
     }
 
     // read the bake config file
-    char *config = read_input_file("bake/config.json");
+    char *config = read_input_file("bake_config.json");
 
     // setup the bake provider
     uint64_t config_size = strlen(config) + 1;
