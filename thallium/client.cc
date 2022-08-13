@@ -142,9 +142,9 @@ arrow::Status Main(char **argv) {
     // query params
     auto filter = 
         cp::greater(cp::field_ref("total_amount"), cp::literal(-200));
-    if (selectivity == 10) {
+    if (selectivity == "10") {
         filter = cp::greater(cp::field_ref("total_amount"), cp::literal(27));
-    } else if (selectivity == 1) {
+    } else if (selectivity == "1") {
         filter = cp::greater(cp::field_ref("total_amount"), cp::literal(69));
     }
 
