@@ -98,7 +98,7 @@ class ParquetStorageService : public arrow::flight::FlightServerBase {
     auto scanner_builder = std::make_shared<arrow::dataset::ScannerBuilder>(
         dataset_schema, std::move(fragment), std::move(options));
 
-    // ARROW_RETURN_NOT_OK(scanner_builder->Filter(filter));
+    ARROW_RETURN_NOT_OK(scanner_builder->Filter(filter));
     // ARROW_RETURN_NOT_OK(scanner_builder->Project({"passenger_count", "fare_amount"}));
 
     ARROW_ASSIGN_OR_RAISE(auto scanner, scanner_builder->Finish());
