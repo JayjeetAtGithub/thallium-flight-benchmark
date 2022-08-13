@@ -185,7 +185,7 @@ arrow::Result<std::shared_ptr<arrow::RecordBatchReader>> ScanEXT4(const ScanReqR
         dataset_schema, std::move(fragment), std::move(options));
 
     ARROW_RETURN_NOT_OK(scanner_builder->Filter(filter));
-    ARROW_RETURN_NOT_OK(scanner_builder->Project(projection_schema->field_names()));
+    // ARROW_RETURN_NOT_OK(scanner_builder->Project(projection_schema->field_names()));
 
     ARROW_ASSIGN_OR_RAISE(auto scanner, scanner_builder->Finish());
     ARROW_ASSIGN_OR_RAISE(auto reader, scanner->ToRecordBatchReader());
