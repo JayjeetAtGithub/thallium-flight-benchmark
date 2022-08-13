@@ -165,6 +165,8 @@ arrow::Status Main(char **argv) {
         arrow::field("total_amount", arrow::float64())
     });
 
+    projection_schema = dataset_schema;
+
     // scan
     ConnCtx conn_ctx = Init(uri);
     {
