@@ -140,12 +140,14 @@ arrow::Status Main(char **argv) {
 
     // query params
     auto filter = 
-        cp::greater(cp::field_ref("total_amount"), cp::literal(69));
-    
-    auto projection_schema = arrow::schema({arrow::field("passenger_count", arrow::int64()),
-                                            arrow::field("fare_amount", arrow::float64())});
+        cp::greater(cp::field_ref("total_amount"), cp::literal(-200));
+    if (selectivity == 10) {
+        filter = cp::greater(cp::field_ref("total_amount"), cp::literal(27));
+    } else if (selectivity == 1) {
+        filter = cp::greater(cp::field_ref("total_amount"), cp::literal(69));
+    }
 
-    auto dataset_schema = arrow::schema({
+    auto schema = arrow::schema({
         arrow::field("VendorID", arrow::int64()),
         arrow::field("tpep_pickup_datetime", arrow::timestamp(arrow::TimeUnit::MICRO)),
         arrow::field("tpep_dropoff_datetime", arrow::timestamp(arrow::TimeUnit::MICRO)),
@@ -165,15 +167,13 @@ arrow::Status Main(char **argv) {
         arrow::field("total_amount", arrow::float64())
     });
 
-    projection_schema = dataset_schema;
-
     // scan
     ConnCtx conn_ctx = Init(uri);
     {
         MEASURE_FUNCTION_EXECUTION_TIME
         for (int i = 1; i <= 200; i++) {
             std::string filepath = "/mnt/cephfs/dataset/16MB.uncompressed.parquet." + std::to_string(i);
-            ARROW_ASSIGN_OR_RAISE(auto scan_req, GetScanRequest(filepath, filter, projection_schema, dataset_schema));
+            ARROW_ASSIGN_OR_RAISE(auto scan_req, GetScanRequest(filepath, filter, schema, schema));
             ScanCtx scan_ctx = Scan(conn_ctx, scan_req);
             int64_t total_rows = 0;
                 std::shared_ptr<arrow::RecordBatch> batch;
