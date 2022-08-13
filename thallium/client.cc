@@ -140,7 +140,7 @@ arrow::Status Main(char **argv) {
 
     // query params
     auto filter = 
-        cp::greater(cp::field_ref("total_amount"), cp::literal(-900));
+        cp::greater(cp::field_ref("total_amount"), cp::literal(69));
     
     auto projection_schema = arrow::schema({arrow::field("passenger_count", arrow::int64()),
                                             arrow::field("fare_amount", arrow::float64())});
