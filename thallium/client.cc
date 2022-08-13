@@ -137,6 +137,7 @@ arrow::Status Main(char **argv) {
     // connection info
     std::string uri_base = "ofi+verbs;ofi_rxm://10.0.2.50:";
     std::string uri = uri_base + argv[1];
+    std::string selectivity = argv[2];
 
     // query params
     auto filter = 
