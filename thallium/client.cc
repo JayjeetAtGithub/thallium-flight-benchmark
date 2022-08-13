@@ -140,7 +140,7 @@ arrow::Status Main(char **argv) {
 
     // query params
     auto filter = 
-        cp::greater(cp::field_ref("total_amount"), cp::literal(-200));
+        cp::greater(cp::field_ref("total_amount"), cp::literal(69));
     
     auto projection_schema = arrow::schema({arrow::field("passenger_count", arrow::int64()),
                                             arrow::field("fare_amount", arrow::float64())});
@@ -165,21 +165,23 @@ arrow::Status Main(char **argv) {
         arrow::field("total_amount", arrow::float64())
     });
 
+    projection_schema = dataset_schema;
+
     // scan
     ConnCtx conn_ctx = Init(uri);
-
-    for (int i = 0; i < 10; i++) {
-        ARROW_ASSIGN_OR_RAISE(auto scan_req, GetScanRequest("file.parquet", filter, projection_schema, dataset_schema));
-        ScanCtx scan_ctx = Scan(conn_ctx, scan_req);
-        int64_t total_rows = 0;
-        {
-            MEASURE_FUNCTION_EXECUTION_TIME
-            std::shared_ptr<arrow::RecordBatch> batch;
-            while ((batch = GetNextBatch(conn_ctx, scan_ctx).ValueOrDie()) != nullptr) {
-                total_rows += batch->num_rows();
-            }
+    {
+        MEASURE_FUNCTION_EXECUTION_TIME
+        for (int i = 1; i <= 200; i++) {
+            std::string filepath = "/mnt/cephfs/dataset/16MB.uncompressed.parquet." + std::to_string(i);
+            ARROW_ASSIGN_OR_RAISE(auto scan_req, GetScanRequest(filepath, filter, projection_schema, dataset_schema));
+            ScanCtx scan_ctx = Scan(conn_ctx, scan_req);
+            int64_t total_rows = 0;
+                std::shared_ptr<arrow::RecordBatch> batch;
+                while ((batch = GetNextBatch(conn_ctx, scan_ctx).ValueOrDie()) != nullptr) {
+                    std::cout << batch->num_rows() << std::endl;
+                    total_rows += batch->num_rows();
+                }
         }
-        std::this_thread::sleep_for(std::chrono::milliseconds(2000));
     }
 
     conn_ctx.engine.finalize();

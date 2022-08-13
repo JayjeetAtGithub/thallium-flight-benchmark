@@ -69,8 +69,6 @@ int main(int argc, char** argv) {
     }
 
     int mode = atoi(argv[1]);
-    std::cout << "Using mode " << mode << std::endl;
-
     tl::engine engine("verbs://ibp130s0", THALLIUM_SERVER_MODE, true);
     margo_instance_id mid = engine.get_margo_instance();
     hg_addr_t svr_addr;
@@ -120,6 +118,7 @@ int main(int argc, char** argv) {
                 // get the rid from pathname
                 size_t value_size = 28;
                 void *value_buf = malloc(28);
+                
                 db.get((void*)stub.path.c_str(), stub.path.length(), value_buf, &value_size);
                 bk::region rid(std::string((char*)value_buf, value_size));
 

@@ -49,22 +49,22 @@ int main(int argc, char *argv[]) {
    // Connect to flight server
   auto client = ConnectToFlightServer(info).ValueOrDie();
 
-  std::string path = "/mnt/cephfs/dataset";
-  auto descriptor = arrow::flight::FlightDescriptor::Path({path});
+  {
+    MEASURE_FUNCTION_EXECUTION_TIME
+    for (int i = 1; i <= 200; i++) {
+      std::string filepath = "/mnt/cephfs/dataset/16MB.uncompressed.parquet." + std::to_string(i);
+      auto descriptor = arrow::flight::FlightDescriptor::Path({filepath});
 
-  // Get flight info
-  std::unique_ptr<arrow::flight::FlightInfo> flight_info;
-  client->GetFlightInfo(descriptor, &flight_info);
+      // Get flight info
+      std::unique_ptr<arrow::flight::FlightInfo> flight_info;
+      client->GetFlightInfo(descriptor, &flight_info);
 
-  // Read table from flight server
-  for (int i = 0; i < 10; i++) {
-    std::shared_ptr<arrow::Table> table;
-    std::unique_ptr<arrow::flight::FlightStreamReader> stream;
-    client->DoGet(flight_info->endpoints()[0].ticket, &stream);
-
-    {
-      MEASURE_FUNCTION_EXECUTION_TIME
+      // Read table from flight server
+      std::shared_ptr<arrow::Table> table;
+      std::unique_ptr<arrow::flight::FlightStreamReader> stream;
+      client->DoGet(flight_info->endpoints()[0].ticket, &stream);
       stream->ReadAll(&table);
+      std::cout << table->ToString() << std::endl;
     }
   }
 }
