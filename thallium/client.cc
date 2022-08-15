@@ -180,7 +180,7 @@ arrow::Status Main(char **argv) {
                 std::shared_ptr<arrow::RecordBatch> batch;
                 while ((batch = GetNextBatch(conn_ctx, scan_ctx).ValueOrDie()) != nullptr) {
                     std::cout << batch->num_rows() << std::endl;
-                    std::cout << batch->num_cols() << std::endl;
+                    std::cout << batch->num_columns() << std::endl;
                     total_rows += batch->num_rows();
                 }
         }
