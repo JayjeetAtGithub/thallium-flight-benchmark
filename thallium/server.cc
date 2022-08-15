@@ -137,7 +137,7 @@ int main(int argc, char** argv) {
                 std::cout << "scanning data from ext4\n";
                 reader = ScanEXT4(stub).ValueOrDie();
             } else if (mode == 4) {
-                std::cout << "scanning data from bake\n";
+                // std::cout << "scanning data from bake\n";
                 uint8_t *ptr;
                 {
                     MEASURE_FUNCTION_EXECUTION_TIME
