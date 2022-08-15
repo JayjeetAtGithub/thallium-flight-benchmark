@@ -92,3 +92,18 @@ The binaries will be generated in the `bin` directory.
 * https://docs.oracle.com/cd/E19436-01/820-3522-10/ch4-linux.html
 
 * https://www.rdmamojo.com/2015/01/24/verify-rdma-working/
+
+
+
+
+cmake -DARROW_PARQUET=ON \
+  -DARROW_FLIGHT=ON \
+  -DARROW_WITH_SNAPPY=ON \
+  -DARROW_WITH_ZLIB=ON \
+  -DARROW_ORC=ON \
+  -DARROW_PYTHON=ON \
+  -DARROW_DATASET=ON \
+  -DARROW_CSV=ON \
+  -DARROW_WITH_LZ4=ON \
+  -DARROW_WITH_ZSTD=ON \
+  ..
