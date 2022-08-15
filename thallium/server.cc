@@ -118,15 +118,19 @@ int main(int argc, char** argv) {
                 reader = ScanEXT4(stub).ValueOrDie();
             } else if (mode == 4) {
                 std::cout << "scanning data from bake\n";
-                // get the rid from pathname
-                size_t value_size = 28;
-                void *value_buf = malloc(28);
-                
-                db.get((void*)stub.path.c_str(), stub.path.length(), value_buf, &value_size);
-                bk::region rid(std::string((char*)value_buf, value_size));
+                uint8_t *ptr;
+                {
+                    MEASURE_FUNCTION_EXECUTION_TIME
+                    // get the rid from pathname
+                    size_t value_size = 28;
+                    void *value_buf = malloc(28);
+                    
+                    db.get((void*)stub.path.c_str(), stub.path.length(), value_buf, &value_size);
+                    bk::region rid(std::string((char*)value_buf, value_size));
 
-                // scan data from bake
-                uint8_t *ptr = (uint8_t*)bcl.get_data(bph, tid, rid);
+                    // scan data from bake
+                    ptr = (uint8_t*)bcl.get_data(bph, tid, rid);
+                }
                 reader = ScanBake(stub, ptr).ValueOrDie();
             }
 
