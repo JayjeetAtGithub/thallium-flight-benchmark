@@ -64,6 +64,8 @@ int main(int argc, char *argv[]) {
       std::unique_ptr<arrow::flight::FlightStreamReader> stream;
       client->DoGet(flight_info->endpoints()[0].ticket, &stream);
       stream->ReadAll(&table);
+      std::cout << table->num_rows() << std::endl;
+      std::cout << table->num_columns() << std::endl;
     }
   }
 }
