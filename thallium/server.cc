@@ -64,7 +64,7 @@ int main(int argc, char** argv) {
 
     if (argc < 2) {
         std::cout << "./ts <mode>\n";
-        std::cout << "\nmode: \n\n1: in-memory\n2: ext4\n3: bake\n";
+        std::cout << "\nmode: \n\n1: in-memory\n2: ext4-mmap\n3: ext4\n4: bake\n";
         exit(0);
     }
 
@@ -111,9 +111,12 @@ int main(int argc, char** argv) {
                 cp::ExecContext exec_ctx;
                 reader = ScanBenchmark(exec_ctx, stub).ValueOrDie();
             } else if (mode == 2) {
+                std::cout << "scanning data from ext4 using mmap\n";
+                reader = ScanEXT4MMap(stub).ValueOrDie();
+            } else if (mode == 3) {
                 std::cout << "scanning data from ext4\n";
                 reader = ScanEXT4(stub).ValueOrDie();
-            } else if (mode == 3) {
+            } else if (mode == 4) {
                 std::cout << "scanning data from bake\n";
                 // get the rid from pathname
                 size_t value_size = 28;

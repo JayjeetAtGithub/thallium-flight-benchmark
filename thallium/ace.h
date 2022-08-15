@@ -175,6 +175,44 @@ arrow::Result<std::shared_ptr<arrow::RecordBatchReader>> ScanEXT4(const ScanReqR
                           arrow::ipc::ReadSchema(&dataset_schema_reader, &empty_memo));
 
     auto format = std::make_shared<arrow::dataset::ParquetFileFormat>();
+    ARROW_ASSIGN_OR_RAISE(auto file, arrow::io::ReadableFile::Open(stub.path));
+    arrow::dataset::FileSource source(file);
+    ARROW_ASSIGN_OR_RAISE(
+        auto fragment, format->MakeFragment(std::move(source), arrow::compute::literal(true)));
+    
+    auto options = std::make_shared<arrow::dataset::ScanOptions>();
+    auto scanner_builder = std::make_shared<arrow::dataset::ScannerBuilder>(
+        dataset_schema, std::move(fragment), std::move(options));
+
+    ARROW_RETURN_NOT_OK(scanner_builder->Filter(filter));
+    ARROW_RETURN_NOT_OK(scanner_builder->Project(projection_schema->field_names()));
+
+    ARROW_ASSIGN_OR_RAISE(auto scanner, scanner_builder->Finish());
+    ARROW_ASSIGN_OR_RAISE(auto reader, scanner->ToRecordBatchReader());
+    return reader;
+}
+
+
+arrow::Result<std::shared_ptr<arrow::RecordBatchReader>> ScanEXT4MMap(const ScanReqRPCStub& stub) {   
+    // deserialize filter
+    ARROW_ASSIGN_OR_RAISE(auto filter,
+      arrow::compute::Deserialize(std::make_shared<arrow::Buffer>(
+      stub.filter_buffer, stub.filter_buffer_size))
+    );
+
+    // deserialize schemas
+    arrow::ipc::DictionaryMemo empty_memo;
+    arrow::io::BufferReader projection_schema_reader(stub.projection_schema_buffer,
+                                                     stub.projection_schema_buffer_size);
+    arrow::io::BufferReader dataset_schema_reader(stub.dataset_schema_buffer,
+                                                  stub.dataset_schema_buffer_size);
+    ARROW_ASSIGN_OR_RAISE(auto projection_schema,
+                          arrow::ipc::ReadSchema(&projection_schema_reader, &empty_memo));
+
+    ARROW_ASSIGN_OR_RAISE(auto dataset_schema,
+                          arrow::ipc::ReadSchema(&dataset_schema_reader, &empty_memo));
+
+    auto format = std::make_shared<arrow::dataset::ParquetFileFormat>();
     ARROW_ASSIGN_OR_RAISE(auto file, arrow::io::MemoryMappedFile::Open(stub.path, arrow::io::FileMode::READ));
     arrow::dataset::FileSource source(file);
     ARROW_ASSIGN_OR_RAISE(

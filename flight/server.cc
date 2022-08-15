@@ -66,7 +66,7 @@ class ParquetStorageService : public arrow::flight::FlightServerBase {
     //     new arrow::flight::RecordBatchStream(reader));
   
     // return arrow::Status::OK();
-    auto dataset_schema = arrow::schema({
+    auto schema = arrow::schema({
         arrow::field("VendorID", arrow::int64()),
         arrow::field("tpep_pickup_datetime", arrow::timestamp(arrow::TimeUnit::MICRO)),
         arrow::field("tpep_dropoff_datetime", arrow::timestamp(arrow::TimeUnit::MICRO)),
@@ -86,8 +86,6 @@ class ParquetStorageService : public arrow::flight::FlightServerBase {
         arrow::field("total_amount", arrow::float64())
     });
 
-    std::cout << request.ticket << std::endl;
-
     auto format = std::make_shared<arrow::dataset::ParquetFileFormat>();
     ARROW_ASSIGN_OR_RAISE(auto file, arrow::io::MemoryMappedFile::Open(request.ticket, arrow::io::FileMode::READ));
     arrow::dataset::FileSource source(file);
@@ -96,10 +94,10 @@ class ParquetStorageService : public arrow::flight::FlightServerBase {
     
     auto options = std::make_shared<arrow::dataset::ScanOptions>();
     auto scanner_builder = std::make_shared<arrow::dataset::ScannerBuilder>(
-        dataset_schema, std::move(fragment), std::move(options));
+        schema, std::move(fragment), std::move(options));
 
     ARROW_RETURN_NOT_OK(scanner_builder->Filter(filter));
-    ARROW_RETURN_NOT_OK(scanner_builder->Project({"passenger_count", "fare_amount"}));
+    ARROW_RETURN_NOT_OK(scanner_builder->Project(schema->field_names()));
 
     ARROW_ASSIGN_OR_RAISE(auto scanner, scanner_builder->Finish());
     ARROW_ASSIGN_OR_RAISE(auto reader, scanner->ToRecordBatchReader());
