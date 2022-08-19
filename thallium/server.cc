@@ -150,6 +150,7 @@ int main(int argc, char** argv) {
             // ABT_thread_join(scan_thread);
             ABT_thread_state state;
             ABT_thread_get_state(scan_thread, &state);
+            std::cout << state << std::endl;
 
             return req.respond(uuid);
         };
