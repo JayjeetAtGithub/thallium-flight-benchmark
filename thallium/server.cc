@@ -147,7 +147,7 @@ int main(int argc, char** argv) {
             reader_map[uuid] = reader;
 
             ABT_thread scan_thread = ABT_THREAD_NULL;
-            ABT_thread_create(pool, thread_func, NULL, ABT_THREAD_ATTR_NULL, &scan_thread)
+            ABT_thread_create(pool, thread_func, NULL, ABT_THREAD_ATTR_NULL, &scan_thread);
             ABT_thread_join(scan_thread);
 
             return req.respond(uuid);
