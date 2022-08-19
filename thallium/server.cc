@@ -64,7 +64,12 @@ static char* read_input_file(const char* filename) {
 
 
 void thread_func(void *arg) {
+    arrow::RecordBatchReader *reader = (arrow::RecordBatchReader*)arg;
+
+    std::shared_ptr<arrow::RecordBatch> batch;
+    auto batch = reader->ReadNext(&batch);
     std::cout << "hello from argobots ult\n";
+    std::cout << batch->ToString() << std::endl;
 }
 
 
