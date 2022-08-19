@@ -123,7 +123,7 @@ int main(int argc, char** argv) {
     // create a new execution stream
     ABT_xstream xstream;
     ABT_xstream_create(ABT_SCHED_NULL, &xstream);
-    ABT_xstram_start(xstream);
+    ABT_xstream_start(xstream);
 
     std::function<void(const tl::request&, const ScanReqRPCStub&)> scan = 
         [&mid, &svr_addr, &bp, &bcl, &bph, &tid, &db, &mode, &xstream](const tl::request &req, const ScanReqRPCStub& stub) {
