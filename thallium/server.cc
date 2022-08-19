@@ -117,10 +117,7 @@ int main(int argc, char** argv) {
     bph.set_eager_limit(0);
     bk::target tid = bp->list_targets()[0];
 
-    // create an argobots pool
-    ABT_pool pool = ABT_POOL_NULL;
-    int ret = ABT_pool_create_basic(ABT_POOL_FIFO, ABT_POOL_ACCESS_MPMC, ABT_FALSE, &pool);
-
+    // fetch the current argobots execution stream
     ABT_xstream xstream;
     ABT_xstream_self(&xstream);
 
