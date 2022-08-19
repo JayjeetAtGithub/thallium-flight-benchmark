@@ -110,9 +110,9 @@ int main(int argc, char** argv) {
     bk::target tid = bp->list_targets()[0];
 
     // create an argobots pool
-    ABT_pool newpool = ABT_POOL_NULL;
+    ABT_pool pool = ABT_POOL_NULL;
     int ret = ABT_pool_create_basic(ABT_POOL_FIFO, ABT_POOL_ACCESS_MPMC,
-                                        ABT_FALSE, &newpool);
+                                        ABT_FALSE, &pool);
 
     std::function<void(const tl::request&, const ScanReqRPCStub&)> scan = 
         [&reader_map, &mid, &svr_addr, &bp, &bcl, &bph, &tid, &db, &mode, &pool](const tl::request &req, const ScanReqRPCStub& stub) {
@@ -149,7 +149,7 @@ int main(int argc, char** argv) {
             ABT_thread scan_thread = ABT_THREAD_NULL;
             ABT_thread_create(pool, thread_func, NULL, ABT_THREAD_ATTR_NULL, &scan_thread)
             ABT_thread_join(scan_thread);
-            
+
             return req.respond(uuid);
         };
 
