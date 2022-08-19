@@ -86,7 +86,7 @@ ScanCtx Scan(ConnCtx &conn_ctx, ScanReq &scan_req) {
 arrow::Result<std::shared_ptr<arrow::RecordBatch>> GetNextBatch(ConnCtx &conn_ctx, std::shared_ptr<arrow::Schema> schema) {
     std::shared_ptr<arrow::RecordBatch> batch;
     std::function<void(const tl::request&, int64_t&, std::vector<int64_t>&, std::vector<int64_t>&, tl::bulk&)> f =
-        [&conn_ctx, &batch](const tl::request& req, int64_t& num_rows, std::vector<int64_t>& data_buff_sizes, std::vector<int64_t>& offset_buff_sizes, tl::bulk& b) {
+        [&conn_ctx, &schema, &batch](const tl::request& req, int64_t& num_rows, std::vector<int64_t>& data_buff_sizes, std::vector<int64_t>& offset_buff_sizes, tl::bulk& b) {
             int num_cols = schema->num_fields();
             
             std::vector<std::shared_ptr<arrow::Array>> columns;
@@ -170,14 +170,15 @@ arrow::Status Main(char **argv) {
 
     // scan
     ConnCtx conn_ctx = Init(uri);
+    int64_t total_rows = 0;
+    std::shared_ptr<arrow::RecordBatch> batch;
+
     {
         MEASURE_FUNCTION_EXECUTION_TIME
         for (int i = 1; i <= 200; i++) {
             std::string filepath = "/mnt/cephfs/dataset/16MB.uncompressed.parquet." + std::to_string(i);
             ARROW_ASSIGN_OR_RAISE(auto scan_req, GetScanRequest(filepath, filter, schema, schema));
             Scan(conn_ctx, scan_req);
-            int64_t total_rows = 0;
-            std::shared_ptr<arrow::RecordBatch> batch;
         }
 
         while ((batch = GetNextBatch(conn_ctx, schema).ValueOrDie()) != nullptr) {
