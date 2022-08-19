@@ -64,7 +64,7 @@ static char* read_input_file(const char* filename) {
 
 
 void thread_func(void *arg) {
-    
+    std::cout << "hello from argobots ult\n";
 }
 
 
