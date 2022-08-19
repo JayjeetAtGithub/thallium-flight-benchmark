@@ -165,7 +165,7 @@ int main(int argc, char** argv) {
     int64_t total_rows_written = 0;
     std::function<void(const tl::request&, const std::string&)> get_next_batch = 
         [&mid, &svr_addr, &engine, &do_rdma, &total_rows_written](const tl::request &req, const std::string& uuid) {
-
+            std::cout << batch_queue.size () << std::endl;
             if (!batch_queue.empty()) {
                 std::shared_ptr<arrow::RecordBatch> batch = batch_queue.front();
                 batch_queue.pop_front();
