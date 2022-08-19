@@ -72,8 +72,10 @@ void scan_handler(void *arg) {
 
     std::shared_ptr<arrow::RecordBatch> batch;
     reader->ReadNext(&batch);
-    std::cout << batch->ToString() << std::endl;
-    batch_queue.push_back(batch);
+    while (batch != nullptr) {
+        batch_queue.push_back(batch);
+        reader->ReadNext(&batch);
+    }
 }
 
 
