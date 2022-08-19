@@ -62,13 +62,15 @@ static char* read_input_file(const char* filename) {
     return buf;
 }
 
+std::vector<std::shared_ptr<arrow::RecordBatch>> batch_queue;
 
-void thread_func(void *arg) {
-    std::shared_ptr<arrow::RecordBatchReader> reader((arrow::RecordBatchReader*)arg);
+void scan_handler(void *arg) {
+    arrow::RecordBatchReader *reader = (arrow::RecordBatchReader*)arg;
+
     std::shared_ptr<arrow::RecordBatch> batch;
     reader->ReadNext(&batch);
-    std::cout << "hello from argobots ult\n";
     std::cout << batch->ToString() << std::endl;
+    batch_queue.push_back(batch);
 }
 
 
