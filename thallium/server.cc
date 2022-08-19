@@ -68,6 +68,7 @@ std::deque<std::shared_ptr<arrow::RecordBatch>> batch_queue;
 
 
 void scan_handler(void *arg) {
+    std::cout << "in the scan handler\n";
     arrow::RecordBatchReader *reader = (arrow::RecordBatchReader*)arg;
 
     std::shared_ptr<arrow::RecordBatch> batch;
