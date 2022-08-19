@@ -113,8 +113,11 @@ int main(int argc, char** argv) {
     ABT_pool pool = ABT_POOL_NULL;
     int ret = ABT_pool_create_basic(ABT_POOL_FIFO, ABT_POOL_ACCESS_MPMC, ABT_FALSE, &pool);
 
+    ABT_xstream xstream;
+    ABT_xstream_self(&xstream);
+
     std::function<void(const tl::request&, const ScanReqRPCStub&)> scan = 
-        [&reader_map, &mid, &svr_addr, &bp, &bcl, &bph, &tid, &db, &mode, &pool](const tl::request &req, const ScanReqRPCStub& stub) {
+        [&reader_map, &mid, &svr_addr, &bp, &bcl, &bph, &tid, &db, &mode, &xstream](const tl::request &req, const ScanReqRPCStub& stub) {
             arrow::dataset::internal::Initialize();
             std::shared_ptr<arrow::RecordBatchReader> reader;
 
@@ -146,7 +149,7 @@ int main(int argc, char** argv) {
             reader_map[uuid] = reader;
 
             ABT_thread scan_thread = ABT_THREAD_NULL;
-            ABT_thread_create(pool, thread_func, NULL, ABT_THREAD_ATTR_NULL, &scan_thread);
+            ABT_thread_create(xstream, thread_func, NULL, ABT_THREAD_ATTR_NULL, &scan_thread);
             // ABT_thread_join(scan_thread);
             ABT_thread_state state;
             ABT_thread_get_state(scan_thread, &state);
