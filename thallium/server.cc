@@ -111,8 +111,7 @@ int main(int argc, char** argv) {
 
     // create an argobots pool
     ABT_pool pool = ABT_POOL_NULL;
-    int ret = ABT_pool_create_basic(ABT_POOL_FIFO, ABT_POOL_ACCESS_MPMC,
-                                        ABT_FALSE, &pool);
+    int ret = ABT_pool_create_basic(ABT_POOL_FIFO, ABT_POOL_ACCESS_MPMC, ABT_FALSE, &pool);
 
     std::function<void(const tl::request&, const ScanReqRPCStub&)> scan = 
         [&reader_map, &mid, &svr_addr, &bp, &bcl, &bph, &tid, &db, &mode, &pool](const tl::request &req, const ScanReqRPCStub& stub) {
