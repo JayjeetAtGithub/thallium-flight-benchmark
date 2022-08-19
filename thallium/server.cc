@@ -62,6 +62,12 @@ static char* read_input_file(const char* filename) {
     return buf;
 }
 
+
+void thread_func(void *arg) {
+    
+}
+
+
 int main(int argc, char** argv) {
 
     if (argc < 2) {
@@ -109,7 +115,7 @@ int main(int argc, char** argv) {
                                         ABT_FALSE, &newpool);
 
     std::function<void(const tl::request&, const ScanReqRPCStub&)> scan = 
-        [&reader_map, &mid, &svr_addr, &bp, &bcl, &bph, &tid, &db, &mode](const tl::request &req, const ScanReqRPCStub& stub) {
+        [&reader_map, &mid, &svr_addr, &bp, &bcl, &bph, &tid, &db, &mode, &pool](const tl::request &req, const ScanReqRPCStub& stub) {
             arrow::dataset::internal::Initialize();
             std::shared_ptr<arrow::RecordBatchReader> reader;
 
@@ -139,6 +145,10 @@ int main(int argc, char** argv) {
 
             std::string uuid = boost::uuids::to_string(boost::uuids::random_generator()());
             reader_map[uuid] = reader;
+
+            ABT_thread scan_thread = ABT_THREAD_NULL;
+            ABT_thread_create(pool, thread_func, NULL, ABT_THREAD_ATTR_NULL, &scan_thread)
+            ABT_thread_join(scan_thread);
             
             return req.respond(uuid);
         };
