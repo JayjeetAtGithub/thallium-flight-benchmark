@@ -69,14 +69,8 @@ std::deque<std::shared_ptr<arrow::RecordBatch>> batch_queue;
 
 void scan_handler(void *arg) {
     arrow::RecordBatchReader *reader = (arrow::RecordBatchReader*)arg;
-    std::cout << "in the scan handler\n";
-
     std::shared_ptr<arrow::RecordBatch> batch;
-    std::cout << "in the scan handler2\n";
-
     reader->ReadNext(&batch);
-    std::cout << "in the scan handler3\n";
-
     while (batch != nullptr) {
         batch_queue.push_back(batch);
         reader->ReadNext(&batch);
@@ -127,10 +121,14 @@ int main(int argc, char** argv) {
 
     // create a new execution stream
     ABT_xstream xstream;
+    ABT_pool pool;
+
     ABT_xstream_self(&xstream);
+    ABT_xstream_get_main_pools(xstream, 1, &pool);
+
 
     std::function<void(const tl::request&, const ScanReqRPCStub&)> scan = 
-        [&mid, &svr_addr, &bp, &bcl, &bph, &tid, &db, &mode, &xstream](const tl::request &req, const ScanReqRPCStub& stub) {
+        [&mid, &svr_addr, &bp, &bcl, &bph, &tid, &db, &mode, &pool](const tl::request &req, const ScanReqRPCStub& stub) {
             arrow::dataset::internal::Initialize();
             std::shared_ptr<arrow::RecordBatchReader> reader;
 
@@ -162,7 +160,7 @@ int main(int argc, char** argv) {
             // reader_map[uuid] = reader;
 
             ABT_thread scan_thread = ABT_THREAD_NULL;
-            ABT_thread_create_on_xstream(xstream, scan_handler, (void*)reader.get(), ABT_THREAD_ATTR_NULL, &scan_thread);
+            ABT_thread_create(pool, scan_handler, (void*)reader.get(), ABT_THREAD_ATTR_NULL, &scan_thread);
 
             return req.respond(0);
         };
