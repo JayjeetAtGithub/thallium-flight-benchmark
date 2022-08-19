@@ -83,11 +83,11 @@ ScanCtx Scan(ConnCtx &conn_ctx, ScanReq &scan_req) {
     return scan_ctx;
 }
 
-arrow::Result<std::shared_ptr<arrow::RecordBatch>> GetNextBatch(ConnCtx &conn_ctx, ScanCtx &scan_ctx) {
+arrow::Result<std::shared_ptr<arrow::RecordBatch>> GetNextBatch(ConnCtx &conn_ctx, std::shared_ptr<arrow::Schema> schema) {
     std::shared_ptr<arrow::RecordBatch> batch;
     std::function<void(const tl::request&, int64_t&, std::vector<int64_t>&, std::vector<int64_t>&, tl::bulk&)> f =
-        [&conn_ctx, &scan_ctx, &batch](const tl::request& req, int64_t& num_rows, std::vector<int64_t>& data_buff_sizes, std::vector<int64_t>& offset_buff_sizes, tl::bulk& b) {
-            int num_cols = scan_ctx.schema->num_fields();
+        [&conn_ctx, &batch](const tl::request& req, int64_t& num_rows, std::vector<int64_t>& data_buff_sizes, std::vector<int64_t>& offset_buff_sizes, tl::bulk& b) {
+            int num_cols = schema->num_fields();
             
             std::vector<std::shared_ptr<arrow::Array>> columns;
             std::vector<std::unique_ptr<arrow::Buffer>> data_buffs(num_cols);
@@ -109,7 +109,7 @@ arrow::Result<std::shared_ptr<arrow::RecordBatch>> GetNextBatch(ConnCtx &conn_ct
             b.on(req.get_endpoint()) >> local;
 
             for (int64_t i = 0; i < num_cols; i++) {
-                std::shared_ptr<arrow::DataType> type = scan_ctx.schema->field(i)->type();  
+                std::shared_ptr<arrow::DataType> type = schema->field(i)->type();  
                 if (is_binary_like(type->id())) {
                     std::shared_ptr<arrow::Array> col_arr = std::make_shared<arrow::StringArray>(num_rows, std::move(offset_buffs[i]), std::move(data_buffs[i]));
                     columns.push_back(col_arr);
@@ -119,13 +119,13 @@ arrow::Result<std::shared_ptr<arrow::RecordBatch>> GetNextBatch(ConnCtx &conn_ct
                 }
             }
 
-            batch = arrow::RecordBatch::Make(scan_ctx.schema, num_rows, columns);
+            batch = arrow::RecordBatch::Make(schema, num_rows, columns);
             return req.respond(0);
         };
     conn_ctx.engine.define("do_rdma", f);
     tl::remote_procedure get_next_batch = conn_ctx.engine.define("get_next_batch");
 
-    int e = get_next_batch.on(conn_ctx.endpoint)(scan_ctx.uuid);
+    int e = get_next_batch.on(conn_ctx.endpoint)();
     if (e == 0) {
         return batch;
     } else {
@@ -175,14 +175,15 @@ arrow::Status Main(char **argv) {
         for (int i = 1; i <= 200; i++) {
             std::string filepath = "/mnt/cephfs/dataset/16MB.uncompressed.parquet." + std::to_string(i);
             ARROW_ASSIGN_OR_RAISE(auto scan_req, GetScanRequest(filepath, filter, schema, schema));
-            ScanCtx scan_ctx = Scan(conn_ctx, scan_req);
+            Scan(conn_ctx, scan_req);
             int64_t total_rows = 0;
             std::shared_ptr<arrow::RecordBatch> batch;
-            // while ((batch = GetNextBatch(conn_ctx, scan_ctx).ValueOrDie()) != nullptr) {
-            //     std::cout << batch->num_rows() << std::endl;
-            //     std::cout << batch->num_columns() << std::endl;
-            //     total_rows += batch->num_rows();
-            // }
+        }
+
+        while ((batch = GetNextBatch(conn_ctx, schema).ValueOrDie()) != nullptr) {
+            std::cout << batch->num_rows() << std::endl;
+            std::cout << batch->num_columns() << std::endl;
+            total_rows += batch->num_rows();
         }
     }
 
