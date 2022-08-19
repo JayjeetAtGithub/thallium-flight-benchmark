@@ -149,7 +149,7 @@ int main(int argc, char** argv) {
             reader_map[uuid] = reader;
 
             ABT_thread scan_thread = ABT_THREAD_NULL;
-            ABT_thread_create(xstream, thread_func, NULL, ABT_THREAD_ATTR_NULL, &scan_thread);
+            ABT_thread_create_on_xstream(xstream, thread_func, NULL, ABT_THREAD_ATTR_NULL, &scan_thread);
             // ABT_thread_join(scan_thread);
             ABT_thread_state state;
             ABT_thread_get_state(scan_thread, &state);
