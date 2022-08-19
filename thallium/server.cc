@@ -57,6 +57,11 @@ class MeasureExecutionTime{
 };
 
 
+#ifndef MEASURE_FUNCTION_EXECUTION_TIME
+#define MEASURE_FUNCTION_EXECUTION_TIME const MeasureExecutionTime measureExecutionTime(__FUNCTION__);
+#endif
+
+
 static char* read_input_file(const char* filename) {
     size_t ret;
     FILE*  fp = fopen(filename, "r");
