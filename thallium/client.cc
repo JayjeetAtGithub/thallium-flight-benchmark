@@ -177,12 +177,12 @@ arrow::Status Main(char **argv) {
             ARROW_ASSIGN_OR_RAISE(auto scan_req, GetScanRequest(filepath, filter, schema, schema));
             ScanCtx scan_ctx = Scan(conn_ctx, scan_req);
             int64_t total_rows = 0;
-                std::shared_ptr<arrow::RecordBatch> batch;
-                while ((batch = GetNextBatch(conn_ctx, scan_ctx).ValueOrDie()) != nullptr) {
-                    std::cout << batch->num_rows() << std::endl;
-                    std::cout << batch->num_columns() << std::endl;
-                    total_rows += batch->num_rows();
-                }
+            std::shared_ptr<arrow::RecordBatch> batch;
+            // while ((batch = GetNextBatch(conn_ctx, scan_ctx).ValueOrDie()) != nullptr) {
+            //     std::cout << batch->num_rows() << std::endl;
+            //     std::cout << batch->num_columns() << std::endl;
+            //     total_rows += batch->num_rows();
+            // }
         }
     }
 
