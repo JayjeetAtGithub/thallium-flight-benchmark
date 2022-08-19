@@ -74,13 +74,10 @@ ConnCtx Init(std::string host) {
     return ctx;
 }
 
-ScanCtx Scan(ConnCtx &conn_ctx, ScanReq &scan_req) {
+void Scan(ConnCtx &conn_ctx, ScanReq &scan_req) {
     tl::remote_procedure scan = conn_ctx.engine.define("scan");
     ScanCtx scan_ctx;
-    std::string uuid = scan.on(conn_ctx.endpoint)(scan_req.stub);
-    scan_ctx.uuid = uuid;
-    scan_ctx.schema = scan_req.schema;
-    return scan_ctx;
+    scan.on(conn_ctx.endpoint)(scan_req.stub);
 }
 
 arrow::Result<std::shared_ptr<arrow::RecordBatch>> GetNextBatch(ConnCtx &conn_ctx, std::shared_ptr<arrow::Schema> schema) {
