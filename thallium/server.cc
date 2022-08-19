@@ -1,6 +1,7 @@
 #include <iostream>
 #include <unordered_map>
 #include <queue>
+#include <chrono>
 
 #include <arrow/api.h>
 #include <arrow/compute/exec/expression.h>
@@ -41,6 +42,20 @@ namespace tl = thallium;
 namespace bk = bake;
 namespace cp = arrow::compute;
 namespace yk = yokan;
+
+
+class MeasureExecutionTime{
+  private:
+      const std::chrono::steady_clock::time_point begin;
+      const std::string caller;
+  public:
+      MeasureExecutionTime(const std::string& caller):caller(caller),begin(std::chrono::steady_clock::now()){}
+      ~MeasureExecutionTime(){
+          const auto duration=std::chrono::steady_clock::now()-begin;
+          std::cout << (double)std::chrono::duration_cast<std::chrono::milliseconds>(duration).count()/1000<<std::endl;
+      }
+};
+
 
 static char* read_input_file(const char* filename) {
     size_t ret;
@@ -160,7 +175,10 @@ int main(int argc, char** argv) {
             // reader_map[uuid] = reader;
 
             ABT_thread scan_thread = ABT_THREAD_NULL;
-            ABT_thread_create(pool, scan_handler, (void*)reader.get(), ABT_THREAD_ATTR_NULL, &scan_thread);
+            {
+                MEASURE_FUNCTION_EXECUTION_TIME 
+                ABT_thread_create(pool, scan_handler, (void*)reader.get(), ABT_THREAD_ATTR_NULL, &scan_thread);
+            }
 
             return req.respond(0);
         };
