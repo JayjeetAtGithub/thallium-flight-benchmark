@@ -64,8 +64,6 @@ static char* read_input_file(const char* filename) {
 
 int main(int argc, char** argv) {
 
-    ABT_init(argc, argv);
-
     if (argc < 2) {
         std::cout << "./ts <mode>\n";
         std::cout << "\nmode: \n\n1: in-memory\n2: ext4-mmap\n3: ext4\n4: bake\n";
@@ -104,6 +102,11 @@ int main(int argc, char** argv) {
     bk::provider_handle bph(bcl, svr_addr, 0);
     bph.set_eager_limit(0);
     bk::target tid = bp->list_targets()[0];
+
+    // create an argobots pool
+    ABT_pool newpool = ABT_POOL_NULL;
+    int ret = ABT_pool_create_basic(ABT_POOL_FIFO, ABT_POOL_ACCESS_MPMC,
+                                        ABT_FALSE, &newpool);
 
     std::function<void(const tl::request&, const ScanReqRPCStub&)> scan = 
         [&reader_map, &mid, &svr_addr, &bp, &bcl, &bph, &tid, &db, &mode](const tl::request &req, const ScanReqRPCStub& stub) {
