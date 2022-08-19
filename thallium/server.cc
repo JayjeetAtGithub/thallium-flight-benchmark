@@ -111,7 +111,7 @@ int main(int argc, char** argv) {
 
     tl::remote_procedure do_rdma = engine.define("do_rdma");
 
-    std::unordered_map<std::string, std::shared_ptr<arrow::RecordBatchReader>> reader_map;
+    // std::unordered_map<std::string, std::shared_ptr<arrow::RecordBatchReader>> reader_map;
     bk::client bcl(mid);
     bk::provider_handle bph(bcl, svr_addr, 0);
     bph.set_eager_limit(0);
@@ -122,7 +122,7 @@ int main(int argc, char** argv) {
     ABT_xstream_self(&xstream);
 
     std::function<void(const tl::request&, const ScanReqRPCStub&)> scan = 
-        [&reader_map, &mid, &svr_addr, &bp, &bcl, &bph, &tid, &db, &mode, &xstream](const tl::request &req, const ScanReqRPCStub& stub) {
+        [&mid, &svr_addr, &bp, &bcl, &bph, &tid, &db, &mode, &xstream](const tl::request &req, const ScanReqRPCStub& stub) {
             arrow::dataset::internal::Initialize();
             std::shared_ptr<arrow::RecordBatchReader> reader;
 
@@ -151,7 +151,7 @@ int main(int argc, char** argv) {
             }
 
             std::string uuid = boost::uuids::to_string(boost::uuids::random_generator()());
-            reader_map[uuid] = reader;
+            // reader_map[uuid] = reader;
 
             ABT_thread scan_thread = ABT_THREAD_NULL;
             ABT_thread_create_on_xstream(xstream, thread_func, (void*)reader.get(), ABT_THREAD_ATTR_NULL, &scan_thread);
@@ -161,13 +161,12 @@ int main(int argc, char** argv) {
 
     int64_t total_rows_written = 0;
     std::function<void(const tl::request&, const std::string&)> get_next_batch = 
-        [&mid, &svr_addr, &engine, &do_rdma, &reader_map, &total_rows_written](const tl::request &req, const std::string& uuid) {
-            
-            std::shared_ptr<arrow::RecordBatchReader> reader = reader_map[uuid];
-            std::shared_ptr<arrow::RecordBatch> batch;
+        [&mid, &svr_addr, &engine, &do_rdma, &total_rows_written](const tl::request &req, const std::string& uuid) {
 
-            if (reader->ReadNext(&batch).ok() && batch != nullptr) {
-
+            if (!batch_queue.empty()) {
+                std::shared_ptr<arrow::RecordBatch> batch = batch_queue.front();
+                batch_queue.pop_front();
+                
                 std::vector<int64_t> data_buff_sizes;
                 std::vector<int64_t> offset_buff_sizes;
                 int64_t num_rows = batch->num_rows();
@@ -215,7 +214,7 @@ int main(int argc, char** argv) {
                 do_rdma.on(req.get_endpoint())(num_rows, data_buff_sizes, offset_buff_sizes, arrow_bulk);
                 return req.respond(0);
             } else {
-                reader_map.erase(uuid);
+                // reader_map.erase(uuid);
                 return req.respond(1);
             }
         };
