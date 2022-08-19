@@ -32,6 +32,8 @@
 #include <yokan/cxx/admin.hpp>
 #include <yokan/cxx/client.hpp>
 
+#include <abt.h>
+
 #include "ace.h"
 
 namespace tl = thallium;
@@ -61,6 +63,8 @@ static char* read_input_file(const char* filename) {
 }
 
 int main(int argc, char** argv) {
+
+    ABT_init(argc, argv);
 
     if (argc < 2) {
         std::cout << "./ts <mode>\n";
