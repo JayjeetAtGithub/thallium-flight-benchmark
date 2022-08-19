@@ -1,5 +1,6 @@
 #include <iostream>
 #include <unordered_map>
+#include <queue>
 
 #include <arrow/api.h>
 #include <arrow/compute/exec/expression.h>
@@ -63,7 +64,7 @@ static char* read_input_file(const char* filename) {
 }
 
 
-std::vector<std::shared_ptr<arrow::RecordBatch>> batch_queue;
+std::deque<std::shared_ptr<arrow::RecordBatch>> batch_queue;
 
 
 void scan_handler(void *arg) {
