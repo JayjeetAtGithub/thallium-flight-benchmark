@@ -184,12 +184,6 @@ arrow::Status Main(char **argv) {
                 total_rows += batch->num_rows();
             }
         }
-
-        // while ((batch = GetNextBatch(conn_ctx, schema).ValueOrDie()) != nullptr) {
-        //     std::cout << batch->num_rows() << std::endl;
-        //     std::cout << batch->num_columns() << std::endl;
-        //     total_rows += batch->num_rows();
-        // }
     }
 
     conn_ctx.engine.finalize();
