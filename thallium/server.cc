@@ -186,7 +186,7 @@ int main(int argc, char** argv) {
     std::function<void(const tl::request&)> finalize_server = 
         [](const tl::request &req) {
             batch_queue.clear();
-        }
+        };
 
     int64_t total_rows_written = 0;
     std::function<void(const tl::request&)> get_next_batch = 
