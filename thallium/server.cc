@@ -139,11 +139,15 @@ int main(int argc, char** argv) {
     bph.set_eager_limit(0);
     bk::target tid = bp->list_targets()[0];
 
-    // create a new execution stream
-    tl::xstream xstream = tl::xstream::self();
+    // create a secondary execution stream from the same pool
+    // as the primary execution stream
+    tl::xstream pri_xstream = tl::xstream::self();
+    std::vector<tl::pool> pools = pri_xstream.get_main_pools(1);
+    tl::scheduler sched = pri_xstream.get_main_sched();
+    tl::managed<tl::xstream> sec_xstream = tl::xstream::create(sched, pools[0]);
 
     std::function<void(const tl::request&, const ScanReqRPCStub&)> scan = 
-        [&mid, &svr_addr, &bp, &bcl, &bph, &tid, &db, &mode, &xstream](const tl::request &req, const ScanReqRPCStub& stub) {
+        [&mid, &svr_addr, &bp, &bcl, &bph, &tid, &db, &mode, &sec_xstream](const tl::request &req, const ScanReqRPCStub& stub) {
             arrow::dataset::internal::Initialize();
             std::shared_ptr<arrow::RecordBatchReader> reader;
 
@@ -181,7 +185,7 @@ int main(int argc, char** argv) {
 
             {
                 MEASURE_FUNCTION_EXECUTION_TIME
-                xstream.make_thread([&]() {
+                sec_xstream.make_thread([&]() {
                     scan_handler((void*)reader.get());
                 });
             }
