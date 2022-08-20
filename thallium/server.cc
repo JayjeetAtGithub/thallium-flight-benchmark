@@ -181,7 +181,7 @@ int main(int argc, char** argv) {
 
             {
                 MEASURE_FUNCTION_EXECUTION_TIME 
-                tl::managed<tl::thread> t = tl::thread::create(pool, scan_handler, (void*)reader.get());
+                tl::managed<tl::thread> t = tl::thread::create_on_pool(pool, scan_handler, (void*)reader.get());
             }
 
             return req.respond(0);
