@@ -179,10 +179,9 @@ int main(int argc, char** argv) {
             // std::string uuid = boost::uuids::to_string(boost::uuids::random_generator()());
             // reader_map[uuid] = reader;
 
-            ABT_thread scan_thread = ABT_THREAD_NULL;
             {
                 MEASURE_FUNCTION_EXECUTION_TIME 
-                ABT_thread_create(pool, scan_handler, (void*)reader.get(), ABT_THREAD_ATTR_NULL, &scan_thread);
+                tl::managed<th::thread> t = tl::thread::create(pool, scan_handler, (void*)reader.get());
             }
 
             return req.respond(0);
