@@ -95,6 +95,7 @@ void scan_handler(void *arg) {
         batch_queue.push_back(batch);
         reader->ReadNext(&batch);
     }
+    tl::thread::exit();
 }
 
 
