@@ -183,6 +183,11 @@ int main(int argc, char** argv) {
             });
         };
 
+    std::function<void(const tl::request&)> finalize_server = 
+        [](const tl::request &req) {
+            batch_queue.clear();
+        }
+
     int64_t total_rows_written = 0;
     std::function<void(const tl::request&)> get_next_batch = 
         [&mid, &svr_addr, &engine, &do_rdma, &total_rows_written](const tl::request &req) {
@@ -245,13 +250,13 @@ int main(int argc, char** argv) {
                 do_rdma.on(req.get_endpoint())(num_rows, data_buff_sizes, offset_buff_sizes, arrow_bulk);
                 return req.respond(0);
             } else {
-                batch_queue.clear();
                 return req.respond(1);
             }
         };
     
     engine.define("scan", scan).disable_response();
     engine.define("get_next_batch", get_next_batch);
+    engine.define("finalize_server", finalize_server);
 
     std::cout << "Server running at address " << engine.self() << std::endl;    
     engine.wait_for_finalize();        

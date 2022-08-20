@@ -81,6 +81,12 @@ void Scan(ConnCtx &conn_ctx, ScanReq &scan_req) {
     scan.on(conn_ctx.endpoint)(scan_req.stub);
 }
 
+void Finalize(ConnCtx &conn_ctx) {
+    tl::remote_procedure finalize_server = conn_ctx.engine.define("finalize_server");
+    finalize_server.on(conn_ctx.endpoint)();
+    conn_ctx.engine.finalize();
+}
+
 arrow::Result<std::shared_ptr<arrow::RecordBatch>> GetNextBatch(ConnCtx &conn_ctx, std::shared_ptr<arrow::Schema> schema) {
     std::shared_ptr<arrow::RecordBatch> batch;
     std::function<void(const tl::request&, int64_t&, std::vector<int64_t>&, std::vector<int64_t>&, tl::bulk&)> f =
@@ -184,7 +190,8 @@ arrow::Status Main(char **argv) {
         }
     }
 
-    conn_ctx.engine.finalize();
+    Finalize(conn_ctx);
+
     return arrow::Status::OK();
 }
 
