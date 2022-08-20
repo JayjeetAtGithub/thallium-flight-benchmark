@@ -2,6 +2,7 @@
 #include <unordered_map>
 #include <queue>
 #include <chrono>
+#include <mutex>
 
 #include <arrow/api.h>
 #include <arrow/compute/exec/expression.h>
@@ -83,7 +84,7 @@ static char* read_input_file(const char* filename) {
     return buf;
 }
 
-
+std::mutex deque_lock;
 std::deque<std::shared_ptr<arrow::RecordBatch>> batch_queue;
 
 
@@ -92,7 +93,10 @@ void scan_handler(void *arg) {
     std::shared_ptr<arrow::RecordBatch> batch;
     reader->ReadNext(&batch);
     while (batch != nullptr) {
-        batch_queue.push_back(batch);
+        {
+            std::lock_guard<std::mutex> lock(deque_lock);
+            batch_queue.push_back(batch);
+        }
         reader->ReadNext(&batch);
     }
 }
@@ -183,10 +187,17 @@ int main(int argc, char** argv) {
     std::function<void(const tl::request&)> get_next_batch = 
         [&mid, &svr_addr, &engine, &do_rdma, &total_rows_written](const tl::request &req) {
             std::cout << "get_next_batch" << std::endl;
-            if (!batch_queue.empty()) {
-                std::shared_ptr<arrow::RecordBatch> batch = batch_queue.front();
-                batch_queue.pop_front();
-                
+            std::shared_ptr<arrow::RecordBatch> batch = nullptr;
+
+            {
+                std::lock_guard<std::mutex> lock(deque_lock);
+                if (!batch_queue.empty()) {
+                    batch = batch_queue.front();
+                    batch_queue.pop_front();
+                }
+            }
+
+            if (batch) {                
                 std::vector<int64_t> data_buff_sizes;
                 std::vector<int64_t> offset_buff_sizes;
                 int64_t num_rows = batch->num_rows();
