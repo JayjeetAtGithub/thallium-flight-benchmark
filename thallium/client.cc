@@ -76,6 +76,7 @@ ConnCtx Init(std::string host) {
 
 void Scan(ConnCtx &conn_ctx, ScanReq &scan_req) {
     tl::remote_procedure scan = conn_ctx.engine.define("scan");
+    scan.disable_response();
     ScanCtx scan_ctx;
     scan.on(conn_ctx.endpoint)(scan_req.stub);
 }

@@ -186,7 +186,7 @@ int main(int argc, char** argv) {
                 });
             }
 
-            return req.respond(0);
+            // return req.respond(0);
         };
 
     int64_t total_rows_written = 0;
@@ -249,7 +249,7 @@ int main(int argc, char** argv) {
             }
         };
     
-    engine.define("scan", scan);
+    engine.define("scan", scan).disable_response();
     engine.define("get_next_batch", get_next_batch);
 
     std::cout << "Server running at address " << engine.self() << std::endl;    
