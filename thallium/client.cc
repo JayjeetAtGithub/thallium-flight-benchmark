@@ -178,6 +178,7 @@ arrow::Status Main(char **argv) {
             ARROW_ASSIGN_OR_RAISE(auto scan_req, GetScanRequest(filepath, filter, schema, schema));
             Scan(conn_ctx, scan_req);
         }
+        std::cout << "About to read batches\n";
         while ((batch = GetNextBatch(conn_ctx, schema).ValueOrDie()) != nullptr) {
             // std::cout << batch->num_rows() << std::endl;
             // std::cout << batch->num_columns() << std::endl;
