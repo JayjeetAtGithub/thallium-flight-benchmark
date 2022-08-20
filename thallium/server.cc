@@ -245,6 +245,7 @@ int main(int argc, char** argv) {
                 do_rdma.on(req.get_endpoint())(num_rows, data_buff_sizes, offset_buff_sizes, arrow_bulk);
                 return req.respond(0);
             } else {
+                batch_queue.clear();
                 return req.respond(1);
             }
         };
