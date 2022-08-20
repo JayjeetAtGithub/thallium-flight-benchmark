@@ -143,7 +143,7 @@ int main(int argc, char** argv) {
     // as the primary execution stream
     tl::xstream pri_xstream = tl::xstream::self();
     std::vector<tl::pool> pools = pri_xstream.get_main_pools(1);
-    tl::managed<tl::xstream> sec_xstream = tl::xstream::create(ABT_SCHED_DEFAULT, pools[0]);
+    tl::managed<tl::xstream> sec_xstream = tl::xstream::create(tl::scheduler::predef::deflt, pools[0]);
 
     std::function<void(const tl::request&, const ScanReqRPCStub&)> scan = 
         [&mid, &svr_addr, &bp, &bcl, &bph, &tid, &db, &mode, &sec_xstream](const tl::request &req, const ScanReqRPCStub& stub) {
