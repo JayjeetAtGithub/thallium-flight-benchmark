@@ -179,12 +179,14 @@ arrow::Status Main(char **argv) {
             Scan(conn_ctx, scan_req);
         }
         std::cout << "About to read batches\n";
-        while ((batch = GetNextBatch(conn_ctx, schema).ValueOrDie()) != nullptr) {
-            // std::cout << batch->num_rows() << std::endl;
-            // std::cout << batch->num_columns() << std::endl;
-            total_rows += batch->num_rows();
-            std::cout << "Total rows read: " << total_rows << std::endl;
-        }
+        auto batch = GetNextBatch(conn_ctx, schema).ValueOrDie();
+        std::cout << batch->ToString() << std::endl;
+        // while ((batch = GetNextBatch(conn_ctx, schema).ValueOrDie()) != nullptr) {
+        //     // std::cout << batch->num_rows() << std::endl;
+        //     // std::cout << batch->num_columns() << std::endl;
+        //     total_rows += batch->num_rows();
+        //     std::cout << "Total rows read: " << total_rows << std::endl;
+        // }
     }
 
     conn_ctx.engine.finalize();
