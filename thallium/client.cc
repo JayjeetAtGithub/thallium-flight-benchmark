@@ -127,7 +127,6 @@ arrow::Result<std::shared_ptr<arrow::RecordBatch>> GetNextBatch(ConnCtx &conn_ct
     if (e == 0) {
         return batch;
     } else {
-        std::cout << "Couldn't get a single batch" << std::endl;
         return nullptr;
     }
 }
@@ -178,16 +177,13 @@ arrow::Status Main(char **argv) {
             std::string filepath = "/mnt/cephfs/dataset/16MB.uncompressed.parquet." + std::to_string(i);
             ARROW_ASSIGN_OR_RAISE(auto scan_req, GetScanRequest(filepath, filter, schema, schema));
             Scan(conn_ctx, scan_req);
+            while ((batch = GetNextBatch(conn_ctx, schema).ValueOrDie()) != nullptr) {
+                // std::cout << batch->num_rows() << std::endl;
+                // std::cout << batch->num_columns() << std::endl;
+                total_rows += batch->num_rows();
+                std::cout << "Total rows read: " << total_rows << std::endl;
+            }
         }
-        std::cout << "About to read batches\n";
-        auto batch = GetNextBatch(conn_ctx, schema).ValueOrDie();
-        std::cout << batch->ToString() << std::endl;
-        // while ((batch = GetNextBatch(conn_ctx, schema).ValueOrDie()) != nullptr) {
-        //     // std::cout << batch->num_rows() << std::endl;
-        //     // std::cout << batch->num_columns() << std::endl;
-        //     total_rows += batch->num_rows();
-        //     std::cout << "Total rows read: " << total_rows << std::endl;
-        // }
     }
 
     conn_ctx.engine.finalize();
