@@ -143,6 +143,7 @@ int main(int argc, char** argv) {
     // as the primary execution stream
     tl::xstream pri_xstream = tl::xstream::self();
     std::vector<tl::pool> pools = pri_xstream.get_main_pools(1);
+    std::cout << "Num pools: " << pools.size() << std::endl;
     tl::managed<tl::xstream> sec_xstream = tl::xstream::create(tl::scheduler::predef::deflt, pools[0]);
 
     std::function<void(const tl::request&, const ScanReqRPCStub&)> scan = 
