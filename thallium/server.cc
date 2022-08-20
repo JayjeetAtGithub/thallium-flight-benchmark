@@ -179,9 +179,11 @@ int main(int argc, char** argv) {
             //     tl::managed<tl::thread> t = tl::thread::create_on_pool(pool, scan_handler, (void*)reader.get());
             // }
 
-            xstream.make_thread([&]() {
-                scan_handler((void*)reader.get());
-            });
+            {
+                xstream.make_thread([&]() {
+                    scan_handler((void*)reader.get());
+                });
+            }
 
             return req.respond(0);
         };
