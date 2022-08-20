@@ -174,28 +174,15 @@ int main(int argc, char** argv) {
                 reader = ScanBake(stub, ptr).ValueOrDie();
             }
 
-            // std::string uuid = boost::uuids::to_string(boost::uuids::random_generator()());
-            // reader_map[uuid] = reader;
-
-            // {
-            //     MEASURE_FUNCTION_EXECUTION_TIME 
-            //     tl::managed<tl::thread> t = tl::thread::create_on_pool(pool, scan_handler, (void*)reader.get());
-            // }
-
-            {
-                MEASURE_FUNCTION_EXECUTION_TIME
-                sec_xstream->make_thread([&]() {
-                    scan_handler((void*)reader.get());
-                });
-            }
-
-            // return req.respond(0);
+            sec_xstream->make_thread([&]() {
+                scan_handler((void*)reader.get());
+            });
         };
 
     int64_t total_rows_written = 0;
     std::function<void(const tl::request&)> get_next_batch = 
         [&mid, &svr_addr, &engine, &do_rdma, &total_rows_written](const tl::request &req) {
-            std::cout << batch_queue.size () << std::endl;
+            std::cout << "get_next_batch" << std::endl;
             if (!batch_queue.empty()) {
                 std::shared_ptr<arrow::RecordBatch> batch = batch_queue.front();
                 batch_queue.pop_front();
