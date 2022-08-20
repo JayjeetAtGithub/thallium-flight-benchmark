@@ -140,15 +140,10 @@ int main(int argc, char** argv) {
     bk::target tid = bp->list_targets()[0];
 
     // create a new execution stream
-    ABT_xstream xstream;
-    ABT_pool pool;
-
-    ABT_xstream_self(&xstream);
-    ABT_xstream_get_main_pools(xstream, 1, &pool);
-
+    tl::xstream xstream = tl::xstream::self();
 
     std::function<void(const tl::request&, const ScanReqRPCStub&)> scan = 
-        [&mid, &svr_addr, &bp, &bcl, &bph, &tid, &db, &mode, &pool](const tl::request &req, const ScanReqRPCStub& stub) {
+        [&mid, &svr_addr, &bp, &bcl, &bph, &tid, &db, &mode, &xstream](const tl::request &req, const ScanReqRPCStub& stub) {
             arrow::dataset::internal::Initialize();
             std::shared_ptr<arrow::RecordBatchReader> reader;
 
@@ -179,10 +174,14 @@ int main(int argc, char** argv) {
             // std::string uuid = boost::uuids::to_string(boost::uuids::random_generator()());
             // reader_map[uuid] = reader;
 
-            {
-                MEASURE_FUNCTION_EXECUTION_TIME 
-                tl::managed<tl::thread> t = tl::thread::create_on_pool(pool, scan_handler, (void*)reader.get());
-            }
+            // {
+            //     MEASURE_FUNCTION_EXECUTION_TIME 
+            //     tl::managed<tl::thread> t = tl::thread::create_on_pool(pool, scan_handler, (void*)reader.get());
+            // }
+
+            xstream->make_thread([&]() {
+                scan_handler((void*)reader.get());
+            });
 
             return req.respond(0);
         };
