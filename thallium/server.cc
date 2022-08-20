@@ -107,7 +107,7 @@ int main(int argc, char** argv) {
     }
 
     int mode = atoi(argv[1]);
-    tl::engine engine("verbs://ibp130s0", THALLIUM_SERVER_MODE, true);
+    tl::engine engine("verbs://ibp130s0", THALLIUM_SERVER_MODE, false);
     margo_instance_id mid = engine.get_margo_instance();
     hg_addr_t svr_addr;
     hg_return_t hret = margo_addr_self(mid, &svr_addr);
