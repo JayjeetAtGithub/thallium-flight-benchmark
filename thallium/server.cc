@@ -107,7 +107,7 @@ int main(int argc, char** argv) {
     }
 
     int mode = atoi(argv[1]);
-    tl::engine engine("verbs://ibp130s0", THALLIUM_SERVER_MODE, true);
+    tl::engine engine("verbs://ibp130s0", THALLIUM_SERVER_MODE, false);
     margo_instance_id mid = engine.get_margo_instance();
     hg_addr_t svr_addr;
     hg_return_t hret = margo_addr_self(mid, &svr_addr);
@@ -142,12 +142,9 @@ int main(int argc, char** argv) {
     // create a secondary execution stream from the same pool
     // as the primary execution stream
     tl::xstream pri_xstream = tl::xstream::self();
-    std::vector<tl::pool> pools = pri_xstream.get_main_pools(1);
-    std::cout << "Num pools: " << pools.size() << std::endl;
-    tl::managed<tl::xstream> sec_xstream = tl::xstream::create(tl::scheduler::predef::deflt, pools[0]);
 
     std::function<void(const tl::request&, const ScanReqRPCStub&)> scan = 
-        [&mid, &svr_addr, &bp, &bcl, &bph, &tid, &db, &mode, &sec_xstream](const tl::request &req, const ScanReqRPCStub& stub) {
+        [&mid, &svr_addr, &bp, &bcl, &bph, &tid, &db, &mode, &pri_xstream](const tl::request &req, const ScanReqRPCStub& stub) {
             arrow::dataset::internal::Initialize();
             std::shared_ptr<arrow::RecordBatchReader> reader;
 
@@ -175,7 +172,7 @@ int main(int argc, char** argv) {
                 reader = ScanBake(stub, ptr).ValueOrDie();
             }
 
-            sec_xstream->make_thread([&]() {
+            pri_xstream.make_thread([&]() {
                 scan_handler((void*)reader.get());
             });
         };

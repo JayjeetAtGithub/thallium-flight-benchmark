@@ -67,7 +67,7 @@ arrow::Result<ScanReq> GetScanRequest(std::string path,
 
 ConnCtx Init(std::string host) {
     ConnCtx ctx;
-    tl::engine engine("verbs://ibp130s0", THALLIUM_SERVER_MODE, true);
+    tl::engine engine("verbs://ibp130s0", THALLIUM_SERVER_MODE, false);
     tl::endpoint endpoint = engine.lookup(host);
     ctx.engine = engine;
     ctx.endpoint = endpoint;
