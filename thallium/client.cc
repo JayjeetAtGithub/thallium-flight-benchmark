@@ -84,7 +84,6 @@ void Scan(ConnCtx &conn_ctx, ScanReq &scan_req) {
 void Finalize(ConnCtx &conn_ctx) {
     tl::remote_procedure finalize_server = conn_ctx.engine.define("finalize_server");
     finalize_server.on(conn_ctx.endpoint)();
-    conn_ctx.engine.finalize();
 }
 
 arrow::Result<std::shared_ptr<arrow::RecordBatch>> GetNextBatch(ConnCtx &conn_ctx, std::shared_ptr<arrow::Schema> schema) {
@@ -191,6 +190,7 @@ arrow::Status Main(char **argv) {
     }
 
     Finalize(conn_ctx);
+    conn_ctx.engine.finalize();
 
     return arrow::Status::OK();
 }
