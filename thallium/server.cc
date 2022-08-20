@@ -180,6 +180,7 @@ int main(int argc, char** argv) {
             // }
 
             {
+                MEASURE_FUNCTION_EXECUTION_TIME
                 xstream.make_thread([&]() {
                     scan_handler((void*)reader.get());
                 });
