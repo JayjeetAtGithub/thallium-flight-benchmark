@@ -162,7 +162,7 @@ int main(int argc, char** argv) {
                 std::cout << "scanning data from ext4 using mmap\n";
                 reader = ScanEXT4MMap(stub).ValueOrDie();
             } else if (mode == 3) {
-                std::cout << "scanning data from ext4\n";
+                std::cout << "scanning data from ext4: " << stub.path.c_str() << std::endl;
                 reader = ScanEXT4(stub).ValueOrDie();
             } else if (mode == 4) {
                 std::cout << "scanning data from bake: " << stub.path.c_str() << std::endl;
