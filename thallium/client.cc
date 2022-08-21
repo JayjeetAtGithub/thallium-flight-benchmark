@@ -71,6 +71,8 @@ ConnCtx Init(std::string host) {
     tl::endpoint endpoint = engine.lookup(host);
     ctx.engine = engine;
     ctx.endpoint = endpoint;
+    tl::remote_procedure clear = conn_ctx.engine.define("clear");
+    clear.on(endpoint)();
     return ctx;
 }
 
@@ -79,11 +81,6 @@ void Scan(ConnCtx &conn_ctx, ScanReq &scan_req) {
     scan.disable_response();
     ScanCtx scan_ctx;
     scan.on(conn_ctx.endpoint)(scan_req.stub);
-}
-
-void Finalize(ConnCtx &conn_ctx) {
-    tl::remote_procedure finalize_server = conn_ctx.engine.define("finalize_server");
-    finalize_server.on(conn_ctx.endpoint)();
 }
 
 arrow::Result<std::shared_ptr<arrow::RecordBatch>> GetNextBatch(ConnCtx &conn_ctx, std::shared_ptr<arrow::Schema> schema) {
