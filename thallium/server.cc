@@ -154,6 +154,8 @@ int main(int argc, char** argv) {
             arrow::dataset::internal::Initialize();
             std::shared_ptr<arrow::RecordBatchReader> reader;
 
+            std::cout << "Batch Queue: " << batch_queue.size() << std::endl;
+
             if (mode == 1) {
                 std::cout << "running transport benchmark\n";
                 cp::ExecContext exec_ctx;
