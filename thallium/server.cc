@@ -192,7 +192,6 @@ int main(int argc, char** argv) {
     int64_t total_rows_written = 0;
     std::function<void(const tl::request&)> get_next_batch = 
         [&mid, &svr_addr, &engine, &do_rdma, &total_rows_written](const tl::request &req) {
-            std::cout << "get_next_batch" << std::endl;
             std::shared_ptr<arrow::RecordBatch> batch = nullptr;
 
             {
