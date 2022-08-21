@@ -258,7 +258,7 @@ int main(int argc, char** argv) {
     
     engine.define("scan", scan).disable_response();
     engine.define("get_next_batch", get_next_batch);
-    engine.define("finalize_server", finalize_server);
+    engine.define("clear", clear);
 
     std::cout << "Server running at address " << engine.self() << std::endl;    
     engine.wait_for_finalize();        
