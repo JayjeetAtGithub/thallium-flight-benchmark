@@ -71,7 +71,7 @@ ConnCtx Init(std::string host) {
     tl::endpoint endpoint = engine.lookup(host);
     ctx.engine = engine;
     ctx.endpoint = endpoint;
-    tl::remote_procedure clear = conn_ctx.engine.define("clear");
+    tl::remote_procedure clear = engine.define("clear");
     clear.on(endpoint)();
     return ctx;
 }
@@ -186,7 +186,6 @@ arrow::Status Main(char **argv) {
         }
     }
 
-    Finalize(conn_ctx);
     conn_ctx.engine.finalize();
 
     return arrow::Status::OK();
