@@ -165,7 +165,7 @@ int main(int argc, char** argv) {
                 std::cout << "scanning data from ext4\n";
                 reader = ScanEXT4(stub).ValueOrDie();
             } else if (mode == 4) {
-                std::cout << "scanning data from bake\n";
+                std::cout << "scanning data from bake: " << stub.path.c_str() << std::endl;
                 // get the rid from pathname
                 size_t value_size = 28;
                 void *value_buf = malloc(28);
