@@ -85,27 +85,7 @@ static char* read_input_file(const char* filename) {
 }
 
 
-class Stopper {
-    public:
-        void Set() {
-            flag++;
-        }
-
-        void Unset() {
-            flag--;
-        }
-
-        bool Finished() {
-            return flag == 0;
-        }
-
-    private:
-        int flag = 0;
-};
-
-
 std::deque<std::shared_ptr<arrow::RecordBatch>> batch_queue;
-Stopper s;
 
 
 void scan_handler(void *arg) {
@@ -220,13 +200,6 @@ int main(int argc, char** argv) {
             if (!batch_queue.empty()) {
                 batch = batch_queue.front();
                 batch_queue.pop_front();
-            } else {
-                if (!s.Finished()) {
-                    std::cout << "coming here\n";
-                    while (batch_queue.empty() || !s.Finished());
-                    batch = batch_queue.front();
-                    batch_queue.pop_front();
-                }
             }
  
             if (batch) {                
