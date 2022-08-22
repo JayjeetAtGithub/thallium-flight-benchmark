@@ -93,10 +93,7 @@ void scan_handler(void *arg) {
     std::shared_ptr<arrow::RecordBatch> batch;
     reader->ReadNext(&batch);
     while (batch != nullptr) {
-        {
-            std::lock_guard<std::mutex> lock(deque_lock);
-            batch_queue.push_back(batch);
-        }
+        batch_queue.push_back(batch);
         reader->ReadNext(&batch);
     }
 }
@@ -196,12 +193,9 @@ int main(int argc, char** argv) {
         [&mid, &svr_addr, &engine, &do_rdma, &total_rows_written](const tl::request &req) {
             std::shared_ptr<arrow::RecordBatch> batch = nullptr;
 
-            {
-                std::lock_guard<std::mutex> lock(deque_lock);
-                if (!batch_queue.empty()) {
-                    batch = batch_queue.front();
-                    batch_queue.pop_front();
-                }
+            if (!batch_queue.empty()) {
+                batch = batch_queue.front();
+                batch_queue.pop_front();
             }
 
             if (batch) {                
