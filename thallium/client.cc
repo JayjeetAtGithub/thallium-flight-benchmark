@@ -183,6 +183,9 @@ arrow::Status Main(char **argv) {
                 total_rows += batch->num_rows();
                 std::cout << "Total rows read: " << total_rows << std::endl;
             }
+            auto lb = GetNextBatch(conn_ctx, schema).ValueOrDie();
+            total_rows += lb->num_rows();
+            std::cout << "Total rows read: " << total_rows << std::endl;
         }
     }
 
