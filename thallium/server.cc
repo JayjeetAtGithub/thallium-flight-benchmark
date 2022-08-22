@@ -222,6 +222,7 @@ int main(int argc, char** argv) {
                 batch_queue.pop_front();
             } else {
                 if (!s.Finished()) {
+                    std::cout << "coming here\n";
                     while (batch_queue.empty() && !s.Finished());
                     batch = batch_queue.front();
                     batch_queue.pop_front();
