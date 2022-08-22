@@ -84,17 +84,41 @@ static char* read_input_file(const char* filename) {
     return buf;
 }
 
-std::mutex deque_lock;
+
+class Stopper {
+    public:
+        void Set() {
+            flag++;
+        }
+
+        void Unset() {
+            flag--;
+        }
+
+        bool Finished() {
+            return flag == 0;
+        }
+
+    private:
+        int flag = 0;
+}
+
+
 std::deque<std::shared_ptr<arrow::RecordBatch>> batch_queue;
+Stopper s;
 
 
 void scan_handler(void *arg) {
     arrow::RecordBatchReader *reader = (arrow::RecordBatchReader*)arg;
     std::shared_ptr<arrow::RecordBatch> batch;
-    reader->ReadNext(&batch);
-    while (batch != nullptr) {
-        batch_queue.push_back(batch);
+    {
+        s.Set();
         reader->ReadNext(&batch);
+        while (batch != nullptr) {
+            batch_queue.push_back(batch);
+            reader->ReadNext(&batch);
+        }
+        s.Unset();
     }
 }
 
@@ -193,11 +217,17 @@ int main(int argc, char** argv) {
         [&mid, &svr_addr, &engine, &do_rdma, &total_rows_written](const tl::request &req) {
             std::shared_ptr<arrow::RecordBatch> batch = nullptr;
 
-            if (!batch_queue.empty()) {
+            if (!batch_queue.empty() {
                 batch = batch_queue.front();
                 batch_queue.pop_front();
+            } else {
+                if (!s.Finished()) {
+                    while (batch_queue.empty() && !s.Finished());
+                    batch = batch_queue.front();
+                    batch_queue.pop_front();
+                }
             }
-
+ 
             if (batch) {                
                 std::vector<int64_t> data_buff_sizes;
                 std::vector<int64_t> offset_buff_sizes;
