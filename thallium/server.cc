@@ -101,7 +101,7 @@ class Stopper {
 
     private:
         int flag = 0;
-}
+};
 
 
 std::deque<std::shared_ptr<arrow::RecordBatch>> batch_queue;
