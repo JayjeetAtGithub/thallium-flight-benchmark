@@ -14,13 +14,16 @@ if __name__ == "__main__":
         "flight-ext4",
         "thallium-ext4",
         "thallium-ext4mmap",
-        "thallium-bake"
+        "thallium-bake",
+        "flight-ext4dataset",
+        "thallium-ext4dataset",
+        "flight-transport",
+        "thallium-transport"
     ]
 
     for filename in filelist:
         with open(filename, "r") as fd:
             lines = fd.readlines()
-            lines = lines[6:]
             lines = [float(l.rstrip()) for l in lines]
             for l in lines:
                 data['latency(s)'].append(l)

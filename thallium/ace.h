@@ -115,8 +115,31 @@ class RandomAccessObject : public arrow::io::RandomAccessFile {
 };
 
 
-arrow::Result<std::shared_ptr<arrow::RecordBatchReader>> ScanBenchmark(cp::ExecContext& exec_context, const ScanReqRPCStub& stub) {
+arrow::Result<std::shared_ptr<arrow::RecordBatchReader>> ScanBenchmark(cp::ExecContext& exec_context, const ScanReqRPCStub& stub, int mode) {
     std::string uri = "file:///mnt/cephfs/dataset";
+
+    auto schema = arrow::schema({
+      arrow::field("VendorID", arrow::int64()),
+      arrow::field("tpep_pickup_datetime", arrow::timestamp(arrow::TimeUnit::MICRO)),
+      arrow::field("tpep_dropoff_datetime", arrow::timestamp(arrow::TimeUnit::MICRO)),
+      arrow::field("passenger_count", arrow::int64()),
+      arrow::field("trip_distance", arrow::float64()),
+      arrow::field("RatecodeID", arrow::int64()),
+      arrow::field("store_and_fwd_flag", arrow::utf8()),
+      arrow::field("PULocationID", arrow::int64()),
+      arrow::field("DOLocationID", arrow::int64()),
+      arrow::field("payment_type", arrow::int64()),
+      arrow::field("fare_amount", arrow::float64()),
+      arrow::field("extra", arrow::float64()),
+      arrow::field("mta_tax", arrow::float64()),
+      arrow::field("tip_amount", arrow::float64()),
+      arrow::field("tolls_amount", arrow::float64()),
+      arrow::field("improvement_surcharge", arrow::float64()),
+      arrow::field("total_amount", arrow::float64())
+    });
+
+    auto filter = arrow::compute::greater(arrow::compute::field_ref("total_amount"),
+                                          arrow::compute::literal(-200));
     
     std::string path;
     ARROW_ASSIGN_OR_RAISE(auto fs, arrow::fs::FileSystemFromUri(uri, &path)); 
@@ -125,10 +148,6 @@ arrow::Result<std::shared_ptr<arrow::RecordBatchReader>> ScanBenchmark(cp::ExecC
     arrow::fs::FileSelector s;
     s.base_dir = std::move(path);
     s.recursive = true;
-
-    auto filter = 
-        arrow::compute::greater(arrow::compute::field_ref("total_amount"),
-                                arrow::compute::literal(-200));
 
     arrow::dataset::FileSystemFactoryOptions options;
     ARROW_ASSIGN_OR_RAISE(auto factory, 
@@ -141,15 +160,20 @@ arrow::Result<std::shared_ptr<arrow::RecordBatchReader>> ScanBenchmark(cp::ExecC
 
     ARROW_ASSIGN_OR_RAISE(auto scanner_builder, dataset->NewScan());
     ARROW_RETURN_NOT_OK(scanner_builder->Filter(filter));
-    ARROW_RETURN_NOT_OK(scanner_builder->Project({"passenger_count", "fare_amount"}));
+    ARROW_RETURN_NOT_OK(scanner_builder->Project(schema->field_names()));
 
     ARROW_ASSIGN_OR_RAISE(auto scanner, scanner_builder->Finish());
-    ARROW_ASSIGN_OR_RAISE(auto table, scanner->ToTable());
 
-    auto im_ds = std::make_shared<arrow::dataset::InMemoryDataset>(table);
-    ARROW_ASSIGN_OR_RAISE(auto im_ds_scanner_builder, im_ds->NewScan());
-    ARROW_ASSIGN_OR_RAISE(auto im_ds_scanner, im_ds_scanner_builder->Finish());
-    ARROW_ASSIGN_OR_RAISE(auto reader, im_ds_scanner->ToRecordBatchReader());
+    std::shared_ptr<arrow::RecordBatchReader> reader; 
+    if (mode == 1) {
+      ARROW_ASSIGN_OR_RAISE(reader, scanner->ToRecordBatchReader());
+    } else {
+      ARROW_ASSIGN_OR_RAISE(auto table, scanner->ToTable())
+      auto im_ds = std::make_shared<arrow::dataset::InMemoryDataset>(table);
+      ARROW_ASSIGN_OR_RAISE(auto im_ds_scanner_builder, im_ds->NewScan());
+      ARROW_ASSIGN_OR_RAISE(auto im_ds_scanner, im_ds_scanner_builder->Finish());
+      ARROW_ASSIGN_OR_RAISE(reader, im_ds_scanner->ToRecordBatchReader());
+    }
 
     return reader;
 }

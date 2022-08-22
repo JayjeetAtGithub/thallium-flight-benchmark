@@ -63,12 +63,11 @@ static char* read_input_file(const char* filename) {
 int main(int argc, char** argv) {
 
     if (argc < 2) {
-        std::cout << "./ts <mode>\n";
-        std::cout << "\nmode: \n\n1: in-memory\n2: ext4-mmap\n3: ext4\n4: bake\n";
-        exit(0);
+        std::cout << "./ts[bench_mode]" << std::endl;
+        exit(1);
     }
 
-    int mode = atoi(argv[1]);
+    int bench_mode = atoi(argv[1]);
     tl::engine engine("verbs://ibp130s0", THALLIUM_SERVER_MODE, true);
     margo_instance_id mid = engine.get_margo_instance();
     hg_addr_t svr_addr;
@@ -79,13 +78,11 @@ int main(int argc, char** argv) {
         return -1;
     }
 
-    // start bake provider
     char *bake_config = read_input_file("bake_config.json");
     bk::provider *bp = bk::provider::create(
         mid, 0, ABT_POOL_NULL, std::string(bake_config, strlen(bake_config) + 1), ABT_IO_INSTANCE_NULL, NULL, NULL
     );
 
-    // start yokan provider, create a database, and initialize the db handle
     char *yokan_config = read_input_file("yokan_config.json");
     yk::Provider yp(mid, 0, "ABCD", yokan_config, ABT_POOL_NULL, nullptr);
     yk::Client ycl(mid);
@@ -102,30 +99,28 @@ int main(int argc, char** argv) {
     bk::target tid = bp->list_targets()[0];
 
     std::function<void(const tl::request&, const ScanReqRPCStub&)> scan = 
-        [&reader_map, &mid, &svr_addr, &bp, &bcl, &bph, &tid, &db, &mode](const tl::request &req, const ScanReqRPCStub& stub) {
+        [&reader_map, &mid, &svr_addr, &bp, &bcl, &bph, &tid, &db, &bench_mode](const tl::request &req, const ScanReqRPCStub& stub) {
             arrow::dataset::internal::Initialize();
             std::shared_ptr<arrow::RecordBatchReader> reader;
 
-            if (mode == 1) {
-                std::cout << "running transport benchmark\n";
+            if (bench_mode == 1 || bench_mode == 2) {
+                std::cout << "Running transport benchmark in mode " << bench_mode << std::endl;
                 cp::ExecContext exec_ctx;
-                reader = ScanBenchmark(exec_ctx, stub).ValueOrDie();
-            } else if (mode == 2) {
-                std::cout << "scanning data from ext4 using mmap\n";
+                reader = ScanBenchmark(exec_ctx, stub, bench_mode).ValueOrDie();
+            } else if (bench_mode == 3) {
+                std::cout << "Scanning data from ext4 using mmap\n";
                 reader = ScanEXT4MMap(stub).ValueOrDie();
-            } else if (mode == 3) {
-                std::cout << "scanning data from ext4\n";
+            } else if (bench_mode == 4) {
+                std::cout << "Scanning data from ext4\n";
                 reader = ScanEXT4(stub).ValueOrDie();
-            } else if (mode == 4) {
-                std::cout << "scanning data from bake\n";
-                // get the rid from pathname
+            } else if (bench_mode == 5) {
+                std::cout << "Scanning data from bake\n";
                 size_t value_size = 28;
                 void *value_buf = malloc(28);
                 
                 db.get((void*)stub.path.c_str(), stub.path.length(), value_buf, &value_size);
                 bk::region rid(std::string((char*)value_buf, value_size));
 
-                // scan data from bake
                 uint8_t *ptr = (uint8_t*)bcl.get_data(bph, tid, rid);
                 reader = ScanBake(stub, ptr).ValueOrDie();
             }

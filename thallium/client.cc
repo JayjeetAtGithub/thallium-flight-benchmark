@@ -133,20 +133,18 @@ arrow::Result<std::shared_ptr<arrow::RecordBatch>> GetNextBatch(ConnCtx &conn_ct
     }
 }
 
-arrow::Status Main(char **argv) {
-    // connection info
+arrow::Status Main(int argc, char **argv) {
+    if (argc < 3) {
+        std::cout << "./tc [port] [bench-mode]" << std::endl;
+        exit(1);
+    }
+
     std::string uri_base = "ofi+verbs;ofi_rxm://10.0.2.50:";
     std::string uri = uri_base + argv[1];
-    std::string selectivity = argv[2];
+    int bench_mode = (int)std::stoi(argv[2]);
 
-    // query params
     auto filter = 
         cp::greater(cp::field_ref("total_amount"), cp::literal(-200));
-    if (selectivity == "10") {
-        filter = cp::greater(cp::field_ref("total_amount"), cp::literal(27));
-    } else if (selectivity == "1") {
-        filter = cp::greater(cp::field_ref("total_amount"), cp::literal(69));
-    }
 
     auto schema = arrow::schema({
         arrow::field("VendorID", arrow::int64()),
@@ -168,22 +166,23 @@ arrow::Status Main(char **argv) {
         arrow::field("total_amount", arrow::float64())
     });
 
-    // scan
     ConnCtx conn_ctx = Init(uri);
-    {
-        MEASURE_FUNCTION_EXECUTION_TIME
-        for (int i = 1; i <= 200; i++) {
-            std::string filepath = "/mnt/cephfs/dataset/16MB.uncompressed.parquet." + std::to_string(i);
-            ARROW_ASSIGN_OR_RAISE(auto scan_req, GetScanRequest(filepath, filter, schema, schema));
-            ScanCtx scan_ctx = Scan(conn_ctx, scan_req);
-            int64_t total_rows = 0;
-                std::shared_ptr<arrow::RecordBatch> batch;
-                while ((batch = GetNextBatch(conn_ctx, scan_ctx).ValueOrDie()) != nullptr) {
-                    std::cout << batch->num_rows() << std::endl;
-                    std::cout << batch->num_columns() << std::endl;
-                    total_rows += batch->num_rows();
-                }
+
+    if (bench_mode == 1 || bench_mode == 2) {
+        std::string path = "/mnt/cephfs/dataset";
+        ARROW_ASSIGN_OR_RAISE(auto scan_req, GetScanRequest(path, filter, schema, schema));
+        ScanCtx scan_ctx = Scan(conn_ctx, scan_req);
+        int64_t total_rows = 0;
+        std::shared_ptr<arrow::RecordBatch> batch;
+        {
+            MEASURE_FUNCTION_EXECUTION_TIME
+            while ((batch = GetNextBatch(conn_ctx, scan_ctx).ValueOrDie()) != nullptr) {
+                total_rows += batch->num_rows();
+                std::cout << "Read " << total_rows << " rows" << std::endl;
+            }
         }
+    } else {
+
     }
 
     conn_ctx.engine.finalize();
@@ -191,5 +190,5 @@ arrow::Status Main(char **argv) {
 }
 
 int main(int argc, char** argv) {
-    Main(argv);
+    Main(argc, argv);
 }
