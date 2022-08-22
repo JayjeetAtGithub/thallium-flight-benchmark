@@ -217,7 +217,7 @@ int main(int argc, char** argv) {
         [&mid, &svr_addr, &engine, &do_rdma, &total_rows_written](const tl::request &req) {
             std::shared_ptr<arrow::RecordBatch> batch = nullptr;
 
-            if (!batch_queue.empty() {
+            if (!batch_queue.empty()) {
                 batch = batch_queue.front();
                 batch_queue.pop_front();
             } else {
