@@ -91,12 +91,10 @@ std::deque<std::shared_ptr<arrow::RecordBatch>> batch_queue;
 void scan_handler(void *arg) {
     arrow::RecordBatchReader *reader = (arrow::RecordBatchReader*)arg;
     std::shared_ptr<arrow::RecordBatch> batch;
-    {
+    reader->ReadNext(&batch);
+    while (batch != nullptr) {
+        batch_queue.push_back(batch);
         reader->ReadNext(&batch);
-        while (batch != nullptr) {
-            batch_queue.push_back(batch);
-            reader->ReadNext(&batch);
-        }
     }
 }
 
