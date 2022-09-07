@@ -118,10 +118,12 @@ class concurrent_queue {
         }
 
         bool empty() {
+            bool emp = false;
             {
                 std::lock_guard<tl::mutex> lock(m);
-                return batch_queue.empty();
+                emp = batch_queue.empty();
             }
+            return emp;
         }
 
         void wait_and_pop(std::shared_ptr<arrow::RecordBatch> &batch) {
