@@ -212,6 +212,7 @@ int main(int argc, char** argv) {
             }
 
             sec_xstream->make_thread([&]() {
+                std::cout << "Made thread for " << stub.path.c_str() << std::endl;
                 scan_handler((void*)reader.get());
             });
         };
