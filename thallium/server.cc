@@ -124,6 +124,7 @@ class concurrent_queue {
 
         void wait_and_pop(std::shared_ptr<arrow::RecordBatch> &batch) {
             std::unique_lock<tl::mutex> lock(m);
+            std::cout << is_live() << "\n";
             if (is_live()) {
                 std::cout << "is live \n";
                 while (batch_queue.empty()) {
