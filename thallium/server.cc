@@ -89,12 +89,12 @@ static char* read_input_file(const char* filename) {
 class concurrent_queue {
     private:
         std::deque<std::shared_ptr<arrow::RecordBatch>> batch_queue;
-        std::mutex m;
-        std::condition_variable cv;
+        tl::mutex m;
+        tl::condition_variable cv;
 
     public:
         void push(std::shared_ptr<arrow::RecordBatch> batch) {
-            std::unique_lock<std::mutex> lock(m);
+            std::unique_lock<tl::mutex> lock(m);
             batch_queue.push_back(batch);
             lock.unlock();
             cv.notify_one();
@@ -102,20 +102,20 @@ class concurrent_queue {
 
         void clear() {
             {
-                std::lock_guard<std::mutex> lock(m);
+                std::lock_guard<tl::mutex> lock(m);
                 batch_queue.clear();
             }
         }
 
         bool empty() {
             {
-                std::lock_guard<std::mutex> lock(m);
+                std::lock_guard<tl::mutex> lock(m);
                 return batch_queue.empty();
             }
         }
 
         void wait_and_pop(std::shared_ptr<arrow::RecordBatch> &batch) {
-            std::unique_lock<std::mutex> lock(m);
+            std::unique_lock<tl::mutex> lock(m);
             while (batch_queue.empty()) {
                 cv.wait(lock);
             }
