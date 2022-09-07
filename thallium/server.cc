@@ -91,8 +91,18 @@ class concurrent_queue {
         std::deque<std::shared_ptr<arrow::RecordBatch>> batch_queue;
         tl::mutex m;
         tl::condition_variable cv;
-
+        bool live;
     public:
+        void start() {
+            live = true;
+        }
+
+        void end() {
+            live = false;
+        }
+
+        bool live() { return live; }
+
         void push(std::shared_ptr<arrow::RecordBatch> batch) {
             std::unique_lock<tl::mutex> lock(m);
             batch_queue.push_back(batch);
@@ -116,7 +126,7 @@ class concurrent_queue {
 
         void wait_and_pop(std::shared_ptr<arrow::RecordBatch> &batch) {
             std::unique_lock<tl::mutex> lock(m);
-            while (batch_queue.empty()) {
+            while (batch_queue.empty() && cq.live()) {
                 cv.wait(lock);
             }
             batch = batch_queue.front();
@@ -125,10 +135,9 @@ class concurrent_queue {
 };
 
 concurrent_queue cq;
-bool scanning = 0;
 
 void scan_handler(void *arg) {
-    scanning = 1;
+    cq.start();
     arrow::RecordBatchReader *reader = (arrow::RecordBatchReader*)arg;
     std::shared_ptr<arrow::RecordBatch> batch;
     reader->ReadNext(&batch);
@@ -137,7 +146,7 @@ void scan_handler(void *arg) {
         std::cout << "pushed into queue" << std::endl;
         reader->ReadNext(&batch);
     }
-    scanning = 0;
+    cq.end();
 }
 
 
@@ -231,10 +240,7 @@ int main(int argc, char** argv) {
     std::function<void(const tl::request&)> get_next_batch = 
         [&mid, &svr_addr, &engine, &do_rdma, &total_rows_written](const tl::request &req) {
             std::shared_ptr<arrow::RecordBatch> batch = nullptr;
-
-            if (scanning) {
-                cq.wait_and_pop(batch);
-            }
+            cq.wait_and_pop(batch);
  
             if (batch) {                
                 std::vector<int64_t> data_buff_sizes;
