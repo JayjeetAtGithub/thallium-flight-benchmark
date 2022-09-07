@@ -94,21 +94,22 @@ class concurrent_queue {
     public:
         void push(std::shared_ptr<arrow::RecordBatch> batch) {
             {
-                std::unique_lock<std::mutex> lock(m);
+                std::lock_guard<std::mutex> lock(m);
                 batch_queue.push(batch);
             }
+            cv.notify_one();
         }
 
         void clear() {
             {
-                std::unique_lock<std::mutex> lock(m);
+                std::lock_guard<std::mutex> lock(m);
                 batch_queue.clear();
             }
         }
 
         bool empty() {
             {
-                std::unique_lock<std::mutex> lock(m);
+                std::lock_guard<std::mutex> lock(m);
                 return batch_queue.empty();
             }
         }
@@ -116,11 +117,12 @@ class concurrent_queue {
         std::shared_ptr<arrow::RecordBatch> pop() {
             std::shared_ptr<arrow::RecordBatch> batch = nullptr;
             {
-                std::unique_lock<std::mutex> lock(m);
-                if (!batch_queue.empty()) {
-                    batch = batch_queue.front();
-                    batch_queue.pop_front();
+                std::lock_guard<std::mutex> lock(m);
+                while (batch_queue.empty()) {
+                    cv.wait(lock);
                 }
+                batch = batch_queue.front();
+                batch_queue.pop_front();
             }
             return batch;
         }
