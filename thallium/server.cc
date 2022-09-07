@@ -87,7 +87,7 @@ static char* read_input_file(const char* filename) {
 
 class concurrent_queue {
     private:
-        std::deque<std::shared_pt<arrow::RecordBatch>> batch_queue;
+        std::deque<std::shared_ptr<arrow::RecordBatch>> batch_queue;
         std::mutex m;
         std::condition_variable cv;
 
