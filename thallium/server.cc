@@ -125,8 +125,10 @@ class concurrent_queue {
 };
 
 concurrent_queue cq;
+bool scanning = 0;
 
 void scan_handler(void *arg) {
+    scanning = 1;
     arrow::RecordBatchReader *reader = (arrow::RecordBatchReader*)arg;
     std::shared_ptr<arrow::RecordBatch> batch;
     reader->ReadNext(&batch);
@@ -135,6 +137,7 @@ void scan_handler(void *arg) {
         std::cout << "pushed into queue" << std::endl;
         reader->ReadNext(&batch);
     }
+    scanning = 0;
 }
 
 
@@ -229,7 +232,7 @@ int main(int argc, char** argv) {
         [&mid, &svr_addr, &engine, &do_rdma, &total_rows_written](const tl::request &req) {
             std::shared_ptr<arrow::RecordBatch> batch = nullptr;
 
-            if (!cq.empty()) {
+            if (scanning) {
                 cq.wait_and_pop(batch);
             }
  
