@@ -95,7 +95,7 @@ class concurrent_queue {
     public:
         void start() { live = true; }
 
-        void end() { live = false; batch_queue.clear(); }
+        void end() { live = false; }
 
         bool is_live() { return live; }
 
