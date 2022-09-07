@@ -124,17 +124,17 @@ class concurrent_queue {
 
         void wait_and_pop(std::shared_ptr<arrow::RecordBatch> &batch) {
             std::unique_lock<tl::mutex> lock(m);
-            std::cout << is_live() << "\n";
+            // std::cout << is_live() << "\n";
             if (is_live()) {
-                std::cout << "is live \n";
+                // std::cout << "is live \n";
                 while (batch_queue.empty()) {
-                    std::cout << "batch queeu empry\n";
+                    // std::cout << "batch queeu empry\n";
                     cv.wait(lock);
                 }
                 batch = batch_queue.front();
                 batch_queue.pop_front();
             } else {
-                std::cout << "is not live\n";
+                // std::cout << "is not live\n";
                 if (!batch_queue.empty()) {
                     batch = batch_queue.front();
                     batch_queue.pop_front();
