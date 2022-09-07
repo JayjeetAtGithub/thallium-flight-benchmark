@@ -227,9 +227,9 @@ int main(int argc, char** argv) {
         [&mid, &svr_addr, &engine, &do_rdma, &total_rows_written](const tl::request &req) {
             std::shared_ptr<arrow::RecordBatch> batch = nullptr;
 
-            if (!cq.empty()) {
+            // if (!cq.empty()) {
                 cq.wait_and_pop(batch);
-            }
+            // }
  
             if (batch) {                
                 std::vector<int64_t> data_buff_sizes;
