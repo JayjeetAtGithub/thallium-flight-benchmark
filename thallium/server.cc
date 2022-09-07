@@ -192,7 +192,7 @@ int main(int argc, char** argv) {
                 cp::ExecContext exec_ctx;
                 reader = ScanBenchmark(exec_ctx, stub).ValueOrDie();
             } else if (mode == 2) {
-                std::cout << "scanning data from ext4 using mmap\n";
+                std::cout << "scanning data from ext4 using mmap: " << stub.path.c_str() << std::endl;
                 reader = ScanEXT4MMap(stub).ValueOrDie();
             } else if (mode == 3) {
                 std::cout << "scanning data from ext4: " << stub.path.c_str() << std::endl;
