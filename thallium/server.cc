@@ -3,6 +3,7 @@
 #include <queue>
 #include <chrono>
 #include <mutex>
+#include <condition_variable>
 
 #include <arrow/api.h>
 #include <arrow/compute/exec/expression.h>
@@ -95,7 +96,7 @@ class concurrent_queue {
         void push(std::shared_ptr<arrow::RecordBatch> batch) {
             {
                 std::lock_guard<std::mutex> lock(m);
-                batch_queue.push(batch);
+                batch_queue.push_back(batch);
             }
             cv.notify_one();
         }
