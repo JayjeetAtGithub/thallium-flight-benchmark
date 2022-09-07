@@ -19,6 +19,7 @@ git clone -c feature.manyFiles=true https://github.com/spack/spack.git ~/spack
 cd ~/spack
 git checkout releases/v0.18
 . share/spack/setup-env.sh
+cd ..
 
 # setup mochi namespace
 git clone https://github.com/mochi-hpc/mochi-spack-packages.git
@@ -30,6 +31,8 @@ spack install --reuse mochi-thallium
 spack load mochi-thallium
 spack install --reuse mochi-bake
 spack load mochi-bake
+spack install --reuse mochi-yokan
+spack load mochi-yokan
 ```
 
 2. Load RDMA kernel modules.
@@ -92,18 +95,3 @@ The binaries will be generated in the `bin` directory.
 * https://docs.oracle.com/cd/E19436-01/820-3522-10/ch4-linux.html
 
 * https://www.rdmamojo.com/2015/01/24/verify-rdma-working/
-
-
-
-
-cmake -DARROW_PARQUET=ON \
-  -DARROW_FLIGHT=ON \
-  -DARROW_WITH_SNAPPY=ON \
-  -DARROW_WITH_ZLIB=ON \
-  -DARROW_ORC=ON \
-  -DARROW_PYTHON=ON \
-  -DARROW_DATASET=ON \
-  -DARROW_CSV=ON \
-  -DARROW_WITH_LZ4=ON \
-  -DARROW_WITH_ZSTD=ON \
-  ..
