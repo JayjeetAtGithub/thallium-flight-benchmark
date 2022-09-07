@@ -95,7 +95,7 @@ class concurrent_queue {
     public:
         void push(std::shared_ptr<arrow::RecordBatch> batch) {
             {
-                std::lock_guard<std::mutex> lock(m);
+                std::unique_lock<std::mutex> lock(m);
                 batch_queue.push_back(batch);
             }
             cv.notify_one();
@@ -103,14 +103,14 @@ class concurrent_queue {
 
         void clear() {
             {
-                std::lock_guard<std::mutex> lock(m);
+                std::unique_lock<std::mutex> lock(m);
                 batch_queue.clear();
             }
         }
 
         bool empty() {
             {
-                std::lock_guard<std::mutex> lock(m);
+                std::unique_lock<std::mutex> lock(m);
                 return batch_queue.empty();
             }
         }
@@ -118,7 +118,7 @@ class concurrent_queue {
         std::shared_ptr<arrow::RecordBatch> pop() {
             std::shared_ptr<arrow::RecordBatch> batch = nullptr;
             {
-                std::lock_guard<std::mutex> lock(m);
+                std::unique_lock<std::mutex> lock(m);
                 while (batch_queue.empty()) {
                     cv.wait(lock);
                 }
