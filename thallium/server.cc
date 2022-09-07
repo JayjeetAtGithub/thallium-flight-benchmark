@@ -127,6 +127,7 @@ class concurrent_queue {
             // std::cout << "here\n";
             if (is_live()) {
                 while (batch_queue.empty()) {
+                    std::cout << "batch queeu empry\n";
                     cv.wait(lock);
                 }
                 batch = batch_queue.front();
