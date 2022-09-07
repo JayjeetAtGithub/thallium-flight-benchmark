@@ -93,13 +93,9 @@ class concurrent_queue {
         tl::condition_variable cv;
         bool live;
     public:
-        void start() {
-            live = true;
-        }
+        void start() { live = true; }
 
-        void end() {
-            live = false;
-        }
+        void end() { live = false; }
 
         bool is_live() { return live; }
 
@@ -117,25 +113,21 @@ class concurrent_queue {
             }
         }
 
-        bool empty() {
-            bool emp = false;
-            {
-                std::lock_guard<tl::mutex> lock(m);
-                emp = batch_queue.empty();
-            }
-            return emp;
-        }
+        // bool empty() {
+        //     bool emp = false;
+        //     {
+        //         std::lock_guard<tl::mutex> lock(m);
+        //         emp = batch_queue.empty();
+        //     }
+        //     return emp;
+        // }
 
         void wait_and_pop(std::shared_ptr<arrow::RecordBatch> &batch) {
-            std::cout<<"vf\n";
             std::unique_lock<tl::mutex> lock(m);
             if (is_live()) {
-                std::cout << "coming here\n";
                 while (batch_queue.empty()) {
                     cv.wait(lock);
                 }
-                                std::cout << "then coming here\n";
-
                 batch = batch_queue.front();
                 batch_queue.pop_front();
             } else {
