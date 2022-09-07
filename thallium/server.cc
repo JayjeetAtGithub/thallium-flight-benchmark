@@ -229,8 +229,6 @@ int main(int argc, char** argv) {
 
             if (!cq.empty()) {
                 cq.wait_and_pop(batch);
-            } else {
-                std::cout << "Queue empty ! Abort" << std::endl;
             }
  
             if (batch) {                
