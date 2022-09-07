@@ -146,7 +146,6 @@ class concurrent_queue {
 concurrent_queue cq;
 
 void scan_handler(void *arg) {
-    cq.start();
     arrow::RecordBatchReader *reader = (arrow::RecordBatchReader*)arg;
     std::shared_ptr<arrow::RecordBatch> batch;
     reader->ReadNext(&batch);
@@ -155,7 +154,6 @@ void scan_handler(void *arg) {
         std::cout << "pushed into queue" << std::endl;
         reader->ReadNext(&batch);
     }
-    cq.end();
 }
 
 
@@ -235,7 +233,9 @@ int main(int argc, char** argv) {
 
             sec_xstream->make_thread([&]() {
                 std::cout << "Made thread for " << stub.path.c_str() << std::endl;
+                cq.start();
                 scan_handler((void*)reader.get());
+                cq.end();
             });
         };
 
