@@ -131,7 +131,7 @@ class concurrent_queue {
             std::unique_lock<tl::mutex> lock(m);
             if (is_live()) {
                 std::cout << "coming here\n";
-                while (empty()) {
+                while (batch_queue.empty()) {
                     cv.wait(lock);
                 }
                                 std::cout << "then coming here\n";
@@ -139,7 +139,7 @@ class concurrent_queue {
                 batch = batch_queue.front();
                 batch_queue.pop_front();
             } else {
-                if (!empty()) {
+                if (!batch_queue.empty()) {
                     batch = batch_queue.front();
                     batch_queue.pop_front();
                 }
