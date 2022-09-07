@@ -85,15 +85,55 @@ static char* read_input_file(const char* filename) {
 }
 
 
-std::deque<std::shared_ptr<arrow::RecordBatch>> batch_queue;
+class concurrent_queue {
+    private:
+        std::deque<std::shared_pt<arrow::RecordBatch>> batch_queue;
+        std::mutex m;
+        std::condition_variable cv;
 
+    public:
+        void push(std::shared_ptr<arrow::RecordBatch> batch) {
+            {
+                std::unique_lock<std::mutex> lock(m);
+                batch_queue.push(batch);
+            }
+        }
+
+        void clear() {
+            {
+                std::unique_lock<std::mutex> lock(m);
+                batch_queue.clear();
+            }
+        }
+
+        bool empty() {
+            {
+                std::unique_lock<std::mutex> lock(m);
+                return batch_queue.empty();
+            }
+        }
+
+        std::shared_ptr<arrow::RecordBatch> pop() {
+            std::shared_ptr<arrow::RecordBatch> batch = nullptr;
+            {
+                std::unique_lock<std::mutex> lock(m);
+                if (!batch_queue.empty()) {
+                    batch = batch_queue.front();
+                    batch_queue.pop_front();
+                }
+            }
+            return batch;
+        }
+};
+
+concurrent_queue cq;
 
 void scan_handler(void *arg) {
     arrow::RecordBatchReader *reader = (arrow::RecordBatchReader*)arg;
     std::shared_ptr<arrow::RecordBatch> batch;
     reader->ReadNext(&batch);
     while (batch != nullptr) {
-        batch_queue.push_back(batch);
+        cq.push(batch);
         reader->ReadNext(&batch);
     }
 }
@@ -149,8 +189,6 @@ int main(int argc, char** argv) {
             arrow::dataset::internal::Initialize();
             std::shared_ptr<arrow::RecordBatchReader> reader;
 
-            std::cout << "Batch Queue: " << batch_queue.size() << std::endl;
-
             if (mode == 1) {
                 std::cout << "running transport benchmark\n";
                 cp::ExecContext exec_ctx;
@@ -182,7 +220,7 @@ int main(int argc, char** argv) {
 
     std::function<void(const tl::request&)> clear = 
         [](const tl::request &req) {
-            batch_queue.clear();
+            cq.clear();
             req.respond(0);
         };
 
@@ -191,9 +229,8 @@ int main(int argc, char** argv) {
         [&mid, &svr_addr, &engine, &do_rdma, &total_rows_written](const tl::request &req) {
             std::shared_ptr<arrow::RecordBatch> batch = nullptr;
 
-            if (!batch_queue.empty()) {
-                batch = batch_queue.front();
-                batch_queue.pop_front();
+            if (!cq.empty()) {
+                batch = cq.pop();
             }
  
             if (batch) {                
