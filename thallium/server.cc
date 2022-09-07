@@ -97,8 +97,8 @@ class concurrent_queue {
             {
                 std::unique_lock<std::mutex> lock(m);
                 batch_queue.push_back(batch);
+                cv.notify_one();
             }
-            cv.notify_one();
         }
 
         void clear() {
