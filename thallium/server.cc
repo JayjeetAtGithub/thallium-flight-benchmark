@@ -94,38 +94,33 @@ class concurrent_queue {
 
     public:
         void push(std::shared_ptr<arrow::RecordBatch> batch) {
-            {
-                std::unique_lock<std::mutex> lock(m);
-                batch_queue.push_back(batch);
-                cv.notify_one();
-            }
+            std::unique_lock<std::mutex> lock(m);
+            batch_queue.push_back(batch);
+            lock.unlock();
+            cv.notify_one();
         }
 
         void clear() {
             {
-                std::unique_lock<std::mutex> lock(m);
+                std::lock_guard<std::mutex> lock(m);
                 batch_queue.clear();
             }
         }
 
         bool empty() {
             {
-                std::unique_lock<std::mutex> lock(m);
+                std::lock_guard<std::mutex> lock(m);
                 return batch_queue.empty();
             }
         }
 
-        std::shared_ptr<arrow::RecordBatch> pop() {
-            std::shared_ptr<arrow::RecordBatch> batch = nullptr;
-            {
-                std::unique_lock<std::mutex> lock(m);
-                while (batch_queue.empty()) {
-                    cv.wait(lock);
-                }
-                batch = batch_queue.front();
-                batch_queue.pop_front();
+        void wait_and_pop(std::shared_ptr<arrow::RecordBatch> &batch) {
+            std::unique_lock<std::mutex> lock(m);
+            while (batch_queue.empty()) {
+                cv.wait(lock);
             }
-            return batch;
+            batch = batch_queue.front();
+            batch_queue.pop_front();
         }
 };
 
@@ -233,7 +228,7 @@ int main(int argc, char** argv) {
             std::shared_ptr<arrow::RecordBatch> batch = nullptr;
 
             if (!cq.empty()) {
-                batch = cq.pop();
+                batch = cq.wait_and_pop(batch);
             }
  
             if (batch) {                
