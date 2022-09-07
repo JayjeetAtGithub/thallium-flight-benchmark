@@ -228,7 +228,7 @@ int main(int argc, char** argv) {
             std::shared_ptr<arrow::RecordBatch> batch = nullptr;
 
             if (!cq.empty()) {
-                batch = cq.wait_and_pop(batch);
+                cq.wait_and_pop(batch);
             }
  
             if (batch) {                
