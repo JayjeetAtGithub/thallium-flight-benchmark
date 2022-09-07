@@ -132,6 +132,7 @@ void scan_handler(void *arg) {
     reader->ReadNext(&batch);
     while (batch != nullptr) {
         cq.push(batch);
+        std::cout << "pushed into queue" << std::endl;
         reader->ReadNext(&batch);
     }
 }
