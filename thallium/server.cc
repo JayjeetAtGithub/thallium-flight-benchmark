@@ -141,7 +141,7 @@ int main(int argc, char** argv) {
     bk::target tid = bp->list_targets()[0];
 
     // create a secondary execution stream from the same progress pool
-    tl::pool pool = engine.get_progress_pool();
+    tl::pool pool = tl::engine::get_progress_pool();
     tl::managed<tl::xstream> sec_xstream = tl::xstream::create(tl::scheduler::predef::deflt, pool);
 
     std::function<void(const tl::request&, const ScanReqRPCStub&)> scan = 
