@@ -74,7 +74,7 @@ class concurrent_queue {
         }
 
         void clear() { batch_queue.clear(); }
-        size_t size() { batch_queue.size(); }
+        size_t size() { return batch_queue.size(); }
 
         bool empty() {
             bool emp = false;
