@@ -76,9 +76,11 @@ ConnCtx Init(std::string host) {
 
 ScanCtx Scan(ConnCtx &conn_ctx, ScanReq &scan_req) {
     tl::remote_procedure scan = conn_ctx.engine.define("scan");
+    scan.disable_response();
+    // std::string uuid = scan.on(conn_ctx.endpoint)(scan_req.stub);
+    scan.on(conn_ctx.endpoint)(scan_req.stub);
     ScanCtx scan_ctx;
-    std::string uuid = scan.on(conn_ctx.endpoint)(scan_req.stub);
-    scan_ctx.uuid = uuid;
+    // scan_ctx.uuid = uuid;
     scan_ctx.schema = scan_req.schema;
     return scan_ctx;
 }
@@ -125,7 +127,9 @@ arrow::Result<std::shared_ptr<arrow::RecordBatch>> GetNextBatch(ConnCtx &conn_ct
     conn_ctx.engine.define("do_rdma", f);
     tl::remote_procedure get_next_batch = conn_ctx.engine.define("get_next_batch");
 
-    int e = get_next_batch.on(conn_ctx.endpoint)(scan_ctx.uuid);
+    // int e = get_next_batch.on(conn_ctx.endpoint)(scan_ctx.uuid);
+    int e = get_next_batch.on(conn_ctx.endpoint)();
+
     if (e == 0) {
         return batch;
     } else {

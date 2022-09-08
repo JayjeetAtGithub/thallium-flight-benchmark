@@ -60,6 +60,81 @@ static char* read_input_file(const char* filename) {
     return buf;
 }
 
+class concurrent_queue {
+    private:
+        std::deque<std::shared_ptr<arrow::RecordBatch>> batch_queue;
+        tl::mutex m;
+        tl::condition_variable cv;
+        // bool live;
+    public:
+        // void start() { live = true; }
+
+        // void end() { live = false; }
+
+        // bool is_live() { return live; }
+
+        void push(std::shared_ptr<arrow::RecordBatch> batch) {
+            std::unique_lock<tl::mutex> lock(m);
+            batch_queue.push_back(batch);
+            lock.unlock();
+            cv.notify_one();
+        }
+
+        void clear() {
+            {
+                std::lock_guard<tl::mutex> lock(m);
+                batch_queue.clear();
+            }
+        }
+
+        bool empty() {
+            bool emp = false;
+            {
+                std::lock_guard<tl::mutex> lock(m);
+                emp = batch_queue.empty();
+            }
+            return emp;
+        }
+
+        void wait_and_pop2(std::shared_ptr<arrow::RecordBatch> &batch) {
+            std::unique_lock<tl::mutex> lock(m);
+            while (batch_queue.empty()) {
+                    cv.wait(lock);
+                }
+            batch = batch_queue.front();
+            batch_queue.pop_front();
+        }
+
+        // void wait_and_pop(std::shared_ptr<arrow::RecordBatch> &batch) {
+        //     std::unique_lock<tl::mutex> lock(m);
+        //     if (is_live()) {
+        //         while (batch_queue.empty()) {
+        //             cv.wait(lock);
+        //         }
+        //         batch = batch_queue.front();
+        //         batch_queue.pop_front();
+        //     } else {
+        //         if (!batch_queue.empty()) {
+        //             batch = batch_queue.front();
+        //             batch_queue.pop_front();
+        //         }
+        //     }
+        // }
+};
+
+concurrent_queue cq;
+
+void scan_handler(void *arg) {
+    arrow::RecordBatchReader *reader = (arrow::RecordBatchReader*)arg;
+    std::shared_ptr<arrow::RecordBatch> batch;
+    reader->ReadNext(&batch);
+    while (batch != nullptr) {
+        cq.push(batch);
+        std::cout << "pushed into queue" << std::endl;
+        reader->ReadNext(&batch);
+    }
+}
+
 int main(int argc, char** argv) {
 
     if (argc < 2) {
@@ -98,8 +173,11 @@ int main(int argc, char** argv) {
     bph.set_eager_limit(0);
     bk::target tid = bp->list_targets()[0];
 
+    tl::managed<tl::xstream> xstream = 
+        tl::xstream::create(tl::scheduler::predef::deflt, engine.get_progress_pool());
+
     std::function<void(const tl::request&, const ScanReqRPCStub&)> scan = 
-        [&reader_map, &mid, &svr_addr, &bp, &bcl, &bph, &tid, &db, &bench_mode](const tl::request &req, const ScanReqRPCStub& stub) {
+        [&reader_map, &mid, &svr_addr, &bp, &bcl, &bph, &tid, &db, &bench_mode, &xstream](const tl::request &req, const ScanReqRPCStub& stub) {
             arrow::dataset::internal::Initialize();
             std::shared_ptr<arrow::RecordBatchReader> reader;
 
@@ -125,20 +203,28 @@ int main(int argc, char** argv) {
                 reader = ScanBake(stub, ptr).ValueOrDie();
             }
 
-            std::string uuid = boost::uuids::to_string(boost::uuids::random_generator()());
-            reader_map[uuid] = reader;
+            // std::string uuid = boost::uuids::to_string(boost::uuids::random_generator()());
+            // reader_map[uuid] = reader;
+
+            xstream->make_thread([&]() {
+                std::cout << "Made thread for " << stub.path.c_str() << std::endl;
+                scan_handler((void*)reader.get());
+            });
             
-            return req.respond(uuid);
+            // return req.respond(uuid);
         };
 
     int64_t total_rows_written = 0;
-    std::function<void(const tl::request&, const std::string&)> get_next_batch = 
-        [&mid, &svr_addr, &engine, &do_rdma, &reader_map, &total_rows_written](const tl::request &req, const std::string& uuid) {
+    std::function<void(const tl::request&)> get_next_batch = 
+        [&mid, &svr_addr, &engine, &do_rdma, &reader_map, &total_rows_written](const tl::request &req) {
             
-            std::shared_ptr<arrow::RecordBatchReader> reader = reader_map[uuid];
-            std::shared_ptr<arrow::RecordBatch> batch;
+            // std::shared_ptr<arrow::RecordBatchReader> reader = reader_map[uuid];
+            std::shared_ptr<arrow::RecordBatch> batch = nullptr;
+            // if (!cq.empty()) {
+            cq.wait_and_pop2(batch);
+            // }
 
-            if (reader->ReadNext(&batch).ok() && batch != nullptr) {
+            if (batch) {
 
                 std::vector<int64_t> data_buff_sizes;
                 std::vector<int64_t> offset_buff_sizes;
@@ -192,7 +278,7 @@ int main(int argc, char** argv) {
             }
         };
     
-    engine.define("scan", scan);
+    engine.define("scan", scan).disable_response();
     engine.define("get_next_batch", get_next_batch);
 
     std::cout << "Server running at address " << engine.self() << std::endl;    
