@@ -227,9 +227,7 @@ int main(int argc, char** argv) {
             cq.start();
             xstream->make_thread([&]() {
                 std::cout << "Made thread for " << stub.path.c_str() << std::endl;
-                cq.start();
                 scan_handler((void*)reader.get());
-                cq.end();
             });
             cq.end();
         };
@@ -244,7 +242,7 @@ int main(int argc, char** argv) {
     std::function<void(const tl::request&, const bool&)> get_next_batch = 
         [&mid, &svr_addr, &engine, &do_rdma, &total_rows_written](const tl::request &req, const bool &last) {
             std::shared_ptr<arrow::RecordBatch> batch = nullptr;
-            if (last) {
+            if (!last) {
                 if (!cq.empty()) {
                     cq.pop(batch);
                 }
