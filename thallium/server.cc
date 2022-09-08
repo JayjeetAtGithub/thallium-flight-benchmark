@@ -105,6 +105,7 @@ void scan_handler(void *arg) {
         std::cout << "pushed into queue" << std::endl;
         reader->ReadNext(&batch);
     }
+    delete reader;
 }
 
 int main(int argc, char** argv) {
