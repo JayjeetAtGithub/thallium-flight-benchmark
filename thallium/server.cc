@@ -85,19 +85,16 @@ static char* read_input_file(const char* filename) {
     return buf;
 }
 
-
 class concurrent_queue {
     private:
         std::deque<std::shared_ptr<arrow::RecordBatch>> batch_queue;
         tl::mutex m;
         tl::condition_variable cv;
-        bool live;
+        bool alive;
     public:
-        void start() { live = true; }
-
-        void end() { live = false; }
-
-        bool is_live() { return live; }
+        void start() { alive = true; }
+        void end() { alive = false; }
+        bool is_alive() { return alive; }
 
         void push(std::shared_ptr<arrow::RecordBatch> batch) {
             std::unique_lock<tl::mutex> lock(m);
@@ -106,12 +103,8 @@ class concurrent_queue {
             cv.notify_one();
         }
 
-        void clear() {
-            {
-                std::lock_guard<tl::mutex> lock(m);
-                batch_queue.clear();
-            }
-        }
+        void clear() { batch_queue.clear(); }
+        size_t size() { return batch_queue.size(); }
 
         bool empty() {
             bool emp = false;
@@ -122,28 +115,14 @@ class concurrent_queue {
             return emp;
         }
 
-        void wait_and_pop2(std::shared_ptr<arrow::RecordBatch> &batch) {
-            std::unique_lock<tl::mutex> lock(m);
-            while (batch_queue.empty()) {
-                    cv.wait(lock);
-                }
-            batch = batch_queue.front();
-            batch_queue.pop_front();
-        }
-
         void wait_and_pop(std::shared_ptr<arrow::RecordBatch> &batch) {
             std::unique_lock<tl::mutex> lock(m);
-            if (is_live()) {
-                while (batch_queue.empty()) {
-                    cv.wait(lock);
-                }
+            while (batch_queue.empty() && is_alive()) {
+                cv.wait(lock);
+            }
+            if (!batch_queue.empty()) {
                 batch = batch_queue.front();
                 batch_queue.pop_front();
-            } else {
-                if (!batch_queue.empty()) {
-                    batch = batch_queue.front();
-                    batch_queue.pop_front();
-                }
             }
         }
 };
@@ -156,7 +135,6 @@ void scan_handler(void *arg) {
     reader->ReadNext(&batch);
     while (batch != nullptr) {
         cq.push(batch);
-        std::cout << "pushed into queue" << std::endl;
         reader->ReadNext(&batch);
     }
 }
@@ -204,11 +182,11 @@ int main(int argc, char** argv) {
     bk::target tid = bp->list_targets()[0];
 
     // create a secondary execution stream from the same progress pool
-    tl::pool pool = engine.get_progress_pool();
-    tl::managed<tl::xstream> sec_xstream = tl::xstream::create(tl::scheduler::predef::deflt, pool);
+    tl::managed<tl::xstream> xstream = 
+        tl::xstream::create(tl::scheduler::predef::deflt, engine.get_progress_pool());
 
     std::function<void(const tl::request&, const ScanReqRPCStub&)> scan = 
-        [&mid, &svr_addr, &bp, &bcl, &bph, &tid, &db, &mode, &sec_xstream](const tl::request &req, const ScanReqRPCStub& stub) {
+        [&mid, &svr_addr, &bp, &bcl, &bph, &tid, &db, &mode, &xstream](const tl::request &req, const ScanReqRPCStub& stub) {
             arrow::dataset::internal::Initialize();
             std::shared_ptr<arrow::RecordBatchReader> reader;
 
@@ -235,13 +213,14 @@ int main(int argc, char** argv) {
                 uint8_t *ptr = (uint8_t*)bcl.get_data(bph, tid, rid);
                 reader = ScanBake(stub, ptr).ValueOrDie();
             }
-
-            sec_xstream->make_thread([&]() {
+            cq.start();
+            xstream->make_thread([&]() {
                 std::cout << "Made thread for " << stub.path.c_str() << std::endl;
                 cq.start();
                 scan_handler((void*)reader.get());
                 cq.end();
             });
+            cq.end();
         };
 
     std::function<void(const tl::request&)> clear = 
@@ -253,12 +232,8 @@ int main(int argc, char** argv) {
     int64_t total_rows_written = 0;
     std::function<void(const tl::request&)> get_next_batch = 
         [&mid, &svr_addr, &engine, &do_rdma, &total_rows_written](const tl::request &req) {
-            std::cout << cq.is_live() << std::endl;
-
             std::shared_ptr<arrow::RecordBatch> batch = nullptr;
-            if (!cq.empty()) {
-                cq.wait_and_pop2(batch);
-            }
+            cq.wait_and_pop(batch);
  
             if (batch) {                
                 std::vector<int64_t> data_buff_sizes;
