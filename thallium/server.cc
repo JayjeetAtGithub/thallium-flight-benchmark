@@ -113,28 +113,33 @@ class concurrent_queue {
             }
         }
 
-        // bool empty() {
-        //     bool emp = false;
-        //     {
-        //         std::lock_guard<tl::mutex> lock(m);
-        //         emp = batch_queue.empty();
-        //     }
-        //     return emp;
-        // }
+        bool empty() {
+            bool emp = false;
+            {
+                std::lock_guard<tl::mutex> lock(m);
+                emp = batch_queue.empty();
+            }
+            return emp;
+        }
+
+        void wait_and_pop2(std::shared_ptr<arrow::RecordBatch> &batch) {
+            std::unique_lock<tl::mutex> lock(m);
+            while (batch_queue.empty()) {
+                    cv.wait(lock);
+                }
+            batch = batch_queue.front();
+            batch_queue.pop_front();
+        }
 
         void wait_and_pop(std::shared_ptr<arrow::RecordBatch> &batch) {
             std::unique_lock<tl::mutex> lock(m);
-            // std::cout << is_live() << "\n";
             if (is_live()) {
-                // std::cout << "is live \n";
                 while (batch_queue.empty()) {
-                    // std::cout << "batch queeu empry\n";
                     cv.wait(lock);
                 }
                 batch = batch_queue.front();
                 batch_queue.pop_front();
             } else {
-                // std::cout << "is not live\n";
                 if (!batch_queue.empty()) {
                     batch = batch_queue.front();
                     batch_queue.pop_front();
@@ -251,7 +256,9 @@ int main(int argc, char** argv) {
             std::cout << cq.is_live() << std::endl;
 
             std::shared_ptr<arrow::RecordBatch> batch = nullptr;
-            cq.wait_and_pop(batch);
+            if (!cq.empty()) {
+                cq.wait_and_pop2(batch);
+            }
  
             if (batch) {                
                 std::vector<int64_t> data_buff_sizes;
