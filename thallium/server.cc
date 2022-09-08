@@ -227,8 +227,8 @@ int main(int argc, char** argv) {
             xstream->make_thread([&]() {
                 std::cout << "Made thread for " << stub.path.c_str() << std::endl;
                 scan_handler((void*)reader.get());
+                cq.end();
             });
-            cq.end();
         };
 
     std::function<void(const tl::request&)> clear = 
