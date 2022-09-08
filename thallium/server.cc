@@ -67,10 +67,7 @@ class concurrent_queue {
         tl::condition_variable cv;
         bool alive;
     public:
-        void start() { 
-            alive = true;
-            batch_queue.clear(); 
-        }
+        void start() { alive = true; }
         void end() { alive = false; }
 
         void push(std::shared_ptr<arrow::RecordBatch> batch) {
