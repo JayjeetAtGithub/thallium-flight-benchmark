@@ -128,13 +128,11 @@ class concurrent_queue {
 
         void pop(std::shared_ptr<arrow::RecordBatch> &batch) {
             std::unique_lock<tl::mutex> lock(m);
-            while (batch_queue.empty()) {
-                cv.wait(lock);
-            }
             if (!batch_queue.empty()) {
                 batch = batch_queue.front();
                 batch_queue.pop_front();
             }
+            lock.unlock();
         }
 };
 
@@ -243,9 +241,7 @@ int main(int argc, char** argv) {
         [&mid, &svr_addr, &engine, &do_rdma, &total_rows_written](const tl::request &req, const bool &last) {
             std::shared_ptr<arrow::RecordBatch> batch = nullptr;
             if (!last) {
-                if (!cq.empty()) {
-                    cq.pop(batch);
-                }
+                cq.pop(batch);
             } else {
                 cq.wait_and_pop(batch);
             }   
