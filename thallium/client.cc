@@ -125,8 +125,7 @@ arrow::Result<std::shared_ptr<arrow::RecordBatch>> GetNextBatch(ConnCtx &conn_ct
     conn_ctx.engine.define("do_rdma", f);
     tl::remote_procedure get_next_batch = conn_ctx.engine.define("get_next_batch");
 
-    // int e = get_next_batch.on(conn_ctx.endpoint, last)();
-    int e = get_next_batch.on(last)();
+    int e = get_next_batch.on(conn_ctx.endpoint)(last);
 
     if (e == 0) {
         return batch;
