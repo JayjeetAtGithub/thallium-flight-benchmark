@@ -69,7 +69,7 @@ class concurrent_queue {
     public:
         void start() { alive = true; }
         void end() { alive = false; }
-        void is_alive() { return alive; }
+        bool is_alive() { return alive; }
 
         void push(std::shared_ptr<arrow::RecordBatch> batch) {
             std::unique_lock<tl::mutex> lock(m);
