@@ -65,14 +65,7 @@ class concurrent_queue {
         std::deque<std::shared_ptr<arrow::RecordBatch>> batch_queue;
         tl::mutex m;
         tl::condition_variable cv;
-        // bool live;
     public:
-        // void start() { live = true; }
-
-        // void end() { live = false; }
-
-        // bool is_live() { return live; }
-
         void push(std::shared_ptr<arrow::RecordBatch> batch) {
             std::unique_lock<tl::mutex> lock(m);
             batch_queue.push_back(batch);
@@ -94,27 +87,11 @@ class concurrent_queue {
         void wait_and_pop2(std::shared_ptr<arrow::RecordBatch> &batch) {
             std::unique_lock<tl::mutex> lock(m);
             while (batch_queue.empty()) {
-                    cv.wait(lock);
-                }
+                cv.wait(lock);
+            }
             batch = batch_queue.front();
             batch_queue.pop_front();
         }
-
-        // void wait_and_pop(std::shared_ptr<arrow::RecordBatch> &batch) {
-        //     std::unique_lock<tl::mutex> lock(m);
-        //     if (is_live()) {
-        //         while (batch_queue.empty()) {
-        //             cv.wait(lock);
-        //         }
-        //         batch = batch_queue.front();
-        //         batch_queue.pop_front();
-        //     } else {
-        //         if (!batch_queue.empty()) {
-        //             batch = batch_queue.front();
-        //             batch_queue.pop_front();
-        //         }
-        //     }
-        // }
 };
 
 concurrent_queue cq;
@@ -198,15 +175,11 @@ int main(int argc, char** argv) {
                 reader = ScanBake(stub, ptr).ValueOrDie();
             }
 
-            // std::string uuid = boost::uuids::to_string(boost::uuids::random_generator()());
-            // reader_map[uuid] = reader;
-
             xstream->make_thread([&]() {
                 std::cout << "Made thread for " << stub.path.c_str() << std::endl;
                 scan_handler((void*)reader.get());
             });
             
-            // return req.respond(uuid);
         };
 
     std::function<void(const tl::request&)> clear = 
@@ -219,7 +192,6 @@ int main(int argc, char** argv) {
     std::function<void(const tl::request&)> get_next_batch = 
         [&mid, &svr_addr, &engine, &do_rdma, &reader_map, &total_rows_written](const tl::request &req) {
             
-            // std::shared_ptr<arrow::RecordBatchReader> reader = reader_map[uuid];
             std::shared_ptr<arrow::RecordBatch> batch = nullptr;
             // if (!cq.empty()) {
             cq.wait_and_pop2(batch);
@@ -274,7 +246,6 @@ int main(int argc, char** argv) {
                 do_rdma.on(req.get_endpoint())(num_rows, data_buff_sizes, offset_buff_sizes, arrow_bulk);
                 return req.respond(0);
             } else {
-                // reader_map.erase(uuid);
                 return req.respond(1);
             }
         };
