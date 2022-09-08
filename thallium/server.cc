@@ -65,7 +65,11 @@ class concurrent_queue {
         std::deque<std::shared_ptr<arrow::RecordBatch>> batch_queue;
         tl::mutex m;
         tl::condition_variable cv;
+        bool alive;
     public:
+        void start() { alive = true; }
+        void end() { alive = false; }
+
         void push(std::shared_ptr<arrow::RecordBatch> batch) {
             std::unique_lock<tl::mutex> lock(m);
             batch_queue.push_back(batch);
@@ -85,9 +89,9 @@ class concurrent_queue {
             return emp;
         }
 
-        void wait_and_pop2(std::shared_ptr<arrow::RecordBatch> &batch) {
+        void wait_and_pop(std::shared_ptr<arrow::RecordBatch> &batch) {
             std::unique_lock<tl::mutex> lock(m);
-            while (batch_queue.empty()) {
+            while (batch_queue.empty() && alive) {
                 cv.wait(lock);
             }
             batch = batch_queue.front();
@@ -98,6 +102,7 @@ class concurrent_queue {
 concurrent_queue cq;
 
 void scan_handler(void *arg) {
+    cq.start();
     std::cout << "Initial size : " << cq.size() << std::endl;
     arrow::RecordBatchReader *reader = (arrow::RecordBatchReader*)arg;
     std::shared_ptr<arrow::RecordBatch> batch;
@@ -106,6 +111,7 @@ void scan_handler(void *arg) {
         cq.push(batch);
         reader->ReadNext(&batch);
     }
+    cq.end();
 }
 
 int main(int argc, char** argv) {
@@ -194,9 +200,7 @@ int main(int argc, char** argv) {
         [&mid, &svr_addr, &engine, &do_rdma, &reader_map, &total_rows_written](const tl::request &req) {
             
             std::shared_ptr<arrow::RecordBatch> batch = nullptr;
-            // if (!cq.empty()) {
-            cq.wait_and_pop2(batch);
-            // }
+            cq.wait_and_pop(batch);
 
             if (batch) {
 
