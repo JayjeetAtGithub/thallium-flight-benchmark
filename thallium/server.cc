@@ -116,7 +116,7 @@ class concurrent_queue {
         }
 
         void wait_and_pop(std::shared_ptr<arrow::RecordBatch> &batch) {
-            std::cout << "wait and pop" << std::endl;
+            std::cout << "wait and pop " << is_alive() << std::endl;
             std::unique_lock<tl::mutex> lock(m);
             while (batch_queue.empty() && is_alive()) {
                 cv.wait(lock);
