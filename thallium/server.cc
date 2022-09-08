@@ -95,8 +95,10 @@ class concurrent_queue {
             while (batch_queue.empty() && is_alive()) {
                 cv.wait(lock);
             }
-            batch = batch_queue.front();
-            batch_queue.pop_front();
+            if (!batch_queue.empty()) {
+                batch = batch_queue.front();
+                batch_queue.pop_front();
+            }
         }
 };
 
