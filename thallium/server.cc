@@ -74,6 +74,7 @@ class concurrent_queue {
         }
 
         void clear() { batch_queue.clear(); }
+        size_t size() { batch_queue.size(); }
 
         bool empty() {
             bool emp = false;
@@ -97,12 +98,12 @@ class concurrent_queue {
 concurrent_queue cq;
 
 void scan_handler(void *arg) {
+    std::cout << "Initial size : " << cq.size() << std::endl;
     arrow::RecordBatchReader *reader = (arrow::RecordBatchReader*)arg;
     std::shared_ptr<arrow::RecordBatch> batch;
     reader->ReadNext(&batch);
     while (batch != nullptr) {
         cq.push(batch);
-        std::cout << "pushed into queue" << std::endl;
         reader->ReadNext(&batch);
     }
 }
