@@ -180,13 +180,11 @@ arrow::Result<std::shared_ptr<arrow::RecordBatchReader>> ScanBenchmark(cp::ExecC
 
 
 arrow::Result<std::shared_ptr<arrow::RecordBatchReader>> ScanEXT4(const ScanReqRPCStub& stub) {   
-    // deserialize filter
     ARROW_ASSIGN_OR_RAISE(auto filter,
       arrow::compute::Deserialize(std::make_shared<arrow::Buffer>(
       stub.filter_buffer, stub.filter_buffer_size))
     );
 
-    // deserialize schemas
     arrow::ipc::DictionaryMemo empty_memo;
     arrow::io::BufferReader projection_schema_reader(stub.projection_schema_buffer,
                                                      stub.projection_schema_buffer_size);
@@ -218,13 +216,11 @@ arrow::Result<std::shared_ptr<arrow::RecordBatchReader>> ScanEXT4(const ScanReqR
 
 
 arrow::Result<std::shared_ptr<arrow::RecordBatchReader>> ScanEXT4MMap(const ScanReqRPCStub& stub) {   
-    // deserialize filter
     ARROW_ASSIGN_OR_RAISE(auto filter,
       arrow::compute::Deserialize(std::make_shared<arrow::Buffer>(
       stub.filter_buffer, stub.filter_buffer_size))
     );
 
-    // deserialize schemas
     arrow::ipc::DictionaryMemo empty_memo;
     arrow::io::BufferReader projection_schema_reader(stub.projection_schema_buffer,
                                                      stub.projection_schema_buffer_size);
@@ -256,13 +252,11 @@ arrow::Result<std::shared_ptr<arrow::RecordBatchReader>> ScanEXT4MMap(const Scan
 
 
 arrow::Result<std::shared_ptr<arrow::RecordBatchReader>> ScanBake(const ScanReqRPCStub& stub, uint8_t *ptr) {   
-    // deserialize filter
     ARROW_ASSIGN_OR_RAISE(auto filter,
       arrow::compute::Deserialize(std::make_shared<arrow::Buffer>(
       stub.filter_buffer, stub.filter_buffer_size))
     );
 
-    // deserialize schemas
     arrow::ipc::DictionaryMemo empty_memo;
     arrow::io::BufferReader projection_schema_reader(stub.projection_schema_buffer,
                                                      stub.projection_schema_buffer_size);

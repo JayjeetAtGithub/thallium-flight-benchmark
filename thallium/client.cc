@@ -71,6 +71,8 @@ ConnCtx Init(std::string host) {
     tl::endpoint endpoint = engine.lookup(host);
     ctx.engine = engine;
     ctx.endpoint = endpoint;
+    tl::remote_procedure clear = engine.define("clear");
+    clear.on(endpoint)();
     return ctx;
 }
 

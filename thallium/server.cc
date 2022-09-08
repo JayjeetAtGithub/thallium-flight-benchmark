@@ -80,12 +80,7 @@ class concurrent_queue {
             cv.notify_one();
         }
 
-        void clear() {
-            {
-                std::lock_guard<tl::mutex> lock(m);
-                batch_queue.clear();
-            }
-        }
+        void clear() { batch_queue.clear(); }
 
         bool empty() {
             bool emp = false;
@@ -214,6 +209,12 @@ int main(int argc, char** argv) {
             // return req.respond(uuid);
         };
 
+    std::function<void(const tl::request&)> clear = 
+        [](const tl::request &req) {
+            cq.clear();
+            req.respond(0);
+        };
+
     int64_t total_rows_written = 0;
     std::function<void(const tl::request&)> get_next_batch = 
         [&mid, &svr_addr, &engine, &do_rdma, &reader_map, &total_rows_written](const tl::request &req) {
@@ -280,6 +281,7 @@ int main(int argc, char** argv) {
     
     engine.define("scan", scan).disable_response();
     engine.define("get_next_batch", get_next_batch);
+    engine.define("clear", clear);
 
     std::cout << "Server running at address " << engine.self() << std::endl;    
     engine.wait_for_finalize();        
