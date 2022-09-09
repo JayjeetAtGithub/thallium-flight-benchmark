@@ -184,11 +184,12 @@ arrow::Status Main(char **argv) {
             bool last = (i == 200);
             while ((batch = GetNextBatch(conn_ctx, schema, last).ValueOrDie()) != nullptr) {
                 total_rows += batch->num_rows();
-                std::cout << "Total rows read: " << total_rows << std::endl;
+                std::cout << batch->ToString() << std::endl;
             }
         }
     }
-
+    
+    std::cout << "Total rows read: " << total_rows << std::endl;
     conn_ctx.engine.finalize();
 
     return arrow::Status::OK();
