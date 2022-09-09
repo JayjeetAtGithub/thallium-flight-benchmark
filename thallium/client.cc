@@ -83,10 +83,10 @@ void Scan(ConnCtx &conn_ctx, ScanReq &scan_req) {
     scan.on(conn_ctx.endpoint)(scan_req.stub);
 }
 
-arrow::Result<std::shared_ptr<arrow::RecordBatch>> GetNextBatch(ConnCtx &conn_ctx, std::shared_ptr<arrow::Schema> schema) {
+arrow::Result<std::shared_ptr<arrow::RecordBatch>> GetNextBatch(ConnCtx &conn_ctx, std::shared_ptr<arrow::Schema> schema, bool last) {
     std::shared_ptr<arrow::RecordBatch> batch;
     std::function<void(const tl::request&, int64_t&, std::vector<int64_t>&, std::vector<int64_t>&, tl::bulk&)> f =
-        [&conn_ctx, &schema, &batch](const tl::request& req, int64_t& num_rows, std::vector<int64_t>& data_buff_sizes, std::vector<int64_t>& offset_buff_sizes, tl::bulk& b) {
+        [&conn_ctx, &schema, &batch, &last](const tl::request& req, int64_t& num_rows, std::vector<int64_t>& data_buff_sizes, std::vector<int64_t>& offset_buff_sizes, tl::bulk& b) {
             int num_cols = schema->num_fields();
             
             std::vector<std::shared_ptr<arrow::Array>> columns;
@@ -125,7 +125,8 @@ arrow::Result<std::shared_ptr<arrow::RecordBatch>> GetNextBatch(ConnCtx &conn_ct
     conn_ctx.engine.define("do_rdma", f);
     tl::remote_procedure get_next_batch = conn_ctx.engine.define("get_next_batch");
 
-    int e = get_next_batch.on(conn_ctx.endpoint)();
+    int e = get_next_batch.on(conn_ctx.endpoint)(last);
+
     if (e == 0) {
         return batch;
     } else {
@@ -180,7 +181,8 @@ arrow::Status Main(char **argv) {
             std::cout << filepath << std::endl;
             ARROW_ASSIGN_OR_RAISE(auto scan_req, GetScanRequest(filepath, filter, schema, schema));
             Scan(conn_ctx, scan_req);
-            while ((batch = GetNextBatch(conn_ctx, schema).ValueOrDie()) != nullptr) {
+            bool last = (i == 200);
+            while ((batch = GetNextBatch(conn_ctx, schema, last).ValueOrDie()) != nullptr) {
                 total_rows += batch->num_rows();
                 std::cout << "Total rows read: " << total_rows << std::endl;
             }
