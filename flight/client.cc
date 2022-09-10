@@ -67,6 +67,8 @@ int main(int argc, char *argv[]) {
     std::cout << "Read " << table->num_rows() << " rows and " << table->num_columns() << " columns" << std::endl;
 
   } else {  
+    MEASURE_FUNCTION_EXECUTION_TIME
+
     for (int i = 1; i <= 200; i++) {
       std::string filepath = "/mnt/cephfs/dataset/16MB.uncompressed.parquet." + std::to_string(i);
       auto descriptor = arrow::flight::FlightDescriptor::Path({filepath});
@@ -77,13 +79,7 @@ int main(int argc, char *argv[]) {
       std::shared_ptr<arrow::Table> table;
       std::unique_ptr<arrow::flight::FlightStreamReader> stream;
       client->DoGet(flight_info->endpoints()[0].ticket, &stream);
-      {
-        MEASURE_FUNCTION_EXECUTION_TIME
-        stream->ReadAll(&table);
-      }
-      std::cout << "Table: " << std::endl;
-      std::cout << table->num_rows() << std::endl;
-      std::cout << table->num_columns() << std::endl;
+      stream->ReadAll(&table);
     }
   }
 }
