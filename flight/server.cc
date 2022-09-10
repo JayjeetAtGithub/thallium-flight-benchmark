@@ -125,9 +125,9 @@ class ParquetStorageService : public arrow::flight::FlightServerBase {
 
             std::shared_ptr<arrow::io::ReadableFile> file;
             if (backend_ == "ext4") {
-                ARROW_ASSIGN_OR_RAISE(file, arrow::io::ReadableFile::Open(request.ticket, arrow::io::FileMode::READ));
+                ARROW_ASSIGN_OR_RAISE(file, arrow::io::ReadableFile::Open(request.ticket));
             } else if (backend_ == "ext4+mmap") {
-                ARROW_ASSIGN_OR_RAISE(file, arrow::io::MemoryMappedFile::Open(request.ticket));
+                ARROW_ASSIGN_OR_RAISE(file, arrow::io::MemoryMappedFile::Open(request.ticket, arrow::io::FileMode::READ));
             }
 
             arrow::dataset::FileSource source(file);
