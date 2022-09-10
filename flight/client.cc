@@ -85,4 +85,5 @@ int main(int argc, char *argv[]) {
       std::cout << table->num_rows() << std::endl;
       std::cout << table->num_columns() << std::endl;
     }
+  }
 }

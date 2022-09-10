@@ -14,8 +14,10 @@
 
 class ParquetStorageService : public arrow::flight::FlightServerBase {
     public:
-        explicit ParquetStorageService(std::shared_ptr<arrow::fs::FileSystem> fs, std::string host, int32_t port, int bench_mode)
-            : fs_(std::move(fs)), host_(host), port_(port), bench_mode_(bench_mode) {}
+        explicit ParquetStorageService(
+            std::shared_ptr<arrow::fs::FileSystem> fs, std::string host, int32_t port, 
+            std::string selectivity, std::string backend
+        ) : fs_(std::move(fs)), host_(host), port_(port), selectivity_(selectivity), backend_(backend) {}
 
         int32_t Port() { return port_; }
 
@@ -75,11 +77,11 @@ class ParquetStorageService : public arrow::flight::FlightServerBase {
 
             ARROW_ASSIGN_OR_RAISE(auto scanner, scanner_builder->Finish());
 
-            if (bench_mode_ == 2) {
+            if (backend_ == "dataset") {
                 ARROW_ASSIGN_OR_RAISE(auto reader, scanner->ToRecordBatchReader());
                 *stream = std::unique_ptr<arrow::flight::FlightDataStream>(
                     new arrow::flight::RecordBatchStream(reader));
-            } else {
+            } else if (backend_ == "dataset+mem") {
                 ARROW_ASSIGN_OR_RAISE(auto table, scanner->ToTable());
                 auto im_ds = std::make_shared<arrow::dataset::InMemoryDataset>(table);
                 ARROW_ASSIGN_OR_RAISE(auto im_ds_scanner_builder, im_ds->NewScan());
@@ -120,7 +122,14 @@ class ParquetStorageService : public arrow::flight::FlightServerBase {
                                         arrow::compute::literal(-200));
             
             auto format = std::make_shared<arrow::dataset::ParquetFileFormat>();
-            ARROW_ASSIGN_OR_RAISE(auto file, arrow::io::ReadableFile::Open(request.ticket, arrow::io::FileMode::READ));
+
+            arrow::Result<std::shared_ptr<arrow::io::ReadableFile>> file;
+            if (backend_ == "ext4") {
+                ARROW_ASSIGN_OR_RAISE(file, arrow::io::ReadableFile::Open(request.ticket, arrow::io::FileMode::READ));
+            } else if (backend_ == "ext4+mmap") {
+                ARROW_ASSIGN_OR_RAISE(file, arrow::io::ReadableFile::Open(request.ticket, arrow::io::FileMode::READ));
+            }
+
             arrow::dataset::FileSource source(file);
             ARROW_ASSIGN_OR_RAISE(
                 auto fragment, format->MakeFragment(std::move(source), arrow::compute::literal(true)));
@@ -144,7 +153,7 @@ class ParquetStorageService : public arrow::flight::FlightServerBase {
         arrow::Status DoGet(const arrow::flight::ServerCallContext&,
                             const arrow::flight::Ticket& request,
                             std::unique_ptr<arrow::flight::FlightDataStream>* stream) {
-            if (bench_mode_ == 1 || bench_mode_ == 2) {
+            if (backend_ == "dataset" || backend_ == "dataset+mem") {
                 return Benchmark(request, stream);
             } else {
                 return Read(request, stream);
@@ -159,7 +168,7 @@ class ParquetStorageService : public arrow::flight::FlightServerBase {
             auto descriptor = arrow::flight::FlightDescriptor::Path({path});
             arrow::flight::FlightEndpoint endpoint;
             
-            if (bench_mode_ == 1 || bench_mode_ == 2) {
+            if (backend_ == "dataset" || backend_ == "dataset+mem") {
                 endpoint.ticket.ticket = "file://" + path;
             } else {
                 endpoint.ticket.ticket = path;
@@ -176,27 +185,34 @@ class ParquetStorageService : public arrow::flight::FlightServerBase {
         std::shared_ptr<arrow::fs::FileSystem> fs_;
         std::string host_;
         int32_t port_;
-        int bench_mode_;
+        std::string selectivity_;
+        std::string backend_;
 };
 
 int main(int argc, char *argv[]) {
     if (argc < 3) {
-        std::cout << "./fs [port] [bench-mode]" << std::endl;
+        std::cout << "./fs [port] [selectivity] [backend] [transport]" << std::endl;
         exit(1);
     }
     
     std::string host = "10.10.1.2";
     int32_t port = (int32_t)std::stoi(argv[1]);
-    int bench_mode = (int)std::stoi(argv[2]);
+    std::string selectivity = (int)std::stoi(argv[2]);
+    std::string backend = argv[3]; // ext4/ext4+mmap/bake/dataset/dataset+mem
+    std::string transport = argv[4]; // tcp+ucx/tcp+grpc
 
     auto fs = std::make_shared<arrow::fs::LocalFileSystem>();
 
     arrow::flight::Location server_location;
-    arrow::flight::Location::ForGrpcTcp(host, port, &server_location);
+    if (transport == "tcp+ucx") {
+        ASSERT_OK_AND_ASSIGN(server_location, arrow::flight::Location::ForScheme("ucx", "[::1]", 0));
+    } else {
+        arrow::flight::Location::ForGrpcTcp(host, port, &server_location);
+    }
 
     arrow::flight::FlightServerOptions options(server_location);
     auto server = std::unique_ptr<arrow::flight::FlightServerBase>(
-        new ParquetStorageService(std::move(fs), host, port, bench_mode));
+        new ParquetStorageService(std::move(fs), host, port, selectivity, backend));
     server->Init(options);
     std::cout << "Listening on port " << server->port() << std::endl;
     server->Serve();
