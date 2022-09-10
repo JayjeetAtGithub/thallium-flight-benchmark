@@ -78,10 +78,12 @@ class ParquetStorageService : public arrow::flight::FlightServerBase {
             ARROW_ASSIGN_OR_RAISE(auto scanner, scanner_builder->Finish());
 
             if (backend_ == "dataset") {
+                std::cout << "Using dataset backend" << std::endl;
                 ARROW_ASSIGN_OR_RAISE(auto reader, scanner->ToRecordBatchReader());
                 *stream = std::unique_ptr<arrow::flight::FlightDataStream>(
                     new arrow::flight::RecordBatchStream(reader));
             } else if (backend_ == "dataset+mem") {
+                std::cout << "Using dataset+mem backend" << std::endl;
                 ARROW_ASSIGN_OR_RAISE(auto table, scanner->ToTable());
                 auto im_ds = std::make_shared<arrow::dataset::InMemoryDataset>(table);
                 ARROW_ASSIGN_OR_RAISE(auto im_ds_scanner_builder, im_ds->NewScan());
@@ -125,9 +127,11 @@ class ParquetStorageService : public arrow::flight::FlightServerBase {
 
             arrow::dataset::FileSource source;
             if (backend_ == "file") {
+                std::cout << "Using file backend: " << request.ticket << std::endl;
                 ARROW_ASSIGN_OR_RAISE(auto file, arrow::io::ReadableFile::Open(request.ticket));
                 source = arrow::dataset::FileSource(file);
             } else if (backend_ == "file+mmap") {
+                std::cout << "Using file+mmap backend: " << request.ticket << std::endl;
                 ARROW_ASSIGN_OR_RAISE(auto file, arrow::io::MemoryMappedFile::Open(request.ticket, arrow::io::FileMode::READ));
                 source = arrow::dataset::FileSource(file);
             }
