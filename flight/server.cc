@@ -123,14 +123,15 @@ class ParquetStorageService : public arrow::flight::FlightServerBase {
             
             auto format = std::make_shared<arrow::dataset::ParquetFileFormat>();
 
-            std::shared_ptr<arrow::io::ReadableFile> file;
+            arrow::dataset::FileSource source;
             if (backend_ == "ext4") {
-                ARROW_ASSIGN_OR_RAISE(file, arrow::io::ReadableFile::Open(request.ticket));
+                ARROW_ASSIGN_OR_RAISE(auto file, arrow::io::ReadableFile::Open(request.ticket));
+                source = arrow::dataset::FileSource(file);
             } else if (backend_ == "ext4+mmap") {
-                ARROW_ASSIGN_OR_RAISE(file, arrow::io::MemoryMappedFile::Open(request.ticket, arrow::io::FileMode::READ));
+                ARROW_ASSIGN_OR_RAISE(auto file, arrow::io::MemoryMappedFile::Open(request.ticket, arrow::io::FileMode::READ));
+                source = arrow::dataset::FileSource(file);
             }
 
-            arrow::dataset::FileSource source(file);
             ARROW_ASSIGN_OR_RAISE(
                 auto fragment, format->MakeFragment(std::move(source), arrow::compute::literal(true)));
             
