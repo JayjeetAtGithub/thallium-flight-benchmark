@@ -123,11 +123,11 @@ class ParquetStorageService : public arrow::flight::FlightServerBase {
             
             auto format = std::make_shared<arrow::dataset::ParquetFileFormat>();
 
-            arrow::Result<std::shared_ptr<arrow::io::ReadableFile>> file;
+            std::shared_ptr<arrow::io::ReadableFile> file;
             if (backend_ == "ext4") {
                 ARROW_ASSIGN_OR_RAISE(file, arrow::io::ReadableFile::Open(request.ticket, arrow::io::FileMode::READ));
             } else if (backend_ == "ext4+mmap") {
-                ARROW_ASSIGN_OR_RAISE(file, arrow::io::ReadableFile::Open(request.ticket, arrow::io::FileMode::READ));
+                ARROW_ASSIGN_OR_RAISE(file, arrow::io::MemoryMappedFile::Open(request.ticket));
             }
 
             arrow::dataset::FileSource source(file);
@@ -205,7 +205,7 @@ int main(int argc, char *argv[]) {
 
     arrow::flight::Location server_location;
     if (transport == "tcp+ucx") {
-        ASSERT_OK_AND_ASSIGN(server_location, arrow::flight::Location::ForScheme("ucx", "[::1]", 0));
+        server_location = arrow::flight::Location::ForScheme("ucx", "[::1]", 0).ValueOrDie();
     } else {
         arrow::flight::Location::ForGrpcTcp(host, port, &server_location);
     }
