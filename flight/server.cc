@@ -191,7 +191,7 @@ class ParquetStorageService : public arrow::flight::FlightServerBase {
 };
 
 int main(int argc, char *argv[]) {
-    if (argc < 3) {
+    if (argc < 4) {
         std::cout << "./fs [port] [selectivity] [backend] [transport]" << std::endl;
         exit(1);
     }
