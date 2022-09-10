@@ -67,19 +67,23 @@ int main(int argc, char *argv[]) {
     std::cout << "Read " << table->num_rows() << " rows and " << table->num_columns() << " columns" << std::endl;
 
   } else {  
-    MEASURE_FUNCTION_EXECUTION_TIME
+    int64_t total_rows = 0;
+    {
+      MEASURE_FUNCTION_EXECUTION_TIME
+      for (int i = 1; i <= 200; i++) {
+        std::string filepath = "/mnt/cephfs/dataset/16MB.uncompressed.parquet." + std::to_string(i);
+        auto descriptor = arrow::flight::FlightDescriptor::Path({filepath});
 
-    for (int i = 1; i <= 200; i++) {
-      std::string filepath = "/mnt/cephfs/dataset/16MB.uncompressed.parquet." + std::to_string(i);
-      auto descriptor = arrow::flight::FlightDescriptor::Path({filepath});
+        std::unique_ptr<arrow::flight::FlightInfo> flight_info;
+        client->GetFlightInfo(descriptor, &flight_info);
 
-      std::unique_ptr<arrow::flight::FlightInfo> flight_info;
-      client->GetFlightInfo(descriptor, &flight_info);
-
-      std::shared_ptr<arrow::Table> table;
-      std::unique_ptr<arrow::flight::FlightStreamReader> stream;
-      client->DoGet(flight_info->endpoints()[0].ticket, &stream);
-      stream->ReadAll(&table);
+        std::shared_ptr<arrow::Table> table;
+        std::unique_ptr<arrow::flight::FlightStreamReader> stream;
+        client->DoGet(flight_info->endpoints()[0].ticket, &stream);
+        stream->ReadAll(&table);
+        total_rows += table->num_rows();
+      }
     }
+    std::cout << "Read " << total_rows << " rows" << std::endl;
   }
 }
