@@ -120,7 +120,7 @@ class ParquetStorageService : public arrow::flight::FlightServerBase {
                                         arrow::compute::literal(-200));
             
             auto format = std::make_shared<arrow::dataset::ParquetFileFormat>();
-            ARROW_ASSIGN_OR_RAISE(auto file, arrow::io::MemoryMappedFile::Open(request.ticket, arrow::io::FileMode::READ));
+            ARROW_ASSIGN_OR_RAISE(auto file, arrow::io::ReadableFile::Open(request.ticket, arrow::io::FileMode::READ));
             arrow::dataset::FileSource source(file);
             ARROW_ASSIGN_OR_RAISE(
                 auto fragment, format->MakeFragment(std::move(source), arrow::compute::literal(true)));
