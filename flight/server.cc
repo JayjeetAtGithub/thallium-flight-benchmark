@@ -124,10 +124,10 @@ class ParquetStorageService : public arrow::flight::FlightServerBase {
             auto format = std::make_shared<arrow::dataset::ParquetFileFormat>();
 
             arrow::dataset::FileSource source;
-            if (backend_ == "ext4") {
+            if (backend_ == "file") {
                 ARROW_ASSIGN_OR_RAISE(auto file, arrow::io::ReadableFile::Open(request.ticket));
                 source = arrow::dataset::FileSource(file);
-            } else if (backend_ == "ext4+mmap") {
+            } else if (backend_ == "file+mmap") {
                 ARROW_ASSIGN_OR_RAISE(auto file, arrow::io::MemoryMappedFile::Open(request.ticket, arrow::io::FileMode::READ));
                 source = arrow::dataset::FileSource(file);
             }
@@ -199,7 +199,7 @@ int main(int argc, char *argv[]) {
     std::string host = "10.10.1.2";
     int32_t port = (int32_t)std::stoi(argv[1]);
     std::string selectivity = argv[2];
-    std::string backend = argv[3]; // ext4/ext4+mmap/bake/dataset/dataset+mem
+    std::string backend = argv[3]; // file/file+mmap/bake/dataset/dataset+mem
     std::string transport = argv[4]; // tcp+ucx/tcp+grpc
 
     auto fs = std::make_shared<arrow::fs::LocalFileSystem>();
