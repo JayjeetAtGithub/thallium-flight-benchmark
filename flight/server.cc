@@ -21,6 +21,19 @@ class ParquetStorageService : public arrow::flight::FlightServerBase {
 
         int32_t Port() { return port_; }
 
+        arrow::compute::Expression GetFilter() {
+            if (selectivity_ == "100") {
+                return arrow::compute::greater(arrow::compute::field_ref("total_amount"),
+                                               arrow::compute::literal(-200));
+            } else if (selectivity_ == "10") {
+                return arrow::compute::greater(arrow::compute::field_ref("total_amount"),
+                                               arrow::compute::literal(27));
+            } else if (selectivity_ == "1") {
+                return arrow::compute::greater(arrow::compute::field_ref("total_amount"),
+                                               arrow::compute::literal(69));
+            }
+        }
+
         arrow::Status GetFlightInfo(const arrow::flight::ServerCallContext&,
                                     const arrow::flight::FlightDescriptor& descriptor,
                                     std::unique_ptr<arrow::flight::FlightInfo>* info) {
@@ -61,10 +74,6 @@ class ParquetStorageService : public arrow::flight::FlightServerBase {
                 arrow::field("total_amount", arrow::float64())
             });
 
-            auto filter = 
-                arrow::compute::greater(arrow::compute::field_ref("total_amount"),
-                                        arrow::compute::literal(-200));
-
             arrow::dataset::FileSystemFactoryOptions options;
             ARROW_ASSIGN_OR_RAISE(auto factory, 
                 arrow::dataset::FileSystemDatasetFactory::Make(std::move(fs), s, std::move(format), options));
@@ -72,16 +81,18 @@ class ParquetStorageService : public arrow::flight::FlightServerBase {
             ARROW_ASSIGN_OR_RAISE(auto dataset,factory->Finish(finish_options));
 
             ARROW_ASSIGN_OR_RAISE(auto scanner_builder, dataset->NewScan());
-            ARROW_RETURN_NOT_OK(scanner_builder->Filter(filter));
+            ARROW_RETURN_NOT_OK(scanner_builder->Filter(GetFilter()));
             ARROW_RETURN_NOT_OK(scanner_builder->Project(schema->field_names()));
 
             ARROW_ASSIGN_OR_RAISE(auto scanner, scanner_builder->Finish());
 
             if (backend_ == "dataset") {
+                std::cout << "Using dataset backend" << std::endl;
                 ARROW_ASSIGN_OR_RAISE(auto reader, scanner->ToRecordBatchReader());
                 *stream = std::unique_ptr<arrow::flight::FlightDataStream>(
                     new arrow::flight::RecordBatchStream(reader));
             } else if (backend_ == "dataset+mem") {
+                std::cout << "Using dataset+mem backend" << std::endl;
                 ARROW_ASSIGN_OR_RAISE(auto table, scanner->ToTable());
                 auto im_ds = std::make_shared<arrow::dataset::InMemoryDataset>(table);
                 ARROW_ASSIGN_OR_RAISE(auto im_ds_scanner_builder, im_ds->NewScan());
@@ -117,20 +128,19 @@ class ParquetStorageService : public arrow::flight::FlightServerBase {
                 arrow::field("total_amount", arrow::float64())
             });
 
-            auto filter = 
-                arrow::compute::greater(arrow::compute::field_ref("total_amount"),
-                                        arrow::compute::literal(-200));
-            
             auto format = std::make_shared<arrow::dataset::ParquetFileFormat>();
 
-            arrow::Result<std::shared_ptr<arrow::io::ReadableFile>> file;
-            if (backend_ == "ext4") {
-                ARROW_ASSIGN_OR_RAISE(file, arrow::io::ReadableFile::Open(request.ticket, arrow::io::FileMode::READ));
-            } else if (backend_ == "ext4+mmap") {
-                ARROW_ASSIGN_OR_RAISE(file, arrow::io::ReadableFile::Open(request.ticket, arrow::io::FileMode::READ));
+            arrow::dataset::FileSource source;
+            if (backend_ == "file") {
+                std::cout << "Using file backend: " << request.ticket << std::endl;
+                ARROW_ASSIGN_OR_RAISE(auto file, arrow::io::ReadableFile::Open(request.ticket));
+                source = arrow::dataset::FileSource(file);
+            } else if (backend_ == "file+mmap") {
+                std::cout << "Using file+mmap backend: " << request.ticket << std::endl;
+                ARROW_ASSIGN_OR_RAISE(auto file, arrow::io::MemoryMappedFile::Open(request.ticket, arrow::io::FileMode::READ));
+                source = arrow::dataset::FileSource(file);
             }
 
-            arrow::dataset::FileSource source(file);
             ARROW_ASSIGN_OR_RAISE(
                 auto fragment, format->MakeFragment(std::move(source), arrow::compute::literal(true)));
             
@@ -138,7 +148,7 @@ class ParquetStorageService : public arrow::flight::FlightServerBase {
             auto scanner_builder = std::make_shared<arrow::dataset::ScannerBuilder>(
                 schema, std::move(fragment), std::move(options));
 
-            ARROW_RETURN_NOT_OK(scanner_builder->Filter(filter));
+            ARROW_RETURN_NOT_OK(scanner_builder->Filter(GetFilter()));
             ARROW_RETURN_NOT_OK(scanner_builder->Project(schema->field_names()));
 
             ARROW_ASSIGN_OR_RAISE(auto scanner, scanner_builder->Finish());
@@ -190,22 +200,22 @@ class ParquetStorageService : public arrow::flight::FlightServerBase {
 };
 
 int main(int argc, char *argv[]) {
-    if (argc < 3) {
+    if (argc < 4) {
         std::cout << "./fs [port] [selectivity] [backend] [transport]" << std::endl;
         exit(1);
     }
     
     std::string host = "10.10.1.2";
     int32_t port = (int32_t)std::stoi(argv[1]);
-    std::string selectivity = (int)std::stoi(argv[2]);
-    std::string backend = argv[3]; // ext4/ext4+mmap/bake/dataset/dataset+mem
+    std::string selectivity = argv[2]; // 100/10/1
+    std::string backend = argv[3]; // file/file+mmap/bake/dataset/dataset+mem
     std::string transport = argv[4]; // tcp+ucx/tcp+grpc
 
     auto fs = std::make_shared<arrow::fs::LocalFileSystem>();
 
     arrow::flight::Location server_location;
     if (transport == "tcp+ucx") {
-        ASSERT_OK_AND_ASSIGN(server_location, arrow::flight::Location::ForScheme("ucx", "[::1]", 0));
+        server_location = arrow::flight::Location::ForScheme("ucx", "[::1]", 0).ValueOrDie();
     } else {
         arrow::flight::Location::ForGrpcTcp(host, port, &server_location);
     }

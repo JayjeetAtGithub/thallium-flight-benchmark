@@ -40,7 +40,7 @@ arrow::Result<std::unique_ptr<arrow::flight::FlightClient>> ConnectToFlightServe
 
 int main(int argc, char *argv[]) {
   if (argc < 3) {
-    std::cout << "./fc [port] [bench-mode]" << std::endl;
+    std::cout << "./fc [port] [mode]" << std::endl;
     exit(1);
   }
 
@@ -48,11 +48,11 @@ int main(int argc, char *argv[]) {
   std::string host = "10.10.1.2";
   info.host = host;
   info.port = (int32_t)std::stoi(argv[1]);
-  int bench_mode = (int)std::stoi(argv[2]);
+  std::string mode = argv[2]; // dataset/file
 
   auto client = ConnectToFlightServer(info).ValueOrDie();
 
-  if (bench_mode == 1 || bench_mode == 2) {
+  if (mode == "dataset") {
     std::string filepath = "/mnt/cephfs/dataset";
     auto descriptor = arrow::flight::FlightDescriptor::Path({filepath});
     std::unique_ptr<arrow::flight::FlightInfo> flight_info;
@@ -67,23 +67,23 @@ int main(int argc, char *argv[]) {
     std::cout << "Read " << table->num_rows() << " rows and " << table->num_columns() << " columns" << std::endl;
 
   } else {  
-    for (int i = 1; i <= 200; i++) {
-      std::string filepath = "/mnt/cephfs/dataset/16MB.uncompressed.parquet." + std::to_string(i);
-      auto descriptor = arrow::flight::FlightDescriptor::Path({filepath});
+    int64_t total_rows = 0;
+    {
+      MEASURE_FUNCTION_EXECUTION_TIME
+      for (int i = 1; i <= 200; i++) {
+        std::string filepath = "/mnt/cephfs/dataset/16MB.uncompressed.parquet." + std::to_string(i);
+        auto descriptor = arrow::flight::FlightDescriptor::Path({filepath});
 
-      std::unique_ptr<arrow::flight::FlightInfo> flight_info;
-      client->GetFlightInfo(descriptor, &flight_info);
+        std::unique_ptr<arrow::flight::FlightInfo> flight_info;
+        client->GetFlightInfo(descriptor, &flight_info);
 
-      std::shared_ptr<arrow::Table> table;
-      std::unique_ptr<arrow::flight::FlightStreamReader> stream;
-      client->DoGet(flight_info->endpoints()[0].ticket, &stream);
-      {
-        MEASURE_FUNCTION_EXECUTION_TIME
+        std::shared_ptr<arrow::Table> table;
+        std::unique_ptr<arrow::flight::FlightStreamReader> stream;
+        client->DoGet(flight_info->endpoints()[0].ticket, &stream);
         stream->ReadAll(&table);
+        total_rows += table->num_rows();
       }
-      std::cout << "Table: " << std::endl;
-      std::cout << table->num_rows() << std::endl;
-      std::cout << table->num_columns() << std::endl;
     }
+    std::cout << "Read " << total_rows << " rows" << std::endl;
   }
 }
