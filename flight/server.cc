@@ -75,7 +75,7 @@ class ParquetStorageService : public arrow::flight::FlightServerBase {
 
             ARROW_ASSIGN_OR_RAISE(auto scanner, scanner_builder->Finish());
 
-            if (bench_mode_ == 1) {
+            if (bench_mode_ == 2) {
                 ARROW_ASSIGN_OR_RAISE(auto reader, scanner->ToRecordBatchReader());
                 *stream = std::unique_ptr<arrow::flight::FlightDataStream>(
                     new arrow::flight::RecordBatchStream(reader));
