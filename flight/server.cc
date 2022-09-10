@@ -197,7 +197,7 @@ int main(int argc, char *argv[]) {
     
     std::string host = "10.10.1.2";
     int32_t port = (int32_t)std::stoi(argv[1]);
-    std::string selectivity = (int)std::stoi(argv[2]);
+    std::string selectivity = argv[2];
     std::string backend = argv[3]; // ext4/ext4+mmap/bake/dataset/dataset+mem
     std::string transport = argv[4]; // tcp+ucx/tcp+grpc
 
