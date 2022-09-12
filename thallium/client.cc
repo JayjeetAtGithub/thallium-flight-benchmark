@@ -168,12 +168,13 @@ arrow::Status Main(int argc, char **argv) {
     });
 
     ConnCtx conn_ctx = Init(uri);
+    int64_t total_rows = 0;
+
 
     if (bench_mode == 1 || bench_mode == 2) {
         std::string path = "/mnt/cephfs/dataset";
         ARROW_ASSIGN_OR_RAISE(auto scan_req, GetScanRequest(path, filter, schema, schema));
         ScanCtx scan_ctx = Scan(conn_ctx, scan_req);
-        int64_t total_rows = 0;
         std::shared_ptr<arrow::RecordBatch> batch;
         {
             MEASURE_FUNCTION_EXECUTION_TIME
