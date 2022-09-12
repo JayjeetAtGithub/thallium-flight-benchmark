@@ -63,12 +63,12 @@ static char* read_input_file(const char* filename) {
 int main(int argc, char** argv) {
 
     if (argc < 3) {
-        std::cout << "./ts [backend] [selectivity]" << std::endl;
+        std::cout << "./ts [selectivity] [backend]" << std::endl;
         exit(1);
     }
 
-    std::string backend = argv[1];
-    std::string selectivity = argv[2];
+    std::string selectivity = argv[1];
+    std::string backend = argv[2];
 
     tl::engine engine("verbs://ibp130s0", THALLIUM_SERVER_MODE, true);
     margo_instance_id mid = engine.get_margo_instance();
