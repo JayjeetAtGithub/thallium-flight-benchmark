@@ -185,6 +185,7 @@ arrow::Status Main(int argc, char **argv) {
     } else {
         {
             MEASURE_FUNCTION_EXECUTION_TIME
+            std::shared_ptr<arrow::RecordBatch> batch;
             for (int i = 1; i <= 200; i++) {
                 std::string filepath = "/mnt/cephfs/dataset/16MB.uncompressed.parquet." + std::to_string(i);
                 ARROW_ASSIGN_OR_RAISE(auto scan_req, GetScanRequest(filepath, filter, schema, schema));
