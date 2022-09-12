@@ -194,10 +194,10 @@ int main(int argc, char** argv) {
     // create a secondary execution stream from the same progress pool
     tl::managed<tl::xstream> xstream = 
         tl::xstream::create(tl::scheduler::predef::deflt, engine.get_progress_pool());
-    
+
     std::shared_ptr<arrow::RecordBatchReader> reader;
     std::function<void(const tl::request&, const ScanReqRPCStub&)> scan = 
-        [&mid, &svr_addr, &bp, &bcl, &bph, &tid, &db, &mode, &xstream, &reader](const tl::request &req, const ScanReqRPCStub& stub) {
+        [&mid, &svr_addr, &bp, &bcl, &bph, &tid, &db, &mode, &xstream, reader](const tl::request &req, const ScanReqRPCStub& stub) {
             arrow::dataset::internal::Initialize();
 
             if (mode == 1) {
