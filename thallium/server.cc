@@ -195,21 +195,21 @@ int main(int argc, char** argv) {
     tl::managed<tl::xstream> xstream = 
         tl::xstream::create(tl::scheduler::predef::deflt, engine.get_progress_pool());
 
-    std::shared_ptr<arrow::RecordBatchReader> reader;
     std::function<void(const tl::request&, const ScanReqRPCStub&)> scan = 
-        [&mid, &svr_addr, &bp, &bcl, &bph, &tid, &db, &mode, &xstream, reader](const tl::request &req, const ScanReqRPCStub& stub) {
+        [&mid, &svr_addr, &bp, &bcl, &bph, &tid, &db, &mode, &xstream](const tl::request &req, const ScanReqRPCStub& stub) {
             arrow::dataset::internal::Initialize();
+            arrow::RecordBatchReader *reader;
 
             if (mode == 1) {
                 std::cout << "running transport benchmark\n";
                 cp::ExecContext exec_ctx;
-                reader = ScanBenchmark(exec_ctx, stub).ValueOrDie();
+                reader = ScanBenchmark(exec_ctx, stub).ValueOrDie().get();
             } else if (mode == 2) {
                 std::cout << "scanning data from ext4 using mmap: " << stub.path.c_str() << std::endl;
-                reader = ScanEXT4MMap(stub).ValueOrDie();
+                reader = ScanEXT4MMap(stub).ValueOrDie().get();
             } else if (mode == 3) {
                 std::cout << "scanning data from ext4: " << stub.path.c_str() << std::endl;
-                reader = ScanEXT4(stub).ValueOrDie();
+                reader = ScanEXT4(stub).ValueOrDie().get();
             } else if (mode == 4) {
                 std::cout << "scanning data from bake: " << stub.path.c_str() << std::endl;
                 // get the rid from pathname
@@ -221,12 +221,12 @@ int main(int argc, char** argv) {
 
                 // scan data from bake
                 uint8_t *ptr = (uint8_t*)bcl.get_data(bph, tid, rid);
-                reader = ScanBake(stub, ptr).ValueOrDie();
+                reader = ScanBake(stub, ptr).ValueOrDie().get();
             }
             cq.start();
             xstream->make_thread([&]() {
                 // std::cout << "Made thread for " << stub.path.c_str() << std::endl;
-                scan_handler((void*)reader.get());
+                scan_handler((void*)reader);
                 cq.end();
             }, tl::anonymous());
         };
