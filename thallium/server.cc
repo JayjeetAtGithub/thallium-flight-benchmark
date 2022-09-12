@@ -106,14 +106,11 @@ int main(int argc, char** argv) {
             std::shared_ptr<arrow::RecordBatchReader> reader;
 
             if (backend == "dataset" || backend == "dataset+mem") {
-                std::cout << "Scanning from dataset\n";
                 cp::ExecContext exec_ctx;
                 reader = ScanDataset(exec_ctx, stub, backend, selectivity).ValueOrDie();
             } else if (backend == "file" || backend == "file+mmap") {
-                std::cout << "Scanning data from file\n";
                 reader = ScanFile(stub, backend, selectivity).ValueOrDie();
             } else if (backend == "bake") {
-                std::cout << "Scanning data from bake\n";
                 size_t value_size = 28;
                 void *value_buf = malloc(28);
                 

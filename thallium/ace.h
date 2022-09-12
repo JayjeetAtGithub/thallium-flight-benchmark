@@ -180,8 +180,10 @@ arrow::Result<std::shared_ptr<arrow::RecordBatchReader>> ScanDataset(cp::ExecCon
 
     std::shared_ptr<arrow::RecordBatchReader> reader; 
     if (backend == "dataset") {
+      std::cout << "Using dataset backend: " << uri << std::endl;
       ARROW_ASSIGN_OR_RAISE(reader, scanner->ToRecordBatchReader());
     } else if (backend == "dataset+mem") {
+      std::cout << "Using dataset+mem backend: " << uri << std::endl;
       ARROW_ASSIGN_OR_RAISE(auto table, scanner->ToTable())
       auto im_ds = std::make_shared<arrow::dataset::InMemoryDataset>(table);
       ARROW_ASSIGN_OR_RAISE(auto im_ds_scanner_builder, im_ds->NewScan());
@@ -218,9 +220,11 @@ arrow::Result<std::shared_ptr<arrow::RecordBatchReader>> ScanFile(const ScanReqR
 
     arrow::dataset::FileSource source;
     if (backend == "file") {
+      std::cout << "Using file backend: " << stub.path << std::endl;
       ARROW_ASSIGN_OR_RAISE(auto file, arrow::io::ReadableFile::Open(stub.path));
       source = arrow::dataset::FileSource(file);
     } else if (backend == "file+mmap") {
+      std::cout << "Using file+mmap backend: " << stub.path << std::endl;
       ARROW_ASSIGN_OR_RAISE(auto file, arrow::io::MemoryMappedFile::Open(stub.path, arrow::io::FileMode::READ));
       source = arrow::dataset::FileSource(file);
     }
@@ -241,6 +245,7 @@ arrow::Result<std::shared_ptr<arrow::RecordBatchReader>> ScanFile(const ScanReqR
 }
 
 arrow::Result<std::shared_ptr<arrow::RecordBatchReader>> ScanBake(const ScanReqRPCStub& stub, uint8_t *ptr) {   
+    std::cout << "Using bake backend: " << stub.path << std::endl;
     // deserialize filter
     ARROW_ASSIGN_OR_RAISE(auto filter,
       arrow::compute::Deserialize(std::make_shared<arrow::Buffer>(
