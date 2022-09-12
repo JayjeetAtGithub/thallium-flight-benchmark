@@ -196,7 +196,7 @@ int main(int argc, char** argv) {
         tl::xstream::create(tl::scheduler::predef::deflt, engine.get_progress_pool());
 
     std::function<void(const tl::request&, const ScanReqRPCStub&)> scan = 
-        [&mid, &svr_addr, &bp, &bcl, &bph, &tid, &db, &mode, &xstream](const tl::request &req, const ScanReqRPCStub& stub) {
+        [mid, svr_addr, bp, bcl, bph, tid, db, mode, xstream](const tl::request &req, const ScanReqRPCStub& stub) {
             arrow::dataset::internal::Initialize();
             std::shared_ptr<arrow::RecordBatchReader> reader;
 
