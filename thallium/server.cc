@@ -228,7 +228,7 @@ int main(int argc, char** argv) {
                 std::cout << "Made thread for " << stub.path.c_str() << std::endl;
                 scan_handler((void*)reader.get());
                 cq.end();
-            });
+            }, tl::anonymous());
         };
 
     std::function<void(const tl::request&)> clear = 
