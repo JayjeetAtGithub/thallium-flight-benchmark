@@ -193,10 +193,10 @@ arrow::Status Main(int argc, char **argv) {
                 ScanCtx scan_ctx = Scan(conn_ctx, scan_req);
                 while ((batch = GetNextBatch(conn_ctx, scan_ctx).ValueOrDie()) != nullptr) {
                     total_rows += batch->num_rows();
-                    std::cout << batch->ToString() << std::endl;
                 }
             }
         }
+        std::cout << "Read " << total_rows << " rows" << std::endl;
     }
 
     conn_ctx.engine.finalize();

@@ -114,8 +114,20 @@ class RandomAccessObject : public arrow::io::RandomAccessFile {
   int64_t file_size = -1;
 };
 
+arrow::compute::Expression GetFilter(std::string selectivity) {
+  if (selectivity_ == "100") {
+      return arrow::compute::greater(arrow::compute::field_ref("total_amount"),
+                                      arrow::compute::literal(-200));
+  } else if (selectivity_ == "10") {
+      return arrow::compute::greater(arrow::compute::field_ref("total_amount"),
+                                      arrow::compute::literal(27));
+  } else if (selectivity_ == "1") {
+      return arrow::compute::greater(arrow::compute::field_ref("total_amount"),
+                                      arrow::compute::literal(69));
+  }
+}
 
-arrow::Result<std::shared_ptr<arrow::RecordBatchReader>> ScanBenchmark(cp::ExecContext& exec_context, const ScanReqRPCStub& stub, int mode) {
+arrow::Result<std::shared_ptr<arrow::RecordBatchReader>> ScanDataset(cp::ExecContext& exec_context, const ScanReqRPCStub& stub, int mode, std::string selectivity) {
     std::string uri = "file:///mnt/cephfs/dataset";
 
     auto schema = arrow::schema({
@@ -159,15 +171,15 @@ arrow::Result<std::shared_ptr<arrow::RecordBatchReader>> ScanBenchmark(cp::ExecC
                           cp::ExecPlan::Make(&exec_context));
 
     ARROW_ASSIGN_OR_RAISE(auto scanner_builder, dataset->NewScan());
-    ARROW_RETURN_NOT_OK(scanner_builder->Filter(filter));
+    ARROW_RETURN_NOT_OK(scanner_builder->Filter(GetFilter(selectivity)));
     ARROW_RETURN_NOT_OK(scanner_builder->Project(schema->field_names()));
 
     ARROW_ASSIGN_OR_RAISE(auto scanner, scanner_builder->Finish());
 
     std::shared_ptr<arrow::RecordBatchReader> reader; 
-    if (mode == 1) {
+    if (mode == 2) {
       ARROW_ASSIGN_OR_RAISE(reader, scanner->ToRecordBatchReader());
-    } else {
+    } else if (mode == 1) {
       ARROW_ASSIGN_OR_RAISE(auto table, scanner->ToTable())
       auto im_ds = std::make_shared<arrow::dataset::InMemoryDataset>(table);
       ARROW_ASSIGN_OR_RAISE(auto im_ds_scanner_builder, im_ds->NewScan());
@@ -179,28 +191,38 @@ arrow::Result<std::shared_ptr<arrow::RecordBatchReader>> ScanBenchmark(cp::ExecC
 }
 
 
-arrow::Result<std::shared_ptr<arrow::RecordBatchReader>> ScanEXT4(const ScanReqRPCStub& stub) {   
-    // deserialize filter
-    ARROW_ASSIGN_OR_RAISE(auto filter,
-      arrow::compute::Deserialize(std::make_shared<arrow::Buffer>(
-      stub.filter_buffer, stub.filter_buffer_size))
-    );
-
-    // deserialize schemas
-    arrow::ipc::DictionaryMemo empty_memo;
-    arrow::io::BufferReader projection_schema_reader(stub.projection_schema_buffer,
-                                                     stub.projection_schema_buffer_size);
-    arrow::io::BufferReader dataset_schema_reader(stub.dataset_schema_buffer,
-                                                  stub.dataset_schema_buffer_size);
-    ARROW_ASSIGN_OR_RAISE(auto projection_schema,
-                          arrow::ipc::ReadSchema(&projection_schema_reader, &empty_memo));
-
-    ARROW_ASSIGN_OR_RAISE(auto dataset_schema,
-                          arrow::ipc::ReadSchema(&dataset_schema_reader, &empty_memo));
-
+arrow::Result<std::shared_ptr<arrow::RecordBatchReader>> ScanFile(const ScanReqRPCStub& stub, int mode, std::string selectivity) {
+    auto schema = arrow::schema({
+      arrow::field("VendorID", arrow::int64()),
+      arrow::field("tpep_pickup_datetime", arrow::timestamp(arrow::TimeUnit::MICRO)),
+      arrow::field("tpep_dropoff_datetime", arrow::timestamp(arrow::TimeUnit::MICRO)),
+      arrow::field("passenger_count", arrow::int64()),
+      arrow::field("trip_distance", arrow::float64()),
+      arrow::field("RatecodeID", arrow::int64()),
+      arrow::field("store_and_fwd_flag", arrow::utf8()),
+      arrow::field("PULocationID", arrow::int64()),
+      arrow::field("DOLocationID", arrow::int64()),
+      arrow::field("payment_type", arrow::int64()),
+      arrow::field("fare_amount", arrow::float64()),
+      arrow::field("extra", arrow::float64()),
+      arrow::field("mta_tax", arrow::float64()),
+      arrow::field("tip_amount", arrow::float64()),
+      arrow::field("tolls_amount", arrow::float64()),
+      arrow::field("improvement_surcharge", arrow::float64()),
+      arrow::field("total_amount", arrow::float64())
+    });
+    
     auto format = std::make_shared<arrow::dataset::ParquetFileFormat>();
-    ARROW_ASSIGN_OR_RAISE(auto file, arrow::io::ReadableFile::Open(stub.path));
-    arrow::dataset::FileSource source(file);
+
+    arrow::dataset::FileSource source;
+    if (mode == 3) {
+      ARROW_ASSIGN_OR_RAISE(auto file, arrow::io::ReadableFile::Open(stub.path));
+      source = arrow::dataset::FileSource(file);
+    } else if (mode == 4) {
+      ARROW_ASSIGN_OR_RAISE(auto file, arrow::io::MemoryMappedFile::Open(stub.path, arrow::io::FileMode::READ));
+      source = arrow::dataset::FileSource(file);
+    }
+
     ARROW_ASSIGN_OR_RAISE(
         auto fragment, format->MakeFragment(std::move(source), arrow::compute::literal(true)));
     
@@ -208,52 +230,13 @@ arrow::Result<std::shared_ptr<arrow::RecordBatchReader>> ScanEXT4(const ScanReqR
     auto scanner_builder = std::make_shared<arrow::dataset::ScannerBuilder>(
         dataset_schema, std::move(fragment), std::move(options));
 
-    ARROW_RETURN_NOT_OK(scanner_builder->Filter(filter));
-    ARROW_RETURN_NOT_OK(scanner_builder->Project(projection_schema->field_names()));
+    ARROW_RETURN_NOT_OK(scanner_builder->Filter(GetFilter(selectivity)));
+    ARROW_RETURN_NOT_OK(scanner_builder->Project(schema->field_names()));
 
     ARROW_ASSIGN_OR_RAISE(auto scanner, scanner_builder->Finish());
     ARROW_ASSIGN_OR_RAISE(auto reader, scanner->ToRecordBatchReader());
     return reader;
 }
-
-
-arrow::Result<std::shared_ptr<arrow::RecordBatchReader>> ScanEXT4MMap(const ScanReqRPCStub& stub) {   
-    // deserialize filter
-    ARROW_ASSIGN_OR_RAISE(auto filter,
-      arrow::compute::Deserialize(std::make_shared<arrow::Buffer>(
-      stub.filter_buffer, stub.filter_buffer_size))
-    );
-
-    // deserialize schemas
-    arrow::ipc::DictionaryMemo empty_memo;
-    arrow::io::BufferReader projection_schema_reader(stub.projection_schema_buffer,
-                                                     stub.projection_schema_buffer_size);
-    arrow::io::BufferReader dataset_schema_reader(stub.dataset_schema_buffer,
-                                                  stub.dataset_schema_buffer_size);
-    ARROW_ASSIGN_OR_RAISE(auto projection_schema,
-                          arrow::ipc::ReadSchema(&projection_schema_reader, &empty_memo));
-
-    ARROW_ASSIGN_OR_RAISE(auto dataset_schema,
-                          arrow::ipc::ReadSchema(&dataset_schema_reader, &empty_memo));
-
-    auto format = std::make_shared<arrow::dataset::ParquetFileFormat>();
-    ARROW_ASSIGN_OR_RAISE(auto file, arrow::io::MemoryMappedFile::Open(stub.path, arrow::io::FileMode::READ));
-    arrow::dataset::FileSource source(file);
-    ARROW_ASSIGN_OR_RAISE(
-        auto fragment, format->MakeFragment(std::move(source), arrow::compute::literal(true)));
-    
-    auto options = std::make_shared<arrow::dataset::ScanOptions>();
-    auto scanner_builder = std::make_shared<arrow::dataset::ScannerBuilder>(
-        dataset_schema, std::move(fragment), std::move(options));
-
-    ARROW_RETURN_NOT_OK(scanner_builder->Filter(filter));
-    ARROW_RETURN_NOT_OK(scanner_builder->Project(projection_schema->field_names()));
-
-    ARROW_ASSIGN_OR_RAISE(auto scanner, scanner_builder->Finish());
-    ARROW_ASSIGN_OR_RAISE(auto reader, scanner->ToRecordBatchReader());
-    return reader;
-}
-
 
 arrow::Result<std::shared_ptr<arrow::RecordBatchReader>> ScanBake(const ScanReqRPCStub& stub, uint8_t *ptr) {   
     // deserialize filter
