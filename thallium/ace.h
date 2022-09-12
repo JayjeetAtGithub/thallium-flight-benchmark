@@ -115,13 +115,13 @@ class RandomAccessObject : public arrow::io::RandomAccessFile {
 };
 
 arrow::compute::Expression GetFilter(std::string selectivity) {
-  if (selectivity_ == "100") {
+  if (selectivity == "100") {
       return arrow::compute::greater(arrow::compute::field_ref("total_amount"),
                                       arrow::compute::literal(-200));
-  } else if (selectivity_ == "10") {
+  } else if (selectivity == "10") {
       return arrow::compute::greater(arrow::compute::field_ref("total_amount"),
                                       arrow::compute::literal(27));
-  } else if (selectivity_ == "1") {
+  } else if (selectivity == "1") {
       return arrow::compute::greater(arrow::compute::field_ref("total_amount"),
                                       arrow::compute::literal(69));
   }
@@ -228,7 +228,7 @@ arrow::Result<std::shared_ptr<arrow::RecordBatchReader>> ScanFile(const ScanReqR
     
     auto options = std::make_shared<arrow::dataset::ScanOptions>();
     auto scanner_builder = std::make_shared<arrow::dataset::ScannerBuilder>(
-        dataset_schema, std::move(fragment), std::move(options));
+        schema, std::move(fragment), std::move(options));
 
     ARROW_RETURN_NOT_OK(scanner_builder->Filter(GetFilter(selectivity)));
     ARROW_RETURN_NOT_OK(scanner_builder->Project(schema->field_names()));
