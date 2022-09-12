@@ -124,6 +124,8 @@ arrow::compute::Expression GetFilter(std::string selectivity) {
   } else if (selectivity == "1") {
       return arrow::compute::greater(arrow::compute::field_ref("total_amount"),
                                       arrow::compute::literal(69));
+  } else {
+    return arrow::compute::literal(true);
   }
 }
 
