@@ -63,11 +63,11 @@ static char* read_input_file(const char* filename) {
 int main(int argc, char** argv) {
 
     if (argc < 3) {
-        std::cout << "./ts [bench_mode] [selectivity]" << std::endl;
+        std::cout << "./ts [backend] [selectivity]" << std::endl;
         exit(1);
     }
 
-    int bench_mode = atoi(argv[1]);
+    std::string backend = argv[1];
     std::string selectivity = argv[2];
 
     tl::engine engine("verbs://ibp130s0", THALLIUM_SERVER_MODE, true);
@@ -101,18 +101,18 @@ int main(int argc, char** argv) {
     bk::target tid = bp->list_targets()[0];
 
     std::function<void(const tl::request&, const ScanReqRPCStub&)> scan = 
-        [&reader_map, &mid, &svr_addr, &bp, &bcl, &bph, &tid, &db, &bench_mode, &selectivity](const tl::request &req, const ScanReqRPCStub& stub) {
+        [&reader_map, &mid, &svr_addr, &bp, &bcl, &bph, &tid, &db, &backend, &selectivity](const tl::request &req, const ScanReqRPCStub& stub) {
             arrow::dataset::internal::Initialize();
             std::shared_ptr<arrow::RecordBatchReader> reader;
 
-            if (bench_mode == 1 || bench_mode == 2) {
+            if (backend == "dataset" || backend == "dataset+mem") {
                 std::cout << "Scanning from dataset\n";
                 cp::ExecContext exec_ctx;
-                reader = ScanDataset(exec_ctx, stub, bench_mode, selectivity).ValueOrDie();
-            } else if (bench_mode == 3 || bench_mode == 4) {
+                reader = ScanDataset(exec_ctx, stub, backend, selectivity).ValueOrDie();
+            } else if (backend == "file" || backend == "file+mmap") {
                 std::cout << "Scanning data from file\n";
-                reader = ScanFile(stub, bench_mode, selectivity).ValueOrDie();
-            } else if (bench_mode == 5) {
+                reader = ScanFile(stub, backend, selectivity).ValueOrDie();
+            } else if (backend == "bake") {
                 std::cout << "Scanning data from bake\n";
                 size_t value_size = 28;
                 void *value_buf = malloc(28);

@@ -129,7 +129,7 @@ arrow::compute::Expression GetFilter(std::string selectivity) {
   }
 }
 
-arrow::Result<std::shared_ptr<arrow::RecordBatchReader>> ScanDataset(cp::ExecContext& exec_context, const ScanReqRPCStub& stub, int mode, std::string selectivity) {
+arrow::Result<std::shared_ptr<arrow::RecordBatchReader>> ScanDataset(cp::ExecContext& exec_context, const ScanReqRPCStub& stub, std::string backend, std::string selectivity) {
     std::string uri = "file:///mnt/cephfs/dataset";
 
     auto schema = arrow::schema({
@@ -179,9 +179,9 @@ arrow::Result<std::shared_ptr<arrow::RecordBatchReader>> ScanDataset(cp::ExecCon
     ARROW_ASSIGN_OR_RAISE(auto scanner, scanner_builder->Finish());
 
     std::shared_ptr<arrow::RecordBatchReader> reader; 
-    if (mode == 2) {
+    if (backend == "dataset") {
       ARROW_ASSIGN_OR_RAISE(reader, scanner->ToRecordBatchReader());
-    } else if (mode == 1) {
+    } else if (backend == "dataset+mem") {
       ARROW_ASSIGN_OR_RAISE(auto table, scanner->ToTable())
       auto im_ds = std::make_shared<arrow::dataset::InMemoryDataset>(table);
       ARROW_ASSIGN_OR_RAISE(auto im_ds_scanner_builder, im_ds->NewScan());
@@ -193,7 +193,7 @@ arrow::Result<std::shared_ptr<arrow::RecordBatchReader>> ScanDataset(cp::ExecCon
 }
 
 
-arrow::Result<std::shared_ptr<arrow::RecordBatchReader>> ScanFile(const ScanReqRPCStub& stub, int mode, std::string selectivity) {
+arrow::Result<std::shared_ptr<arrow::RecordBatchReader>> ScanFile(const ScanReqRPCStub& stub, std::string backend, std::string selectivity) {
     auto schema = arrow::schema({
       arrow::field("VendorID", arrow::int64()),
       arrow::field("tpep_pickup_datetime", arrow::timestamp(arrow::TimeUnit::MICRO)),
@@ -217,10 +217,10 @@ arrow::Result<std::shared_ptr<arrow::RecordBatchReader>> ScanFile(const ScanReqR
     auto format = std::make_shared<arrow::dataset::ParquetFileFormat>();
 
     arrow::dataset::FileSource source;
-    if (mode == 3) {
+    if (backend == "file") {
       ARROW_ASSIGN_OR_RAISE(auto file, arrow::io::ReadableFile::Open(stub.path));
       source = arrow::dataset::FileSource(file);
-    } else if (mode == 4) {
+    } else if (backend == "file+mmap") {
       ARROW_ASSIGN_OR_RAISE(auto file, arrow::io::MemoryMappedFile::Open(stub.path, arrow::io::FileMode::READ));
       source = arrow::dataset::FileSource(file);
     }

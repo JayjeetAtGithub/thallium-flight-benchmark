@@ -136,13 +136,13 @@ arrow::Result<std::shared_ptr<arrow::RecordBatch>> GetNextBatch(ConnCtx &conn_ct
 
 arrow::Status Main(int argc, char **argv) {
     if (argc < 3) {
-        std::cout << "./tc [port] [bench-mode]" << std::endl;
+        std::cout << "./tc [port] [backend]" << std::endl;
         exit(1);
     }
 
     std::string uri_base = "ofi+verbs;ofi_rxm://10.0.2.50:";
     std::string uri = uri_base + argv[1];
-    int bench_mode = (int)std::stoi(argv[2]);
+    std::string backend = argv[2];
 
     auto filter = 
         cp::greater(cp::field_ref("total_amount"), cp::literal(-200));
@@ -171,7 +171,7 @@ arrow::Status Main(int argc, char **argv) {
     int64_t total_rows = 0;
 
 
-    if (bench_mode == 1 || bench_mode == 2) {
+    if (backend == "dataset") {
         std::string path = "/mnt/cephfs/dataset";
         ARROW_ASSIGN_OR_RAISE(auto scan_req, GetScanRequest(path, filter, schema, schema));
         ScanCtx scan_ctx = Scan(conn_ctx, scan_req);
