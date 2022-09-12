@@ -8,7 +8,6 @@
 
 #include <arrow/compute/exec/expression.h>
 
-
 struct ConnCtx {
     thallium::engine engine;
     thallium::endpoint endpoint;
