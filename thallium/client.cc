@@ -10,12 +10,13 @@
 #include <arrow/ipc/api.h>
 #include <arrow/util/checked_cast.h>
 #include <arrow/util/iterator.h>
-#include "arrow/array/array_base.h"
-#include "arrow/array/array_nested.h"
-#include "arrow/array/data.h"
-#include "arrow/array/util.h"
-#include "arrow/testing/random.h"
-#include "arrow/util/key_value_metadata.h"
+
+#include <arrow/array/array_base.h>
+#include <arrow/array/array_nested.h>
+#include <arrow/array/data.h>
+#include <arrow/array/util.h>
+#include <arrow/testing/random.h>
+#include <arrow/util/key_value_metadata.h>
 
 #include <parquet/arrow/reader.h>
 #include <parquet/arrow/writer.h>
@@ -182,7 +183,19 @@ arrow::Status Main(int argc, char **argv) {
             }
         }
     } else {
-
+        {
+            MEASURE_FUNCTION_EXECUTION_TIME
+            for (int i = 1; i <= 200; i++) {
+                std::string filepath = "/mnt/cephfs/dataset/16MB.uncompressed.parquet." + std::to_string(i);
+                ARROW_ASSIGN_OR_RAISE(auto scan_req, GetScanRequest(filepath, filter, schema, schema));
+                Scan(conn_ctx, scan_req);
+                // bool last = (i == 200);
+                while ((batch = GetNextBatch(conn_ctx, schema, last).ValueOrDie()) != nullptr) {
+                    total_rows += batch->num_rows();
+                    std::cout << batch->ToString() << std::endl;
+                }
+            }
+        }
     }
 
     conn_ctx.engine.finalize();
