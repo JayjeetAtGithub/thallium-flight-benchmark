@@ -151,9 +151,6 @@ arrow::Result<std::shared_ptr<arrow::RecordBatchReader>> ScanDataset(cp::ExecCon
       arrow::field("improvement_surcharge", arrow::float64()),
       arrow::field("total_amount", arrow::float64())
     });
-
-    auto filter = arrow::compute::greater(arrow::compute::field_ref("total_amount"),
-                                          arrow::compute::literal(-200));
     
     std::string path;
     ARROW_ASSIGN_OR_RAISE(auto fs, arrow::fs::FileSystemFromUri(uri, &path)); 
