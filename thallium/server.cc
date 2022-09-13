@@ -10,12 +10,12 @@
 #include <arrow/util/checked_cast.h>
 #include <arrow/util/iterator.h>
 
-#include "arrow/array/array_base.h"
-#include "arrow/array/array_nested.h"
-#include "arrow/array/data.h"
-#include "arrow/array/util.h"
-#include "arrow/testing/random.h"
-#include "arrow/util/key_value_metadata.h"
+#include <arrow/array/array_base.h>
+#include <arrow/array/array_nested.h>
+#include <arrow/array/data.h>
+#include <arrow/array/util.h>
+#include <arrow/testing/random.h>
+#include <arrow/util/key_value_metadata.h>
 
 #include <boost/uuid/uuid.hpp>
 #include <boost/uuid/uuid_generators.hpp>
@@ -62,12 +62,14 @@ static char* read_input_file(const char* filename) {
 
 int main(int argc, char** argv) {
 
-    if (argc < 2) {
-        std::cout << "./ts[bench_mode]" << std::endl;
+    if (argc < 3) {
+        std::cout << "./ts [selectivity] [backend]" << std::endl;
         exit(1);
     }
 
-    int bench_mode = atoi(argv[1]);
+    std::string selectivity = argv[1];
+    std::string backend = argv[2];
+
     tl::engine engine("verbs://ibp130s0", THALLIUM_SERVER_MODE, true);
     margo_instance_id mid = engine.get_margo_instance();
     hg_addr_t svr_addr;
@@ -99,22 +101,16 @@ int main(int argc, char** argv) {
     bk::target tid = bp->list_targets()[0];
 
     std::function<void(const tl::request&, const ScanReqRPCStub&)> scan = 
-        [&reader_map, &mid, &svr_addr, &bp, &bcl, &bph, &tid, &db, &bench_mode](const tl::request &req, const ScanReqRPCStub& stub) {
+        [&reader_map, &mid, &svr_addr, &bp, &bcl, &bph, &tid, &db, &backend, &selectivity](const tl::request &req, const ScanReqRPCStub& stub) {
             arrow::dataset::internal::Initialize();
             std::shared_ptr<arrow::RecordBatchReader> reader;
 
-            if (bench_mode == 1 || bench_mode == 2) {
-                std::cout << "Running transport benchmark in mode " << bench_mode << std::endl;
+            if (backend == "dataset" || backend == "dataset+mem") {
                 cp::ExecContext exec_ctx;
-                reader = ScanBenchmark(exec_ctx, stub, bench_mode).ValueOrDie();
-            } else if (bench_mode == 3) {
-                std::cout << "Scanning data from ext4 using mmap\n";
-                reader = ScanEXT4MMap(stub).ValueOrDie();
-            } else if (bench_mode == 4) {
-                std::cout << "Scanning data from ext4\n";
-                reader = ScanEXT4(stub).ValueOrDie();
-            } else if (bench_mode == 5) {
-                std::cout << "Scanning data from bake\n";
+                reader = ScanDataset(exec_ctx, stub, backend, selectivity).ValueOrDie();
+            } else if (backend == "file" || backend == "file+mmap") {
+                reader = ScanFile(stub, backend, selectivity).ValueOrDie();
+            } else if (backend == "bake") {
                 size_t value_size = 28;
                 void *value_buf = malloc(28);
                 

@@ -87,12 +87,12 @@ class ParquetStorageService : public arrow::flight::FlightServerBase {
             ARROW_ASSIGN_OR_RAISE(auto scanner, scanner_builder->Finish());
 
             if (backend_ == "dataset") {
-                std::cout << "Using dataset backend" << std::endl;
+                std::cout << "Using dataset backend: " << request.ticket << std::endl;
                 ARROW_ASSIGN_OR_RAISE(auto reader, scanner->ToRecordBatchReader());
                 *stream = std::unique_ptr<arrow::flight::FlightDataStream>(
                     new arrow::flight::RecordBatchStream(reader));
             } else if (backend_ == "dataset+mem") {
-                std::cout << "Using dataset+mem backend" << std::endl;
+                std::cout << "Using dataset+mem backend: " << request.ticket << std::endl;
                 ARROW_ASSIGN_OR_RAISE(auto table, scanner->ToTable());
                 auto im_ds = std::make_shared<arrow::dataset::InMemoryDataset>(table);
                 ARROW_ASSIGN_OR_RAISE(auto im_ds_scanner_builder, im_ds->NewScan());

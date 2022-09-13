@@ -10,12 +10,13 @@
 #include <arrow/ipc/api.h>
 #include <arrow/util/checked_cast.h>
 #include <arrow/util/iterator.h>
-#include "arrow/array/array_base.h"
-#include "arrow/array/array_nested.h"
-#include "arrow/array/data.h"
-#include "arrow/array/util.h"
-#include "arrow/testing/random.h"
-#include "arrow/util/key_value_metadata.h"
+
+#include <arrow/array/array_base.h>
+#include <arrow/array/array_nested.h>
+#include <arrow/array/data.h>
+#include <arrow/array/util.h>
+#include <arrow/testing/random.h>
+#include <arrow/util/key_value_metadata.h>
 
 #include <parquet/arrow/reader.h>
 #include <parquet/arrow/writer.h>
@@ -135,13 +136,13 @@ arrow::Result<std::shared_ptr<arrow::RecordBatch>> GetNextBatch(ConnCtx &conn_ct
 
 arrow::Status Main(int argc, char **argv) {
     if (argc < 3) {
-        std::cout << "./tc [port] [bench-mode]" << std::endl;
+        std::cout << "./tc [port] [backend]" << std::endl;
         exit(1);
     }
 
     std::string uri_base = "ofi+verbs;ofi_rxm://10.0.2.50:";
     std::string uri = uri_base + argv[1];
-    int bench_mode = (int)std::stoi(argv[2]);
+    std::string backend = argv[2];
 
     auto filter = 
         cp::greater(cp::field_ref("total_amount"), cp::literal(-200));
@@ -167,12 +168,13 @@ arrow::Status Main(int argc, char **argv) {
     });
 
     ConnCtx conn_ctx = Init(uri);
+    int64_t total_rows = 0;
 
-    if (bench_mode == 1 || bench_mode == 2) {
+
+    if (backend == "dataset") {
         std::string path = "/mnt/cephfs/dataset";
         ARROW_ASSIGN_OR_RAISE(auto scan_req, GetScanRequest(path, filter, schema, schema));
         ScanCtx scan_ctx = Scan(conn_ctx, scan_req);
-        int64_t total_rows = 0;
         std::shared_ptr<arrow::RecordBatch> batch;
         {
             MEASURE_FUNCTION_EXECUTION_TIME
@@ -182,7 +184,19 @@ arrow::Status Main(int argc, char **argv) {
             }
         }
     } else {
-
+        {
+            MEASURE_FUNCTION_EXECUTION_TIME
+            std::shared_ptr<arrow::RecordBatch> batch;
+            for (int i = 1; i <= 200; i++) {
+                std::string filepath = "/mnt/cephfs/dataset/16MB.uncompressed.parquet." + std::to_string(i);
+                ARROW_ASSIGN_OR_RAISE(auto scan_req, GetScanRequest(filepath, filter, schema, schema));
+                ScanCtx scan_ctx = Scan(conn_ctx, scan_req);
+                while ((batch = GetNextBatch(conn_ctx, scan_ctx).ValueOrDie()) != nullptr) {
+                    total_rows += batch->num_rows();
+                }
+            }
+        }
+        std::cout << "Read " << total_rows << " rows" << std::endl;
     }
 
     conn_ctx.engine.finalize();

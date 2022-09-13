@@ -40,7 +40,7 @@ arrow::Result<std::unique_ptr<arrow::flight::FlightClient>> ConnectToFlightServe
 
 int main(int argc, char *argv[]) {
   if (argc < 3) {
-    std::cout << "./fc [port] [mode]" << std::endl;
+    std::cout << "./fc [port] [backend]" << std::endl;
     exit(1);
   }
 
@@ -48,11 +48,11 @@ int main(int argc, char *argv[]) {
   std::string host = "10.10.1.2";
   info.host = host;
   info.port = (int32_t)std::stoi(argv[1]);
-  std::string mode = argv[2]; // dataset/file
+  std::string backend = argv[2]; // dataset/file
 
   auto client = ConnectToFlightServer(info).ValueOrDie();
 
-  if (mode == "dataset") {
+  if (backend == "dataset") {
     std::string filepath = "/mnt/cephfs/dataset";
     auto descriptor = arrow::flight::FlightDescriptor::Path({filepath});
     std::unique_ptr<arrow::flight::FlightInfo> flight_info;
