@@ -70,6 +70,13 @@ make
 
 The binaries will be generated in the `bin` directory.
 
+## Deploying dataset
+
+On the server node,
+```bash
+./deploy_data.sh
+```
+
 ## Running Benchmarks
 
 ### Thallium
