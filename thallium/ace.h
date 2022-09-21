@@ -241,7 +241,7 @@ arrow::Result<std::shared_ptr<arrow::RecordBatchReader>> ScanFile(const ScanReqR
     return reader;
 }
 
-arrow::Result<std::shared_ptr<arrow::RecordBatchReader>> ScanBake(const ScanReqRPCStub& stub, uint8_t *ptr) {   
+arrow::Result<std::shared_ptr<arrow::RecordBatchReader>> ScanBake(const ScanReqRPCStub& stub, uint8_t *ptr, std::string selectivity) {
     std::cout << "Using bake backend: " << stub.path << std::endl;
     // deserialize filter
     ARROW_ASSIGN_OR_RAISE(auto filter,
@@ -271,7 +271,7 @@ arrow::Result<std::shared_ptr<arrow::RecordBatchReader>> ScanBake(const ScanReqR
     auto scanner_builder = std::make_shared<arrow::dataset::ScannerBuilder>(
         dataset_schema, std::move(fragment), std::move(options));
 
-    ARROW_RETURN_NOT_OK(scanner_builder->Filter(filter));
+    ARROW_RETURN_NOT_OK(scanner_builder->Filter(GetFilter(selectivity)));
     ARROW_RETURN_NOT_OK(scanner_builder->Project(projection_schema->field_names()));
 
     ARROW_ASSIGN_OR_RAISE(auto scanner, scanner_builder->Finish());

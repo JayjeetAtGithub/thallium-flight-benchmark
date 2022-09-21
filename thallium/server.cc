@@ -118,7 +118,7 @@ int main(int argc, char** argv) {
                 bk::region rid(std::string((char*)value_buf, value_size));
 
                 uint8_t *ptr = (uint8_t*)bcl.get_data(bph, tid, rid);
-                reader = ScanBake(stub, ptr).ValueOrDie();
+                reader = ScanBake(stub, ptr, selectivity).ValueOrDie();
             }
 
             std::string uuid = boost::uuids::to_string(boost::uuids::random_generator()());
