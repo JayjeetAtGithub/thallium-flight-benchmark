@@ -96,7 +96,7 @@ arrow::Result<std::shared_ptr<arrow::RecordBatch>> GetNextBatch(ConnCtx &conn_ct
             std::vector<std::pair<void*,std::size_t>> segments(num_cols*2);
             
             {
-                MeasureExecutionTime m("preallocate buffers and map to segments");
+                MeasureExecutionTime m("preallocate_buffers_and_map_to_segments");
                 for (int64_t i = 0; i < num_cols; i++) {
                     data_buffs[i] = arrow::AllocateBuffer(data_buff_sizes[i]).ValueOrDie();
                     offset_buffs[i] = arrow::AllocateBuffer(offset_buff_sizes[i]).ValueOrDie();
@@ -121,7 +121,7 @@ arrow::Result<std::shared_ptr<arrow::RecordBatch>> GetNextBatch(ConnCtx &conn_ct
             }
 
             {
-                MeasureExecutionTime m("make batch from buffers");
+                MeasureExecutionTime m("make_batch_from_buffers");
                 for (int64_t i = 0; i < num_cols; i++) {
                     std::shared_ptr<arrow::DataType> type = scan_ctx.schema->field(i)->type();  
                     if (is_binary_like(type->id())) {
