@@ -121,7 +121,7 @@ arrow::Result<std::shared_ptr<arrow::RecordBatch>> GetNextBatch(ConnCtx &conn_ct
             }
 
             {
-                MeasureExecutionTime m("make batch from buffers")
+                MeasureExecutionTime m("make batch from buffers");
                 for (int64_t i = 0; i < num_cols; i++) {
                     std::shared_ptr<arrow::DataType> type = scan_ctx.schema->field(i)->type();  
                     if (is_binary_like(type->id())) {
