@@ -95,28 +95,42 @@ arrow::Result<std::shared_ptr<arrow::RecordBatch>> GetNextBatch(ConnCtx &conn_ct
             std::vector<std::unique_ptr<arrow::Buffer>> offset_buffs(num_cols);
             std::vector<std::pair<void*,std::size_t>> segments(num_cols*2);
             
-            for (int64_t i = 0; i < num_cols; i++) {
-                data_buffs[i] = arrow::AllocateBuffer(data_buff_sizes[i]).ValueOrDie();
-                offset_buffs[i] = arrow::AllocateBuffer(offset_buff_sizes[i]).ValueOrDie();
+            {
+                MeasureExecutionTime m("preallocate buffers and map to segments");
+                for (int64_t i = 0; i < num_cols; i++) {
+                    data_buffs[i] = arrow::AllocateBuffer(data_buff_sizes[i]).ValueOrDie();
+                    offset_buffs[i] = arrow::AllocateBuffer(offset_buff_sizes[i]).ValueOrDie();
 
-                segments[i*2].first = (void*)data_buffs[i]->mutable_data();
-                segments[i*2].second = data_buff_sizes[i];
+                    segments[i*2].first = (void*)data_buffs[i]->mutable_data();
+                    segments[i*2].second = data_buff_sizes[i];
 
-                segments[(i*2)+1].first = (void*)offset_buffs[i]->mutable_data();
-                segments[(i*2)+1].second = offset_buff_sizes[i];
+                    segments[(i*2)+1].first = (void*)offset_buffs[i]->mutable_data();
+                    segments[(i*2)+1].second = offset_buff_sizes[i];
+                }
+            }          
+
+            tl::bulk local;
+            {
+                MeasureExecutionTime m("expose");
+                local = conn_ctx.engine.expose(segments, tl::bulk_mode::write_only);
             }
 
-            tl::bulk local = conn_ctx.engine.expose(segments, tl::bulk_mode::write_only);
-            b.on(req.get_endpoint()) >> local;
+            {
+                MeasureExecutionTime m("do_rdma");
+                b.on(req.get_endpoint()) >> local;
+            }
 
-            for (int64_t i = 0; i < num_cols; i++) {
-                std::shared_ptr<arrow::DataType> type = scan_ctx.schema->field(i)->type();  
-                if (is_binary_like(type->id())) {
-                    std::shared_ptr<arrow::Array> col_arr = std::make_shared<arrow::StringArray>(num_rows, std::move(offset_buffs[i]), std::move(data_buffs[i]));
-                    columns.push_back(col_arr);
-                } else {
-                    std::shared_ptr<arrow::Array> col_arr = std::make_shared<arrow::PrimitiveArray>(type, num_rows, std::move(data_buffs[i]));
-                    columns.push_back(col_arr);
+            {
+                MeasureExecutionTime m("make batch from buffers")
+                for (int64_t i = 0; i < num_cols; i++) {
+                    std::shared_ptr<arrow::DataType> type = scan_ctx.schema->field(i)->type();  
+                    if (is_binary_like(type->id())) {
+                        std::shared_ptr<arrow::Array> col_arr = std::make_shared<arrow::StringArray>(num_rows, std::move(offset_buffs[i]), std::move(data_buffs[i]));
+                        columns.push_back(col_arr);
+                    } else {
+                        std::shared_ptr<arrow::Array> col_arr = std::make_shared<arrow::PrimitiveArray>(type, num_rows, std::move(data_buffs[i]));
+                        columns.push_back(col_arr);
+                    }
                 }
             }
 
