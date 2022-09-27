@@ -210,9 +210,10 @@ int main(int argc, char** argv) {
                     }
                 }
 
+                tl::bulk arrow_bulk;
                 {
                     MeasureExecutionTime m("expose_for_read");
-                    tl::bulk arrow_bulk = engine.expose(segments, tl::bulk_mode::read_only);
+                    arrow_bulk = engine.expose(segments, tl::bulk_mode::read_only);
                 }
                 
                 do_rdma.on(req.get_endpoint())(num_rows, data_buff_sizes, offset_buff_sizes, arrow_bulk);
