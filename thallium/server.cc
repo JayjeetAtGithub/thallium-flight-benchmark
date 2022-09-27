@@ -151,7 +151,7 @@ int main(int argc, char** argv) {
         [&mid, &svr_addr, &engine, &do_rdma, &reader_map, &total_rows_written](const tl::request &req, const std::string& uuid) {
             std::shared_ptr<arrow::RecordBatchReader> reader;
             {
-                MeasureExecutionTime m("fetch_reader_from_map");
+                MeasureExecutionTime m("fetch_reader");
                 reader = reader_map[uuid];
             }
 
@@ -173,41 +173,48 @@ int main(int argc, char** argv) {
 
                 std::string null_buff = "xx";
 
-                for (int64_t i = 0; i < batch->num_columns(); i++) {
-                    std::shared_ptr<arrow::Array> col_arr = batch->column(i);
-                    arrow::Type::type type = col_arr->type_id();
-                    int64_t null_count = col_arr->null_count();
+                {
+                    MeasureExecutionTime m("map_buffer_to_segments");
+                    for (int64_t i = 0; i < batch->num_columns(); i++) {
+                        std::shared_ptr<arrow::Array> col_arr = batch->column(i);
+                        arrow::Type::type type = col_arr->type_id();
+                        int64_t null_count = col_arr->null_count();
 
-                    int64_t data_size = 0;
-                    int64_t offset_size = 0;
+                        int64_t data_size = 0;
+                        int64_t offset_size = 0;
 
-                    if (is_binary_like(type)) {
-                        std::shared_ptr<arrow::Buffer> data_buff = 
-                            std::static_pointer_cast<arrow::BinaryArray>(col_arr)->value_data();
-                        std::shared_ptr<arrow::Buffer> offset_buff = 
-                            std::static_pointer_cast<arrow::BinaryArray>(col_arr)->value_offsets();
-                        data_size = data_buff->size();
-                        offset_size = offset_buff->size();
-                        segments[i*2].first = (void*)data_buff->data();
-                        segments[i*2].second = data_size;
-                        segments[(i*2)+1].first = (void*)offset_buff->data();
-                        segments[(i*2)+1].second = offset_size;
-                    } else {
-                        std::shared_ptr<arrow::Buffer> data_buff = 
-                            std::static_pointer_cast<arrow::PrimitiveArray>(col_arr)->values();
-                        data_size = data_buff->size();
-                        offset_size = null_buff.size() + 1; 
-                        segments[i*2].first  = (void*)data_buff->data();
-                        segments[i*2].second = data_size;
-                        segments[(i*2)+1].first = (void*)(&null_buff[0]);
-                        segments[(i*2)+1].second = offset_size;
+                        if (is_binary_like(type)) {
+                            std::shared_ptr<arrow::Buffer> data_buff = 
+                                std::static_pointer_cast<arrow::BinaryArray>(col_arr)->value_data();
+                            std::shared_ptr<arrow::Buffer> offset_buff = 
+                                std::static_pointer_cast<arrow::BinaryArray>(col_arr)->value_offsets();
+                            data_size = data_buff->size();
+                            offset_size = offset_buff->size();
+                            segments[i*2].first = (void*)data_buff->data();
+                            segments[i*2].second = data_size;
+                            segments[(i*2)+1].first = (void*)offset_buff->data();
+                            segments[(i*2)+1].second = offset_size;
+                        } else {
+                            std::shared_ptr<arrow::Buffer> data_buff = 
+                                std::static_pointer_cast<arrow::PrimitiveArray>(col_arr)->values();
+                            data_size = data_buff->size();
+                            offset_size = null_buff.size() + 1; 
+                            segments[i*2].first  = (void*)data_buff->data();
+                            segments[i*2].second = data_size;
+                            segments[(i*2)+1].first = (void*)(&null_buff[0]);
+                            segments[(i*2)+1].second = offset_size;
+                        }
+
+                        data_buff_sizes.push_back(data_size);
+                        offset_buff_sizes.push_back(offset_size);
                     }
-
-                    data_buff_sizes.push_back(data_size);
-                    offset_buff_sizes.push_back(offset_size);
                 }
 
-                tl::bulk arrow_bulk = engine.expose(segments, tl::bulk_mode::read_only);
+                {
+                    MeasureExecutionTime m("expose_for_read");
+                    tl::bulk arrow_bulk = engine.expose(segments, tl::bulk_mode::read_only);
+                }
+                
                 do_rdma.on(req.get_endpoint())(num_rows, data_buff_sizes, offset_buff_sizes, arrow_bulk);
                 return req.respond(0);
             } else {
