@@ -149,10 +149,10 @@ int main(int argc, char** argv) {
     int64_t total_rows_written = 0;
     std::function<void(const tl::request&, const std::string&)> get_next_batch = 
         [&mid, &svr_addr, &engine, &do_rdma, &reader_map, &total_rows_written](const tl::request &req, const std::string& uuid) {
-            
+            std::shared_ptr<arrow::RecordBatchReader> reader;
             {
                 MeasureExecutionTime m("fetch_reader_from_map");
-                std::shared_ptr<arrow::RecordBatchReader> reader = reader_map[uuid];
+                reader = reader_map[uuid];
             }
 
             std::shared_ptr<arrow::RecordBatch> batch;
