@@ -1,0 +1,30 @@
+Selectivity:  1  %
+preallocate_buffers_and_map_to_segments  : 0.096 %
+expose_for_write  : 0.396 %
+fetch_buffers  : 0.915 %
+make_batch_from_buffers  : 0.095 %
+fetch_reader  : 0.0 %
+read_next_batch  : 97.562 %
+map_buffer_to_segments  : 0.049 %
+expose_for_read  : 0.882 %
+------------------------------------------------
+Selectivity:  10  %
+preallocate_buffers_and_map_to_segments  : 0.161 %
+expose_for_write  : 3.007 %
+fetch_buffers  : 1.269 %
+make_batch_from_buffers  : 0.082 %
+fetch_reader  : 0.001 %
+read_next_batch  : 93.46600000000001 %
+map_buffer_to_segments  : 0.047 %
+expose_for_read  : 1.9619999999999997 %
+------------------------------------------------
+Selectivity:  100  %
+preallocate_buffers_and_map_to_segments  : 0.11199999999999999 %
+expose_for_write  : 6.93 %
+fetch_buffers  : 8.956 %
+make_batch_from_buffers  : 0.061 %
+fetch_reader  : 0.001 %
+read_next_batch  : 78.532 %
+map_buffer_to_segments  : 0.182 %
+expose_for_read  : 5.221 %
+------------------------------------------------
