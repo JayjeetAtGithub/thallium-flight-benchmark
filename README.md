@@ -31,7 +31,7 @@ spack install --reuse mochi-thallium
 spack load mochi-thallium
 spack install --reuse mochi-bake
 spack load mochi-bake
-spack install --reuse mochi-yokan
+spack install --reuse mochi-yokan ^rocksdb
 spack load mochi-yokan
 ```
 
