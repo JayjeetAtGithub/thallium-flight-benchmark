@@ -1,6 +1,6 @@
 # Thallium vs Arrow Flight Benchmark
 
-## Configuring CloudLab APT r320 Nodes
+## Configuring CloudLab APT r320/c6220 Nodes
 
 **NOTE:** All the steps need to be repeated on both the client and server nodes.
 
@@ -27,11 +27,13 @@ spack repo add mochi-spack-packages
 
 # install mochi-thallium
 spack install libfabric fabrics=tcp,udp,sockets,verbs,rxm
+spack install --reuse mercury +ucx
+spack install --reuse mochi-margo@main
 spack install --reuse mochi-thallium
-spack load mochi-thallium
 spack install --reuse mochi-bake
-spack load mochi-bake
 spack install --reuse mochi-yokan ^rocksdb
+spack load mochi-thallium
+spack load mochi-bake
 spack load mochi-yokan
 ```
 
