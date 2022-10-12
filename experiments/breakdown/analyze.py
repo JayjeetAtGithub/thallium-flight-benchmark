@@ -1,4 +1,7 @@
 import math
+from unittest import result
+import matplotlib.pyplot as plt
+import seaborn
 
 
 def round_up(n, decimals=0):
@@ -55,9 +58,25 @@ if __name__ == "__main__":
                 total += result_dict[key]
         
         # print(total)
+        percentages = list()
+        stage_labels = list()
         for key in result_dict.keys():
             if key != "scan_file":
                 print(key, " :", round_up(float(result_dict[key]/total), 5) * 100, "%")
+                percentages.append(round_up(float(result_dict[key]/total), 5) * 100)
+                stage_labels.append(key)
+        
+        data = percentages
+        keys = stage_labels
 
-        result_dict = dict()
+        print(data)
+        print(keys)
+        
+        palette_color = seaborn.color_palette('bright')
+        plt.pie(data, labels=keys, colors=palette_color, autopct='%.2f%%')
+        plt.savefig(f"plot_{l}.pdf")
+        plt.cla()
+        plt.clf()
+
         print("------------------------------------------------")
+        result_dict = dict()
