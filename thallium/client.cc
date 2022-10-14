@@ -66,9 +66,9 @@ arrow::Result<ScanReq> GetScanRequest(std::string path,
     return req;
 }
 
-ConnCtx Init(std::string host) {
+ConnCtx Init(std::string protocol, std::string host) {
     ConnCtx ctx;
-    tl::engine engine("verbs://ibp130s0", THALLIUM_SERVER_MODE, true);
+    tl::engine engine(protocol, THALLIUM_SERVER_MODE, true);
     tl::endpoint endpoint = engine.lookup(host);
     ctx.engine = engine;
     ctx.endpoint = endpoint;
@@ -135,14 +135,14 @@ arrow::Result<std::shared_ptr<arrow::RecordBatch>> GetNextBatch(ConnCtx &conn_ct
 }
 
 arrow::Status Main(int argc, char **argv) {
-    if (argc < 3) {
-        std::cout << "./tc [port] [backend]" << std::endl;
+    if (argc < 4) {
+        std::cout << "./tc [uri] [backend] [protocol]" << std::endl;
         exit(1);
     }
 
-    std::string uri_base = "ofi+verbs;ofi_rxm://10.0.2.50:";
-    std::string uri = uri_base + argv[1];
+    std::string uri = argv[1];
     std::string backend = argv[2];
+    std::string protocol = argv[3];
 
     auto filter = 
         cp::greater(cp::field_ref("total_amount"), cp::literal(-200));
@@ -167,7 +167,7 @@ arrow::Status Main(int argc, char **argv) {
         arrow::field("total_amount", arrow::float64())
     });
 
-    ConnCtx conn_ctx = Init(uri);
+    ConnCtx conn_ctx = Init(protocol, uri);
     int64_t total_rows = 0;
 
 
