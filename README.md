@@ -11,23 +11,23 @@
 apt update
 apt install -y ibverbs-utils
 
+# clone the repository
+git clone https://github.com/JayjeetAtGithub/thallium-flight-benchmark ~/thallium-flight-benchmark
+
 # install arrow
-./deploy_arrow.sh
+~/thallium-flight-benchmark/deploy_arrow.sh
 
 # install spack
-git clone -c feature.manyFiles=true https://github.com/spack/spack.git ~/spack
-cd ~/spack
-git checkout releases/v0.18
-. share/spack/setup-env.sh
-cd ..
+git clone -b releases/v0.18 -c feature.manyFiles=true https://github.com/spack/spack.git ~/spack
+. ~/spack/share/spack/setup-env.sh
 
 # setup mochi namespace
-git clone https://github.com/mochi-hpc/mochi-spack-packages.git
-spack repo add mochi-spack-packages
+git clone https://github.com/mochi-hpc/mochi-spack-packages.git ~/mochi-spack-packages
+spack repo add ~/mochi-spack-packages
 
 # install mochi-thallium
 spack install libfabric fabrics=tcp,udp,sockets,verbs,rxm
-spack install --reuse mercury +ucx
+spack install --reuse mercury +ucx ^ucx+verbs
 spack install --reuse mochi-margo@main
 spack install --reuse mochi-thallium
 spack install --reuse mochi-bake
@@ -77,26 +77,6 @@ The binaries will be generated in the `bin` directory.
 On the server node,
 ```bash
 ./deploy_data.sh
-```
-
-## Running Benchmarks
-
-### Thallium
-```bash
-# on server
-./bin/ts 
-
-# on client
-./bin/tc [port]"
-```
-
-### Flight
-```bash
-# on server
-./bin/fs [port]
-
-# on client
-./bin/fc [port]
 ```
 
 ## References
