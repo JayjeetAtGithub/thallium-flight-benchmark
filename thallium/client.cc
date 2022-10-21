@@ -180,9 +180,9 @@ arrow::Status Main(int argc, char **argv) {
             MEASURE_FUNCTION_EXECUTION_TIME
             while ((batch = GetNextBatch(conn_ctx, scan_ctx).ValueOrDie()) != nullptr) {
                 total_rows += batch->num_rows();
-                std::cout << "Read " << total_rows << " rows" << std::endl;
             }
         }
+        std::cout << "Read " << total_rows << " rows" << std::endl;
     } else {
         {
             MEASURE_FUNCTION_EXECUTION_TIME
