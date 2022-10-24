@@ -25,6 +25,8 @@
 #include "payload.h"
 
 
+double total_time_partwise = 0;
+
 class MeasureExecutionTime{
   private:
       const std::chrono::steady_clock::time_point begin;
@@ -33,7 +35,11 @@ class MeasureExecutionTime{
       MeasureExecutionTime(const std::string& caller):caller(caller),begin(std::chrono::steady_clock::now()){}
       ~MeasureExecutionTime(){
           const auto duration=std::chrono::steady_clock::now()-begin;
-          std::cout << caller << " : " << (double)std::chrono::duration_cast<std::chrono::microseconds>(duration).count()/1000 << " ms" << std::endl;
+          double value = (double)std::chrono::duration_cast<std::chrono::microseconds>(duration).count()/1000;
+          if (caller != "total") {
+            total_time_partwise += value;
+          }
+          std::cout << caller << " : " << value << " ms" << std::endl;
       }
 };
 
@@ -147,6 +153,8 @@ arrow::Status Main(int argc, char **argv) {
         exit(1);
     }
 
+    total_time_partwise = 0;
+
     std::string uri = argv[1];
     std::string backend = argv[2];
     std::string protocol = argv[3];
@@ -189,6 +197,7 @@ arrow::Status Main(int argc, char **argv) {
                 total_rows += batch->num_rows();
             }
         }
+        std::cout << "total partwise : " << total_time_partwise << std::endl;
     } else {
         {
             MeasureExecutionTime m("total");
@@ -205,6 +214,7 @@ arrow::Status Main(int argc, char **argv) {
         std::cout << "Read " << total_rows << " rows" << std::endl;
     }
 
+    total_time_partwise = 0;
     conn_ctx.engine.finalize();
     return arrow::Status::OK();
 }
