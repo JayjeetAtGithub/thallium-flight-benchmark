@@ -104,7 +104,7 @@ arrow::Result<std::shared_ptr<arrow::RecordBatch>> GetNextBatch(ConnCtx &conn_ct
             tl::bulk local = conn_ctx.engine.expose(segments, tl::bulk_mode::write_only);
 
             {
-                MeasureFunctionExecution m("do_rdma");
+                MeasureExecutionTime m("do_rdma");
                 b.on(req.get_endpoint()) >> local;
             }
 
@@ -176,14 +176,14 @@ arrow::Status Main(int argc, char **argv) {
         ScanCtx scan_ctx = Scan(conn_ctx, scan_req);
         std::shared_ptr<arrow::RecordBatch> batch;
         {
-            MeasureFunctionExecution m("total");
+            MeasureExecutionTime m("total");
             while ((batch = GetNextBatch(conn_ctx, scan_ctx).ValueOrDie()) != nullptr) {
                 total_rows += batch->num_rows();
             }
         }
     } else {
         {
-            MeasureFunctionExecution m("total");
+            MeasureExecutionTime m("total");
             std::shared_ptr<arrow::RecordBatch> batch;
             for (int i = 1; i <= 200; i++) {
                 std::string filepath = "/mnt/cephfs/dataset/16MB.uncompressed.parquet." + std::to_string(i);
