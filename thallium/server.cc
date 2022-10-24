@@ -217,7 +217,7 @@ int main(int argc, char** argv) {
                 return req.respond(0);
             } else {
                 reader_map.erase(uuid);
-                std::cout << "total_partwise : " << total_partwise << std::endl;
+                std::cout << "total_partwise : " << total_time_partwise << std::endl;
                 return req.respond(1);
             }
         };
