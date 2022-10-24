@@ -27,6 +27,7 @@
 
 double total_time_partwise = 0;
 
+
 class MeasureExecutionTime{
   private:
       const std::chrono::steady_clock::time_point begin;
@@ -197,7 +198,7 @@ arrow::Status Main(int argc, char **argv) {
                 total_rows += batch->num_rows();
             }
         }
-        std::cout << "total partwise : " << total_time_partwise << std::endl;
+        std::cout << "total partwise : " << total_time_partwise << " ms " << std::endl;
     } else {
         {
             MeasureExecutionTime m("total");

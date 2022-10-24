@@ -39,6 +39,25 @@ namespace bk = bake;
 namespace cp = arrow::compute;
 namespace yk = yokan;
 
+
+double total_time_partwise = 0;
+
+
+class MeasureExecutionTime{
+  private:
+      const std::chrono::steady_clock::time_point begin;
+      const std::string caller;
+  public:
+      MeasureExecutionTime(const std::string& caller):caller(caller),begin(std::chrono::steady_clock::now()){}
+      ~MeasureExecutionTime(){
+          const auto duration=std::chrono::steady_clock::now()-begin;
+          double value = (double)std::chrono::duration_cast<std::chrono::microseconds>(duration).count()/1000;
+          total_time_partwise += value;
+          std::cout << caller << " : " << value << " ms" << std::endl;
+      }
+};
+
+
 static char* read_input_file(const char* filename) {
     size_t ret;
     FILE*  fp = fopen(filename, "r");
@@ -103,6 +122,7 @@ int main(int argc, char** argv) {
 
     std::function<void(const tl::request&, const ScanReqRPCStub&)> scan = 
         [&reader_map, &mid, &svr_addr, &bp, &bcl, &bph, &tid, &db, &backend, &selectivity](const tl::request &req, const ScanReqRPCStub& stub) {
+            total_time_partwise = 0;
             arrow::dataset::internal::Initialize();
             std::shared_ptr<arrow::RecordBatchReader> reader;
 
@@ -134,8 +154,14 @@ int main(int argc, char** argv) {
             
             std::shared_ptr<arrow::RecordBatchReader> reader = reader_map[uuid];
             std::shared_ptr<arrow::RecordBatch> batch;
+            
+            arrow::Status s;
+            {
+                MeasureExecutionTime m("read_next");
+                s = reader->ReadNext(&batch);
+            }
 
-            if (reader->ReadNext(&batch).ok() && batch != nullptr) {
+            if (s.ok() && batch != nullptr) {
 
                 std::vector<int64_t> data_buff_sizes;
                 std::vector<int64_t> offset_buff_sizes;
@@ -180,7 +206,13 @@ int main(int argc, char** argv) {
                     offset_buff_sizes.push_back(offset_size);
                 }
 
-                tl::bulk arrow_bulk = engine.expose(segments, tl::bulk_mode::read_only);
+                tl::bulk arrow_bulk;
+                
+                {
+                    MeasureExecutionTime m("expose_for_read");
+                    arrow_bulk = engine.expose(segments, tl::bulk_mode::read_only);
+                }
+
                 do_rdma.on(req.get_endpoint())(num_rows, data_buff_sizes, offset_buff_sizes, arrow_bulk);
                 return req.respond(0);
             } else {
