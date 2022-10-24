@@ -10,10 +10,18 @@ if __name__ == "__main__":
         "selectivity": list()
     }
 
+    # filelist = [
+    #     "file_flight",
+    #     "file_tl",
+    #     "bake_tl"
+    # ]
+
     filelist = [
-        "file_flight",
-        "file_tl",
-        "bake_tl"
+        'fl_tcp_grpc',
+        'tl_ofi_tcp',
+        'tl_ofi_verbs',
+        'tl_ucx_all',
+        'tl_ucx_tcp'
     ]
 
     for filename in filelist:
@@ -39,4 +47,6 @@ if __name__ == "__main__":
     print(df)
     sns_plot = sns.barplot(x="mode", y="latency(s)", hue="selectivity", data=df)
     plt.title("Selectivity")
-    plt.savefig('plot.pdf')
+    plt.xticks(rotation=20)
+
+    plt.savefig('plot2.pdf')
