@@ -198,7 +198,7 @@ arrow::Status Main(int argc, char **argv) {
                 total_rows += batch->num_rows();
             }
         }
-        std::cout << "total partwise : " << total_time_partwise << " ms " << std::endl;
+        std::cout << "total_partwise : " << total_time_partwise << " ms " << std::endl;
     } else {
         {
             MeasureExecutionTime m("total");
