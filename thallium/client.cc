@@ -140,13 +140,8 @@ arrow::Result<std::shared_ptr<arrow::RecordBatch>> GetNextBatch(ConnCtx &conn_ct
     conn_ctx.engine.define("do_rdma", f);
     tl::remote_procedure get_next_batch = conn_ctx.engine.define("get_next_batch");
 
-    int e;
-    
-    {
-        MeasureExecutionTime m("rpc_01");
-        e = get_next_batch.on(conn_ctx.endpoint)(scan_ctx.uuid);
-    }
-    
+    int e = get_next_batch.on(conn_ctx.endpoint)(scan_ctx.uuid);
+
     if (e == 0) {
         return batch;
     } else {
@@ -191,7 +186,6 @@ arrow::Status Main(int argc, char **argv) {
 
     ConnCtx conn_ctx = Init(protocol, uri);
     int64_t total_rows = 0;
-
 
     if (backend == "dataset") {
         std::string path = "/mnt/cephfs/dataset";

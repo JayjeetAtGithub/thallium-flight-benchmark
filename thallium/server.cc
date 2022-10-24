@@ -215,15 +215,12 @@ int main(int argc, char** argv) {
                     arrow_bulk = engine.expose(segments, tl::bulk_mode::read_only);
                 }
                 
-                {
-                    MeasureExecutionTime m("rpc_02");
-                    do_rdma.on(req.get_endpoint())(num_rows, data_buff_sizes, offset_buff_sizes, arrow_bulk);
-                }
-                
+                do_rdma.on(req.get_endpoint())(num_rows, data_buff_sizes, offset_buff_sizes, arrow_bulk);
                 return req.respond(0);
             } else {
                 reader_map.erase(uuid);
                 std::cout << "total_partwise : " << total_time_partwise << std::endl;
+                total_time_partwise = 0;
                 return req.respond(1);
             }
         };
