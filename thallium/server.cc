@@ -216,11 +216,6 @@ int main(int argc, char** argv) {
                                 (void*)data_buff->data(),
                                 data_size
                             ));
-
-                            segments.emplace_back(std::make_pair(
-                                (void*)(&null_buff[0]),
-                                offset_size
-                            ));
                         }
 
                         data_buff_sizes.push_back(data_size);
