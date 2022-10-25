@@ -160,7 +160,7 @@ int main(int argc, char** argv) {
             
             std::shared_ptr<arrow::RecordBatchReader> reader = reader_map[uuid];
             std::shared_ptr<arrow::RecordBatch> batch;
-            
+
             arrow::Status s;
             {
                 MeasureExecutionTime m("read_next");
@@ -174,7 +174,8 @@ int main(int argc, char** argv) {
                 int64_t num_rows = batch->num_rows();
                 total_rows_written += num_rows;
 
-                std::vector<std::pair<void*,std::size_t>> segments(batch->num_columns()*2);
+                std::vector<std::pair<void*,std::size_t>> segments;
+                segments.reserve(batch->num_columns()*2);
 
                 std::string null_buff = "xx";
                 {
@@ -194,19 +195,38 @@ int main(int argc, char** argv) {
                                 std::static_pointer_cast<arrow::BinaryArray>(col_arr)->value_offsets();
                             data_size = data_buff->size();
                             offset_size = offset_buff->size();
-                            segments[i*2].first = (void*)data_buff->data();
-                            segments[i*2].second = data_size;
-                            segments[(i*2)+1].first = (void*)offset_buff->data();
-                            segments[(i*2)+1].second = offset_size;
+
+                            segments.emplace_back({
+                                (void*)data_buff->data(),
+                                data_size
+                            });
+
+                            segments.emplace_back({
+                                (void*)offset_buff->data(),
+                                offset_size
+                            });
+
+                            // segments[i*2].first = (void*)data_buff->data();
+                            // segments[i*2].second = data_size;
+                            // segments[(i*2)+1].first = (void*)offset_buff->data();
+                            // segments[(i*2)+1].second = offset_size;
+                        
+                        
                         } else {
                             std::shared_ptr<arrow::Buffer> data_buff = 
                                 std::static_pointer_cast<arrow::PrimitiveArray>(col_arr)->values();
                             data_size = data_buff->size();
                             offset_size = null_buff.size() + 1; 
-                            segments[i*2].first  = (void*)data_buff->data();
-                            segments[i*2].second = data_size;
-                            segments[(i*2)+1].first = (void*)(&null_buff[0]);
-                            segments[(i*2)+1].second = offset_size;
+                            
+                            segments.emplace_back({
+                                (void*)data_buff->data(),
+                                data_size
+                            });
+
+                            segments.emplace_back({
+                                (void*)(&null_buff[0]),
+                                offset_size
+                            });
                         }
 
                         data_buff_sizes.push_back(data_size);
