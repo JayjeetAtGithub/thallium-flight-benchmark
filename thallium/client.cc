@@ -37,7 +37,7 @@ class MeasureExecutionTime{
       ~MeasureExecutionTime(){
           const auto duration=std::chrono::steady_clock::now()-begin;
           double value = (double)std::chrono::duration_cast<std::chrono::microseconds>(duration).count()/1000;
-          if (caller != "total") {
+          if (caller != "total" && caller != "total_get_next_batch") {
             total_time_partwise += value;
           }
           std::cout << caller << " : " << value << " ms" << std::endl;
