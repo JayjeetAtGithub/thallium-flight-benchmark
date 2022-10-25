@@ -15,7 +15,7 @@ class MeasureExecutionTime{
     MeasureExecutionTime(const std::string& caller):caller(caller),begin(std::chrono::steady_clock::now()){}
     ~MeasureExecutionTime(){
         const auto duration=std::chrono::steady_clock::now()-begin;
-        std::cout << (double)std::chrono::duration_cast<std::chrono::milliseconds>(duration).count()/1000 << " seconds" <<std::endl;
+        std::cout << (double)std::chrono::duration_cast<std::chrono::microseconds>(duration).count()/1000 << " ms" <<std::endl;
     }
 };
 
