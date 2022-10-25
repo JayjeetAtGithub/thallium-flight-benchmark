@@ -196,15 +196,15 @@ int main(int argc, char** argv) {
                             data_size = data_buff->size();
                             offset_size = offset_buff->size();
 
-                            segments.emplace_back({
+                            segments.emplace_back(std::make_pair(
                                 (void*)data_buff->data(),
                                 data_size
-                            });
+                            ));
 
-                            segments.emplace_back({
+                            segments.emplace_back(std::make_pair(
                                 (void*)offset_buff->data(),
                                 offset_size
-                            });
+                            ));
 
                             // segments[i*2].first = (void*)data_buff->data();
                             // segments[i*2].second = data_size;
@@ -218,15 +218,15 @@ int main(int argc, char** argv) {
                             data_size = data_buff->size();
                             offset_size = null_buff.size() + 1; 
                             
-                            segments.emplace_back({
+                            segments.emplace_back(std::make_pair(
                                 (void*)data_buff->data(),
                                 data_size
-                            });
+                            ));
 
-                            segments.emplace_back({
+                            segments.emplace_back(std::make_pair(
                                 (void*)(&null_buff[0]),
                                 offset_size
-                            });
+                            ));
                         }
 
                         data_buff_sizes.push_back(data_size);
