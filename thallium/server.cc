@@ -177,7 +177,6 @@ int main(int argc, char** argv) {
                 std::vector<std::pair<void*,std::size_t>> segments;
                 segments.reserve(batch->num_columns()*2);
 
-                std::string null_buff = "xx";
                 {
                     MeasureExecutionTime m("map_buf_to_segments");
                     for (int64_t i = 0; i < batch->num_columns(); i++) {
@@ -210,7 +209,6 @@ int main(int argc, char** argv) {
                             std::shared_ptr<arrow::Buffer> data_buff = 
                                 std::static_pointer_cast<arrow::PrimitiveArray>(col_arr)->values();
                             data_size = data_buff->size();
-                            offset_size = null_buff.size() + 1; 
                             
                             segments.emplace_back(std::make_pair(
                                 (void*)data_buff->data(),
