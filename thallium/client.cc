@@ -34,7 +34,7 @@ class MeasureExecutionTime{
       const std::string caller;
       const bool breaker;
   public:
-      MeasureExecutionTime(const std::string& caller, bool breaker):caller(caller), breaker(breaker),begin(std::chrono::steady_clock::now()){}
+      MeasureExecutionTime(const std::string& caller, bool breaker = false):caller(caller), breaker(breaker),begin(std::chrono::steady_clock::now()){}
       ~MeasureExecutionTime(){
           const auto duration=std::chrono::steady_clock::now()-begin;
           double value = (double)std::chrono::duration_cast<std::chrono::microseconds>(duration).count()/1000;
