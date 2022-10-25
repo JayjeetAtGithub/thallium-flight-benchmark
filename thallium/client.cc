@@ -32,8 +32,9 @@ class MeasureExecutionTime{
   private:
       const std::chrono::steady_clock::time_point begin;
       const std::string caller;
+      const bool breaker;
   public:
-      MeasureExecutionTime(const std::string& caller):caller(caller),begin(std::chrono::steady_clock::now()){}
+      MeasureExecutionTime(const std::string& caller, bool breaker):caller(caller), breaker(breaker),begin(std::chrono::steady_clock::now()){}
       ~MeasureExecutionTime(){
           const auto duration=std::chrono::steady_clock::now()-begin;
           double value = (double)std::chrono::duration_cast<std::chrono::microseconds>(duration).count()/1000;
@@ -41,6 +42,9 @@ class MeasureExecutionTime{
             total_time_partwise += value;
           }
           std::cout << caller << " : " << value << " ms" << std::endl;
+          if (breaker) {
+            std::cout << std::endl;
+          }
       }
 };
 
@@ -196,7 +200,7 @@ arrow::Status Main(int argc, char **argv) {
             MeasureExecutionTime m("total");
 
             {
-                MeasureExecutionTime m("total_get_next_batch");
+                MeasureExecutionTime m("total_get_next_batch", true);
                 batch = GetNextBatch(conn_ctx, scan_ctx).ValueOrDie();
             }
 
@@ -204,7 +208,7 @@ arrow::Status Main(int argc, char **argv) {
                 total_rows += batch->num_rows();\
 
                 {
-                    MeasureExecutionTime m("total_get_next_batch");
+                    MeasureExecutionTime m("total_get_next_batch", true);
                     batch = GetNextBatch(conn_ctx, scan_ctx).ValueOrDie();
                 }
             }
