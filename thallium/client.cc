@@ -201,7 +201,12 @@ arrow::Status Main(int argc, char **argv) {
             }
 
             while (batch != nullptr) {
-                total_rows += batch->num_rows();
+                total_rows += batch->num_rows();\
+
+                {
+                    MeasureExecutionTime m("total_get_next_batch");
+                    batch = GetNextBatch(conn_ctx, scan_ctx).ValueOrDie();
+                }
             }
         }
         std::cout << "total_partwise : " << total_time_partwise << " ms " << std::endl;
