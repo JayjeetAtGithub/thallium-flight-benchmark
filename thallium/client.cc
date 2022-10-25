@@ -194,7 +194,13 @@ arrow::Status Main(int argc, char **argv) {
         std::shared_ptr<arrow::RecordBatch> batch;
         {
             MeasureExecutionTime m("total");
-            while ((batch = GetNextBatch(conn_ctx, scan_ctx).ValueOrDie()) != nullptr) {
+
+            {
+                MeasureExecutionTime m("total_get_next_batch");
+                batch = GetNextBatch(conn_ctx, scan_ctx).ValueOrDie();
+            }
+
+            while (batch != nullptr) {
                 total_rows += batch->num_rows();
             }
         }
