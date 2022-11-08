@@ -15,7 +15,7 @@ apt install -y ibverbs-utils
 git clone https://github.com/JayjeetAtGithub/thallium-flight-benchmark ~/thallium-flight-benchmark
 
 # install arrow
-~/thallium-flight-benchmark/deploy_arrow.sh
+~/thallium-flight-benchmark/scripts/deploy_arrow.sh
 
 # install spack
 git clone -b releases/v0.18 -c feature.manyFiles=true https://github.com/spack/spack.git ~/spack
@@ -50,7 +50,7 @@ modprobe ib_ipoib
 ifconfig -a
 ```
 
-You should find a `ib0` or `ibp8s0` interface.
+You should find a `ib0` or `ibp130s0` interface.
 
 4. Assign an IP address to the IB network interface.
 ```bash
@@ -76,7 +76,7 @@ The binaries will be generated in the `bin` directory.
 
 On the server node,
 ```bash
-./deploy_data.sh
+./scripts/deploy_data.sh
 ```
 
 ## References
