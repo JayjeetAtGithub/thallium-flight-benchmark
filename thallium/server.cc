@@ -40,6 +40,8 @@ namespace bk = bake;
 namespace cp = arrow::compute;
 namespace yk = yokan;
 
+#define BUFFER_SIZE 1024*1024
+
 static char* read_input_file(const char* filename) {
     size_t ret;
     FILE*  fp = fopen(filename, "r");
@@ -60,6 +62,8 @@ static char* read_input_file(const char* filename) {
     fclose(fp);
     return buf;
 }
+
+std::vector<std::pair<void*,std::size_t>> segments;
 
 int main(int argc, char** argv) {
 
@@ -102,8 +106,10 @@ int main(int argc, char** argv) {
     bph.set_eager_limit(0);
     bk::target tid = bp->list_targets()[0];
 
+    tl::bulk arrow_bulk;
+
     std::function<void(const tl::request&, const ScanReqRPCStub&)> scan = 
-        [&reader_map, &mid, &svr_addr, &bp, &bcl, &bph, &tid, &db, &backend, &selectivity](const tl::request &req, const ScanReqRPCStub& stub) {
+        [&engine, &reader_map, &mid, &svr_addr, &bp, &bcl, &bph, &tid, &db, &backend, &selectivity](const tl::request &req, const ScanReqRPCStub& stub) {
             arrow::dataset::internal::Initialize();
             std::shared_ptr<arrow::RecordBatchReader> reader;
 
@@ -125,7 +131,16 @@ int main(int argc, char** argv) {
 
             std::string uuid = boost::uuids::to_string(boost::uuids::random_generator()());
             reader_map[uuid] = reader;
-            
+
+            auto schema = reader->schema();
+            segments.reserve(schema->num_fields() * 2);
+
+            for (int i = 0; i < segments.size(); i++) {
+                segments[i].first = malloc(BUFFER_SIZE);
+                segments[i].second = BUFFER_SIZE;
+            }
+
+            arrow_bulk = engine.expose(segments, tl::bulk_mode::read_only);
             return req.respond(uuid);
         };
 
@@ -162,29 +177,35 @@ int main(int argc, char** argv) {
                             std::static_pointer_cast<arrow::BinaryArray>(col_arr)->value_offsets();
                         data_size = data_buff->size();
                         offset_size = offset_buff->size();
-                        segments[i*2].first = (void*)data_buff->data();
+                        // segments[i*2].first = (void*)data_buff->data();
+                        memcpy(segments[i*2].first, data_buff->data(), data_size);
                         segments[i*2].second = data_size;
-                        segments[(i*2)+1].first = (void*)offset_buff->data();
+                        // segments[(i*2)+1].first = (void*)offset_buff->data();
+                        memcpy(segments[(i*2)+1].first, offset_buff->data(), offset_size);
                         segments[(i*2)+1].second = offset_size;
                     } else {
                         std::shared_ptr<arrow::Buffer> data_buff = 
                             std::static_pointer_cast<arrow::PrimitiveArray>(col_arr)->values();
                         data_size = data_buff->size();
                         offset_size = null_buff.size() + 1; 
-                        segments[i*2].first  = (void*)data_buff->data();
+                        // segments[i*2].first  = (void*)data_buff->data();
+                        memcpy(segments[i*2].first, data_buff->data(), data_size);
                         segments[i*2].second = data_size;
-                        segments[(i*2)+1].first = (void*)(&null_buff[0]);
+                        // segments[(i*2)+1].first = (void*)(&null_buff[0]);
+                        memcpy(segments[(i*2)+1].first, &null_buff[0], offset_size);
                         segments[(i*2)+1].second = offset_size;
                     }
 
                     data_buff_sizes.push_back(data_size);
                     offset_buff_sizes.push_back(offset_size);
                 }
-                tl::bulk arrow_bulk;
-                {
-                    Trace t("server: engine.expose");
-                    arrow_bulk = engine.expose(segments, tl::bulk_mode::read_only);
-                }
+                
+                // tl::bulk arrow_bulk;
+                
+                // {
+                //     Trace t("server: engine.expose");
+                //     arrow_bulk = engine.expose(segments, tl::bulk_mode::read_only);
+                // }
                 do_rdma.on(req.get_endpoint())(num_rows, data_buff_sizes, offset_buff_sizes, arrow_bulk);
                 return req.respond(0);
             } else {
