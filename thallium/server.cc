@@ -130,8 +130,7 @@ int main(int argc, char** argv) {
             std::string uuid = boost::uuids::to_string(boost::uuids::random_generator()());
             reader_map[uuid] = reader;
             
-            std::vector<std::pair<void*,std::size_t>> segments;
-            segments.reserve(34);
+            std::vector<std::pair<void*,std::size_t>> segments(34);
             
             std::cout << "Allocating Segments: " << segments.size() << std::endl;
             for (int i = 0; i < segments.size(); i++) {
