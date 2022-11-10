@@ -107,7 +107,7 @@ int main(int argc, char** argv) {
     tl::bulk arrow_bulk;
 
     std::function<void(const tl::request&, const ScanReqRPCStub&)> scan = 
-        [&engine, &reader_map, &mid, &svr_addr, &bp, &bcl, &bph, &tid, &db, &backend, &selectivity, &arrow_bulk, &segments](const tl::request &req, const ScanReqRPCStub& stub) {
+        [&engine, &reader_map, &mid, &svr_addr, &bp, &bcl, &bph, &tid, &db, &backend, &selectivity, &arrow_bulk](const tl::request &req, const ScanReqRPCStub& stub) {
             arrow::dataset::internal::Initialize();
             std::shared_ptr<arrow::RecordBatchReader> reader;
 
