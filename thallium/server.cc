@@ -134,7 +134,8 @@ int main(int argc, char** argv) {
 
             auto schema = reader->schema();
             segments.reserve(schema->num_fields() * 2);
-
+            
+            std::cout << "Allocating Segments" << std::endl;
             for (int i = 0; i < segments.size(); i++) {
                 auto buf = arrow::AllocateBuffer(BUFFER_SIZE).ValueOrDie();
                 // memset(buf->mutable_data(), 0, BUFFER_SIZE);
