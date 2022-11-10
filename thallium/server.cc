@@ -109,7 +109,7 @@ int main(int argc, char** argv) {
     tl::bulk arrow_bulk;
 
     std::function<void(const tl::request&, const ScanReqRPCStub&)> scan = 
-        [&engine, &reader_map, &mid, &svr_addr, &bp, &bcl, &bph, &tid, &db, &backend, &selectivity, &arrow_bulk](const tl::request &req, const ScanReqRPCStub& stub) {
+        [&engine, &reader_map, &mid, &svr_addr, &bp, &bcl, &bph, &tid, &db, &backend, &selectivity, &arrow_bulk, &segments](const tl::request &req, const ScanReqRPCStub& stub) {
             arrow::dataset::internal::Initialize();
             std::shared_ptr<arrow::RecordBatchReader> reader;
 
@@ -132,10 +132,8 @@ int main(int argc, char** argv) {
             std::string uuid = boost::uuids::to_string(boost::uuids::random_generator()());
             reader_map[uuid] = reader;
 
-            auto schema = reader->schema();
-            segments.reserve(schema->num_fields() * 2);
+            segments.reserve(34);
             
-
             std::cout << "Allocating Segments: " << segments.size() << std::endl;
             for (int i = 0; i < segments.size(); i++) {
                 auto buf = arrow::AllocateBuffer(BUFFER_SIZE).ValueOrDie();
