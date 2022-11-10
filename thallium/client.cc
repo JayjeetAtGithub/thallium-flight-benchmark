@@ -97,7 +97,7 @@ arrow::Result<std::shared_ptr<arrow::RecordBatch>> GetNextBatch(ConnCtx &conn_ct
             std::vector<std::pair<void*,std::size_t>> segments(num_cols*2);
             
             {
-                Trace t("client: arrow.allocate + segment.create")
+                Trace t("client: arrow.allocate + segment.create");
                 for (int64_t i = 0; i < num_cols; i++) {
                     data_buffs[i] = arrow::AllocateBuffer(data_buff_sizes[i]).ValueOrDie();
                     offset_buffs[i] = arrow::AllocateBuffer(offset_buff_sizes[i]).ValueOrDie();
