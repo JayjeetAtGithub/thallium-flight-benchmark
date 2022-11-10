@@ -142,7 +142,7 @@ int main(int argc, char** argv) {
                 segments[i].second = BUFFER_SIZE;
             }
 
-            arrow_bulk = engine.expose(segments, tl::bulk_mode::read_only);
+            arrow_bulk = engine.expose(segments, tl::bulk_mode::read_write);
             return req.respond(uuid);
         };
 
