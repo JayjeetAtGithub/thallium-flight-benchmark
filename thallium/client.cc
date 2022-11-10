@@ -23,6 +23,7 @@
 #include <thallium.hpp>
 
 #include "payload.h"
+#include "trace.h"
 
 
 class MeasureExecutionTime{
