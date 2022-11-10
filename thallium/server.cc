@@ -138,7 +138,7 @@ int main(int argc, char** argv) {
             std::cout << "Allocating Segments" << std::endl;
             for (int i = 0; i < segments.size(); i++) {
                 auto buf = arrow::AllocateBuffer(BUFFER_SIZE).ValueOrDie();
-                // memset(buf->mutable_data(), 0, BUFFER_SIZE);
+                memset(buf->mutable_data(), 0, BUFFER_SIZE);
                 segments[i].first = (void*)buf->mutable_data();
                 segments[i].second = BUFFER_SIZE;
             }
