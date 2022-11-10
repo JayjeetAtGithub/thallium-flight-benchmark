@@ -63,8 +63,6 @@ static char* read_input_file(const char* filename) {
     return buf;
 }
 
-std::vector<std::pair<void*,std::size_t>> segments;
-
 int main(int argc, char** argv) {
 
     if (argc < 4) {
@@ -131,7 +129,8 @@ int main(int argc, char** argv) {
 
             std::string uuid = boost::uuids::to_string(boost::uuids::random_generator()());
             reader_map[uuid] = reader;
-
+            
+            std::vector<std::pair<void*,std::size_t>> segments;
             segments.reserve(34);
             
             std::cout << "Allocating Segments: " << segments.size() << std::endl;
