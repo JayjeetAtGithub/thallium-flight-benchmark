@@ -40,7 +40,7 @@ namespace bk = bake;
 namespace cp = arrow::compute;
 namespace yk = yokan;
 
-#define BUFFER_SIZE 1024*1024
+#define BUFFER_SIZE 1024*50
 
 static char* read_input_file(const char* filename) {
     size_t ret;
