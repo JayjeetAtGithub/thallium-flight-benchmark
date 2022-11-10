@@ -136,7 +136,9 @@ int main(int argc, char** argv) {
             segments.reserve(schema->num_fields() * 2);
 
             for (int i = 0; i < segments.size(); i++) {
-                segments[i].first = malloc(BUFFER_SIZE);
+                char *buffer = (char*)malloc(BUFFER_SIZE);
+                memset(buffer, 0, BUFFER_SIZE);
+                segments[i].first = (void*)buffer;
                 segments[i].second = BUFFER_SIZE;
             }
 
