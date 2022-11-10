@@ -172,7 +172,7 @@ arrow::Result<std::shared_ptr<arrow::RecordBatchReader>> ScanDataset(cp::ExecCon
     ARROW_ASSIGN_OR_RAISE(auto scanner_builder, dataset->NewScan());
     ARROW_RETURN_NOT_OK(scanner_builder->Filter(GetFilter(selectivity)));
     ARROW_RETURN_NOT_OK(scanner_builder->Project(schema->field_names()));
-
+    ARROW_RETURN_NOT_OK(scanner_builder->BatchSize(1024*1024*5));
     ARROW_ASSIGN_OR_RAISE(auto scanner, scanner_builder->Finish());
 
     std::shared_ptr<arrow::RecordBatchReader> reader; 
@@ -263,24 +263,6 @@ arrow::Result<std::shared_ptr<arrow::RecordBatchReader>> ScanBake(const ScanReqR
       arrow::field("improvement_surcharge", arrow::float64()),
       arrow::field("total_amount", arrow::float64())
     });
-    
-    // // deserialize filter
-    // ARROW_ASSIGN_OR_RAISE(auto filter,
-    //   arrow::compute::Deserialize(std::make_shared<arrow::Buffer>(
-    //   stub.filter_buffer, stub.filter_buffer_size))
-    // );
-
-    // // deserialize schemas
-    // arrow::ipc::DictionaryMemo empty_memo;
-    // arrow::io::BufferReader projection_schema_reader(stub.projection_schema_buffer,
-    //                                                  stub.projection_schema_buffer_size);
-    // arrow::io::BufferReader dataset_schema_reader(stub.dataset_schema_buffer,
-    //                                               stub.dataset_schema_buffer_size);
-    // ARROW_ASSIGN_OR_RAISE(auto projection_schema,
-    //                       arrow::ipc::ReadSchema(&projection_schema_reader, &empty_memo));
-
-    // ARROW_ASSIGN_OR_RAISE(auto dataset_schema,
-    //                       arrow::ipc::ReadSchema(&dataset_schema_reader, &empty_memo));
 
     auto format = std::make_shared<arrow::dataset::ParquetFileFormat>();
     auto file = std::make_shared<RandomAccessObject>(ptr, 16074327);
