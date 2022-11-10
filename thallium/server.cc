@@ -141,6 +141,7 @@ int main(int argc, char** argv) {
             }
 
             tl::bulk some_bulk = engine.expose(segments, tl::bulk_mode::read_write);
+            std::cout << "Exposed bulk" << std::endl;
             return req.respond(uuid);
         };
 
