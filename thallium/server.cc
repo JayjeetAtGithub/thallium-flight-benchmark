@@ -40,7 +40,7 @@ namespace bk = bake;
 namespace cp = arrow::compute;
 namespace yk = yokan;
 
-#define BUFFER_SIZE 1024*100
+#define BUFFER_SIZE 1024*1024
 
 static char* read_input_file(const char* filename) {
     size_t ret;
@@ -136,9 +136,9 @@ int main(int argc, char** argv) {
             segments.reserve(schema->num_fields() * 2);
 
             for (int i = 0; i < segments.size(); i++) {
-                char *buffer = (char*)malloc(BUFFER_SIZE);
-                memset(buffer, 0, BUFFER_SIZE);
-                segments[i].first = (void*)buffer;
+                auto buf = arrow::AllocateBuffer(BUFFER_SIZE).ValueOrDie();
+                // memset(buf->mutable_data(), 0, BUFFER_SIZE);
+                segments[i].first = (void*)buf->mutable_data();
                 segments[i].second = BUFFER_SIZE;
             }
 
