@@ -63,6 +63,8 @@ static char* read_input_file(const char* filename) {
     return buf;
 }
 
+vector<uint8_t*> pointers;
+
 int main(int argc, char** argv) {
 
     if (argc < 4) {
@@ -135,6 +137,7 @@ int main(int argc, char** argv) {
             std::cout << "Allocating Segments: " << segments.size() << std::endl;
             for (int i = 0; i < segments.size(); i++) {
                 auto buf = arrow::AllocateBuffer(BUFFER_SIZE).ValueOrDie();
+                pointers.push_back(buf->mutable_data());
                 memset(buf->mutable_data(), 0, BUFFER_SIZE);
                 segments[i].first = (void*)buf->mutable_data();
                 segments[i].second = BUFFER_SIZE;
