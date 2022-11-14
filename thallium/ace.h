@@ -172,7 +172,6 @@ arrow::Result<std::shared_ptr<arrow::RecordBatchReader>> ScanDataset(cp::ExecCon
     ARROW_ASSIGN_OR_RAISE(auto scanner_builder, dataset->NewScan());
     ARROW_RETURN_NOT_OK(scanner_builder->Filter(GetFilter(selectivity)));
     ARROW_RETURN_NOT_OK(scanner_builder->Project(schema->field_names()));
-    ARROW_RETURN_NOT_OK(scanner_builder->BatchSize(1024*1024*5));
     ARROW_ASSIGN_OR_RAISE(auto scanner, scanner_builder->Finish());
 
     std::shared_ptr<arrow::RecordBatchReader> reader; 
