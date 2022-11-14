@@ -162,6 +162,10 @@ int main(int argc, char** argv) {
                             std::static_pointer_cast<arrow::BinaryArray>(col_arr)->value_offsets();
                         data_size = data_buff->size();
                         offset_size = offset_buff->size();
+
+                        std::cout << "data_size: " << data_size << "\n";
+                        std::cout << "offset_size: " << offset_size << "\n";
+
                         segments[i*2].first = (void*)data_buff->data();
                         segments[i*2].second = data_size;
                         segments[(i*2)+1].first = (void*)offset_buff->data();
@@ -171,6 +175,10 @@ int main(int argc, char** argv) {
                             std::static_pointer_cast<arrow::PrimitiveArray>(col_arr)->values();
                         data_size = data_buff->size();
                         offset_size = null_buff.size() + 1; 
+
+                        std::cout << "data_size: " << data_size << "\n";
+                        std::cout << "offset_size: " << offset_size << "\n";
+
                         segments[i*2].first  = (void*)data_buff->data();
                         segments[i*2].second = data_size;
                         segments[(i*2)+1].first = (void*)(&null_buff[0]);
