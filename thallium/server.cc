@@ -63,7 +63,7 @@ static char* read_input_file(const char* filename) {
     return buf;
 }
 
-vector<uint8_t*> pointers;
+std::vector<uint8_t*> pointers;
 
 int main(int argc, char** argv) {
 
