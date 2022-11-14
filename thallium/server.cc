@@ -40,7 +40,7 @@ namespace bk = bake;
 namespace cp = arrow::compute;
 namespace yk = yokan;
 
-#define BUFFER_SIZE 10512
+#define BUFFER_SIZE 1024*1024
 
 static char* read_input_file(const char* filename) {
     size_t ret;
@@ -207,13 +207,7 @@ int main(int argc, char** argv) {
                     data_buff_sizes.push_back(data_size);
                     offset_buff_sizes.push_back(offset_size);
                 }
-                
-                // tl::bulk arrow_bulk;
-                
-                // {
-                //     Trace t("server: engine.expose");
-                //     arrow_bulk = engine.expose(segments, tl::bulk_mode::read_only);
-                // }
+
                 do_rdma.on(req.get_endpoint())(num_rows, data_buff_sizes, offset_buff_sizes, arrow_bulk);
                 return req.respond(0);
             } else {
