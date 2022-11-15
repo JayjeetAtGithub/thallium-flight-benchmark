@@ -139,7 +139,7 @@ int main(int argc, char** argv) {
             for (int i = 0; i < segments.size(); i++) {
                 std::shared_ptr<arrow::Buffer> buf = arrow::AllocateBuffer(BUFFER_SIZE).ValueOrDie();
                 pointers.push_back(buf);
-                memset(pointers[pointers.size()-1]->data(), 0, BUFFER_SIZE);
+                memset(pointers[pointers.size()-1]->mutable_data(), 0, BUFFER_SIZE);
                 segments[i].first = (void*)pointers[pointers.size()-1]->data();
                 segments[i].second = BUFFER_SIZE;
             }
