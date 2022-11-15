@@ -86,29 +86,30 @@ ScanCtx Scan(ConnCtx &conn_ctx, ScanReq &scan_req) {
 
 arrow::Result<std::shared_ptr<arrow::RecordBatch>> GetNextBatch(ConnCtx &conn_ctx, ScanCtx &scan_ctx) {
     std::shared_ptr<arrow::RecordBatch> batch;
-    std::function<void(const tl::request&, int64_t&, std::vector<int64_t>&, std::vector<int64_t>&, tl::bulk&)> f =
-        [&conn_ctx, &scan_ctx, &batch](const tl::request& req, int64_t& num_rows, std::vector<int64_t>& data_buff_sizes, std::vector<int64_t>& offset_buff_sizes, tl::bulk& b) {
+    std::function<void(const tl::request&, int32_t&, std::vector<std::pair<int32_t, int32_t>>&, std::vector<std::pair<int32_t, int32_t>>&, int32_t&, tl::bulk&)> f =
+        [&conn_ctx, &scan_ctx, &batch](const tl::request& req, int32_t& num_rows, std::vector<std::pair<int32_t, int32_t>>& data_buff_sizes, std::vector<std::pair<int32_t, int32_t>>& offset_buff_sizes, int32_t& total_size, tl::bulk& b) {
             int num_cols = scan_ctx.schema->num_fields();
             
             std::vector<std::shared_ptr<arrow::Array>> columns;
-            std::vector<std::unique_ptr<arrow::Buffer>> data_buffs(num_cols);
-            std::vector<std::unique_ptr<arrow::Buffer>> offset_buffs(num_cols);
-            std::vector<std::pair<void*,std::size_t>> segments;
-            segments.reserve(num_cols*2);
-            
-            for (int64_t i = 0; i < num_cols; i++) {
-                data_buffs[i] = arrow::AllocateBuffer(data_buff_sizes[i]).ValueOrDie();
-                offset_buffs[i] = arrow::AllocateBuffer(offset_buff_sizes[i]).ValueOrDie();
+            // std::vector<std::unique_ptr<arrow::Buffer>> data_buffs(num_cols);
+            // std::vector<std::unique_ptr<arrow::Buffer>> offset_buffs(num_cols);
+            std::vector<std::pair<void*,std::size_t>> segments(1);
+            segments[0].first = (uint8_t*)malloc(total_size);
+            segments[0].second = total_size;
 
-                segments.emplace_back(std::make_pair(
-                    (void*)data_buffs[i]->mutable_data(),
-                    data_buff_sizes[i]
-                ));
-                segments.emplace_back(std::make_pair(
-                    (void*)offset_buffs[i]->mutable_data(),
-                    offset_buff_sizes[i]
-                ));
-            }
+            // for (int64_t i = 0; i < num_cols; i++) {
+            //     data_buffs[i] = arrow::AllocateBuffer(data_buff_sizes[i]).ValueOrDie();
+            //     offset_buffs[i] = arrow::AllocateBuffer(offset_buff_sizes[i]).ValueOrDie();
+
+            //     segments.emplace_back(std::make_pair(
+            //         (void*)data_buffs[i]->mutable_data(),
+            //         data_buff_sizes[i]
+            //     ));
+            //     segments.emplace_back(std::make_pair(
+            //         (void*)offset_buffs[i]->mutable_data(),
+            //         offset_buff_sizes[i]
+            //     ));
+            // }
 
             tl::bulk local = conn_ctx.engine.expose(segments, tl::bulk_mode::write_only);
             b.on(req.get_endpoint()) >> local;
@@ -116,10 +117,25 @@ arrow::Result<std::shared_ptr<arrow::RecordBatch>> GetNextBatch(ConnCtx &conn_ct
             for (int64_t i = 0; i < num_cols; i++) {
                 std::shared_ptr<arrow::DataType> type = scan_ctx.schema->field(i)->type();  
                 if (is_binary_like(type->id())) {
-                    std::shared_ptr<arrow::Array> col_arr = std::make_shared<arrow::StringArray>(num_rows, std::move(offset_buffs[i]), std::move(data_buffs[i]));
+                    
+                    std::shared_ptr<arrow::Buffer> data_buff = arrow::Buffer::Wrap(
+                        (uint8_t*)segments[0].first + data_buff_sizes[i].first,
+                        data_buff_sizes[i].second
+                    );
+
+                    std::shared_ptr<arrow::Buffer> offset_buff = arrow::Buffer::Wrap(
+                        (uint8_t*)segments[0].first + offset_buff_sizes[i].first,
+                        offset_buff_sizes[i].second
+                    );
+
+                    std::shared_ptr<arrow::Array> col_arr = std::make_shared<arrow::StringArray>(num_rows, std::move(offset_buff), std::move(data_buff));
                     columns.push_back(col_arr);
                 } else {
-                    std::shared_ptr<arrow::Array> col_arr = std::make_shared<arrow::PrimitiveArray>(type, num_rows, std::move(data_buffs[i]));
+                    std::shared_ptr<arrow::Buffer> data_buff = arrow::Buffer::Wrap(
+                        (uint8_t*)segments[0].first + data_buff_sizes[i].first,
+                        data_buff_sizes[i].second
+                    );
+                    std::shared_ptr<arrow::Array> col_arr = std::make_shared<arrow::PrimitiveArray>(type, num_rows, std::move(data_buff));
                     columns.push_back(col_arr);
                 }
             }
