@@ -102,7 +102,7 @@ arrow::Result<std::shared_ptr<arrow::RecordBatch>> GetNextBatch(ConnCtx &conn_ct
                 segments.emplace_back(std::make_pair(
                     (void*)data_buffs[i]->mutable_data(),
                     data_buff_sizes[i]
-                    ));
+                ));
                 segments.emplace_back(std::make_pair(
                     (void*)offset_buffs[i]->mutable_data(),
                     offset_buff_sizes[i]
