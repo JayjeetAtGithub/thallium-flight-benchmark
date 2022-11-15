@@ -99,11 +99,14 @@ arrow::Result<std::shared_ptr<arrow::RecordBatch>> GetNextBatch(ConnCtx &conn_ct
                 data_buffs[i] = arrow::AllocateBuffer(data_buff_sizes[i]).ValueOrDie();
                 offset_buffs[i] = arrow::AllocateBuffer(offset_buff_sizes[i]).ValueOrDie();
 
-                segments[i*2].first = (void*)data_buffs[i]->mutable_data();
-                segments[i*2].second = data_buff_sizes[i];
-
-                segments[(i*2)+1].first = (void*)offset_buffs[i]->mutable_data();
-                segments[(i*2)+1].second = offset_buff_sizes[i];
+                segments.emplace_back(std::make_pair(
+                    (void*)data_buffs[i]->mutable_data(),
+                    data_buff_sizes[i]
+                    ));
+                segments.emplace_back(std::make_pair(
+                    (void*)offset_buffs[i]->mutable_data(),
+                    offset_buff_sizes[i]
+                ));
             }
 
             tl::bulk local = conn_ctx.engine.expose(segments, tl::bulk_mode::write_only);
