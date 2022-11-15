@@ -192,7 +192,7 @@ int main(int argc, char** argv) {
 
                         off_offsets.emplace_back(curr_pos);
                         off_sizes.emplace_back(offset_size);
-                        memcpy(segment_buffer + curr_off_pos, (uint8_t*)null_buff.c_str(), offset_size);
+                        memcpy(segment_buffer + curr_pos, (uint8_t*)null_buff.c_str(), offset_size);
                         curr_off_pos += offset_size;
 
                         total_size += (data_size + offset_size);
