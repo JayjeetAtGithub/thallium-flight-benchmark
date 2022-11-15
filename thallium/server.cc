@@ -175,10 +175,10 @@ int main(int argc, char** argv) {
                             std::static_pointer_cast<arrow::PrimitiveArray>(col_arr)->values();
 
                         data_size = data_buff->size();
-                        segments.emplace_back(std::make_pair((void*)data_buff->data(), data_size));
-
                         offset_size = null_buff.size() + 1; 
-                        segments.emplace_back(std::make_pair((void*)null_buff.c_str(), offset_size));
+                        segments.emplace_back(std::make_pair((void*)data_buff->data(), data_size));
+                        segments.emplace_back(std::make_pair((void*)(&null_buff[0]), offset_size));
+
                         // segments[i*2].first  = (void*)data_buff->data();
                         // segments[i*2].second = data_size;
                         // segments[(i*2)+1].first = (void*)(&null_buff[0]);

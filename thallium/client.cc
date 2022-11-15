@@ -93,7 +93,8 @@ arrow::Result<std::shared_ptr<arrow::RecordBatch>> GetNextBatch(ConnCtx &conn_ct
             std::vector<std::shared_ptr<arrow::Array>> columns;
             std::vector<std::unique_ptr<arrow::Buffer>> data_buffs(num_cols);
             std::vector<std::unique_ptr<arrow::Buffer>> offset_buffs(num_cols);
-            std::vector<std::pair<void*,std::size_t>> segments(num_cols*2);
+            std::vector<std::pair<void*,std::size_t>> segments;
+            segments.reserve(num_cols*2);
             
             for (int64_t i = 0; i < num_cols; i++) {
                 data_buffs[i] = arrow::AllocateBuffer(data_buff_sizes[i]).ValueOrDie();
