@@ -207,8 +207,8 @@ int main(int argc, char** argv) {
                 return req.respond(0);
             } else {
                 reader_map.erase(uuid);
-                return req.respond(1);
                 delete segment_buffer;
+                return req.respond(1);
             }
         };
     
