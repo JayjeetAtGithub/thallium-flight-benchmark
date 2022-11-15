@@ -134,13 +134,13 @@ int main(int argc, char** argv) {
             
             std::shared_ptr<arrow::RecordBatchReader> reader = reader_map[uuid];
             std::shared_ptr<arrow::RecordBatch> batch;
+            uint8_t *segment_buffer = (uint8_t*)malloc(32*1024*1024);
 
             if (reader->ReadNext(&batch).ok() && batch != nullptr) {
                 int32_t num_rows = batch->num_rows();
                 total_rows_written += num_rows;
 
                 std::vector<std::pair<void*,std::size_t>> segments(1);
-                uint8_t *segment_buffer = (uint8_t*)malloc(32*1024*1024);
 
                 int32_t curr_pos = 0;
                 int32_t total_size = 0;
@@ -208,6 +208,7 @@ int main(int argc, char** argv) {
             } else {
                 reader_map.erase(uuid);
                 return req.respond(1);
+                delete segment_buffer;
             }
         };
     
