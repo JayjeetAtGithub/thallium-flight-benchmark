@@ -145,8 +145,11 @@ int main(int argc, char** argv) {
                 int32_t curr_pos = 0;
                 int32_t total_size = 0;
 
-                std::vector<std::pair<int32_t, int32_t>> data_offsets_sizes;
-                std::vector<std::pair<int32_t, int32_t>> off_offsets_sizes;
+                std::vector<int32_t> data_offsets;
+                std::vector<int32_t> data_sizes;
+
+                std::vector<int32_t> off_offsets;
+                std::vector<int32_t> off_sizes;
 
                 std::string null_buff = "xx";
 
@@ -180,11 +183,13 @@ int main(int argc, char** argv) {
                         data_size = data_buff->size();
                         offset_size = null_buff.size() + 1; 
 
-                        data_offsets_sizes.emplace_back(std::make_pair(curr_pos, data_size));
+                        data_offsets.emplace_back(curr_pos);
+                        data_sizes.emplace_back(data_size);
                         memcpy(segment_buffer + curr_pos, data_buff->data(), data_size);
                         curr_pos += data_size;
 
-                        off_offsets_sizes.emplace_back(std::make_pair(curr_pos, offset_size));
+                        off_offsets.emplace_back(curr_pos);
+                        off_sizes.emplace_back(offset_size);
                         memcpy(segment_buffer + curr_off_pos, (uint8_t*)null_buff.c_str(), offset_size);
                         curr_off_pos += offset_size;
 
@@ -196,7 +201,7 @@ int main(int argc, char** argv) {
                 segments[0].second = total_size;
 
                 tl::bulk arrow_bulk = engine.expose(segments, tl::bulk_mode::read_only);
-                do_rdma.on(req.get_endpoint())(num_rows, data_offset_sizes, off_offset_sizes, total_size, arrow_bulk);
+                do_rdma.on(req.get_endpoint())(num_rows, data_offsets, data_sizes, off_offsets, off_sizes, total_size, arrow_bulk);
                 return req.respond(0);
             } else {
                 reader_map.erase(uuid);
