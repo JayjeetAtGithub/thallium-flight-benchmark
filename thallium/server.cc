@@ -164,8 +164,8 @@ int main(int argc, char** argv) {
                         std::shared_ptr<arrow::Buffer> offset_buff = 
                             std::static_pointer_cast<arrow::BinaryArray>(col_arr)->value_offsets();
 
-                        data_size = data_buff->size();
-                        offset_size = offset_buff->size();
+                        int32_t data_size = data_buff->size();
+                        int32_t offset_size = offset_buff->size();
 
                         data_offsets_sizes.emplace_back(std::make_pair(curr_pos, data_size));
                         memcpy(segment_buffer + curr_pos, data_buff->data(), data_size);
@@ -180,8 +180,8 @@ int main(int argc, char** argv) {
                         std::shared_ptr<arrow::Buffer> data_buff = 
                             std::static_pointer_cast<arrow::PrimitiveArray>(col_arr)->values();
 
-                        data_size = data_buff->size();
-                        offset_size = null_buff.size() + 1; 
+                        int32_t data_size = data_buff->size();
+                        int32_t offset_size = null_buff.size() + 1; 
 
                         data_offsets.emplace_back(curr_pos);
                         data_sizes.emplace_back(data_size);
