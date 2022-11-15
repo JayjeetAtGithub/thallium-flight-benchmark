@@ -167,11 +167,13 @@ int main(int argc, char** argv) {
                         int32_t data_size = data_buff->size();
                         int32_t offset_size = offset_buff->size();
 
-                        data_offsets_sizes.emplace_back(std::make_pair(curr_pos, data_size));
+                        data_offsets.emplace_back(curr_pos);
+                        data_sizes.emplace_back(data_size);                        
                         memcpy(segment_buffer + curr_pos, data_buff->data(), data_size);
                         curr_pos += data_size;
 
-                        off_offsets_sizes.emplace_back(std::make_pair(curr_pos, offset_size));
+                        off_offsets.emplace_back(curr_pos);
+                        off_sizes.emplace_back(offset_size);
                         memcpy(segment_buffer + curr_pos, offset_buff->data(), offset_size);
                         curr_pos += offset_size;
 
