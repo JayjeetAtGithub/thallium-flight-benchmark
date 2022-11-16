@@ -60,6 +60,22 @@ static char* read_input_file(const char* filename) {
     return buf;
 }
 
+class MeasureExecutionTime{
+  private:
+      const std::chrono::steady_clock::time_point begin;
+      const std::string caller;
+  public:
+      MeasureExecutionTime(const std::string& caller):caller(caller),begin(std::chrono::steady_clock::now()){}
+      ~MeasureExecutionTime(){
+          const auto duration=std::chrono::steady_clock::now()-begin;
+          std::cout << caller << (double)std::chrono::duration_cast<std::chrono::microseconds>(duration).count()/1000 << " ms" <<std::endl;
+      }
+};
+
+#ifndef MEASURE_FUNCTION_EXECUTION_TIME
+#define MEASURE_FUNCTION_EXECUTION_TIME const MeasureExecutionTime measureExecutionTime(__FUNCTION__);
+#endif
+
 int main(int argc, char** argv) {
 
     if (argc < 4) {
