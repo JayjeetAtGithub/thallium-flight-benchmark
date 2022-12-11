@@ -201,6 +201,7 @@ int main(int argc, char** argv) {
                     }
                 }
 
+                segmenrs[0].first = (void*)segment_buffer;
                 segments[0].second = total_size;
 
                 do_rdma.on(req.get_endpoint())(num_rows, data_offsets, data_sizes, off_offsets, off_sizes, total_size, arrow_bulk);
