@@ -119,7 +119,12 @@ int main(int argc, char** argv) {
     uint8_t *segment_buffer = (uint8_t*)malloc(32*1024*1024);
     segments[0].first = (void*)segment_buffer;
     segments[0].second = 32*1024*1024;
-    tl::bulk arrow_bulk = engine.expose(segments, tl::bulk_mode::read_write);
+    tl::bulk arrow_bulk;
+    
+    {
+        MeasureExecutionTime m("engine.expose");
+        arrow_bulk = engine.expose(segments, tl::bulk_mode::read_write);
+    }
 
     std::function<void(const tl::request&, const ScanReqRPCStub&)> scan = 
         [&reader_map, &mid, &svr_addr, &bp, &bcl, &bph, &tid, &db, &backend, &selectivity](const tl::request &req, const ScanReqRPCStub& stub) {
