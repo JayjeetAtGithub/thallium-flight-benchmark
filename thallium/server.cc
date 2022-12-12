@@ -1,4 +1,5 @@
 #include <iostream>
+#include <chrono>
 #include <unordered_map>
 
 #include <arrow/api.h>
@@ -38,6 +39,19 @@ namespace tl = thallium;
 namespace bk = bake;
 namespace cp = arrow::compute;
 namespace yk = yokan;
+
+class MeasureExecutionTime{
+  private:
+      const std::chrono::steady_clock::time_point begin;
+      const std::string caller;
+  public:
+      MeasureExecutionTime(const std::string& caller):caller(caller),begin(std::chrono::steady_clock::now()){}
+      ~MeasureExecutionTime(){
+          const auto duration=std::chrono::steady_clock::now()-begin;
+          std::cout << caller << " : " << (double)std::chrono::duration_cast<std::chrono::microseconds>(duration).count()/1000 << "ms" <<std::endl;
+      }
+};
+
 
 static char* read_input_file(const char* filename) {
     size_t ret;
