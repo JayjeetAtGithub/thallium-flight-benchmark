@@ -95,8 +95,12 @@ arrow::Result<std::shared_ptr<arrow::RecordBatch>> GetNextBatch(ConnCtx &conn_ct
             segments[0].first = (uint8_t*)malloc(total_size);
             segments[0].second = total_size;
 
-            tl::bulk local = conn_ctx.engine.expose(segments, tl::bulk_mode::write_only);
-            b.on(req.get_endpoint()) >> local;
+            tl::bulk local;
+            {
+                MeasureExecutionTime m("expose_and_rdma");
+                local = conn_ctx.engine.expose(segments, tl::bulk_mode::write_only);
+                b.on(req.get_endpoint()) >> local;
+            }
 
             for (int64_t i = 0; i < num_cols; i++) {
                 std::shared_ptr<arrow::DataType> type = scan_ctx.schema->field(i)->type();  
