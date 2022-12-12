@@ -33,7 +33,7 @@ class MeasureExecutionTime{
       MeasureExecutionTime(const std::string& caller):caller(caller),begin(std::chrono::steady_clock::now()){}
       ~MeasureExecutionTime(){
           const auto duration=std::chrono::steady_clock::now()-begin;
-          std::cout << (double)std::chrono::duration_cast<std::chrono::milliseconds>(duration).count()/1000<<std::endl;
+          std::cout << caller << " : " << (double)std::chrono::duration_cast<std::chrono::microseconds>(duration).count()/1000 << " ms" <<std::endl;
       }
 };
 
@@ -110,8 +110,13 @@ arrow::Result<std::shared_ptr<arrow::RecordBatch>> GetNextBatch(ConnCtx &conn_ct
                 ));
             }
 
-            tl::bulk local = conn_ctx.engine.expose(segments, tl::bulk_mode::write_only);
-            b.on(req.get_endpoint()) >> local;
+            tl::bulk local;
+            
+            {
+                MeasureExecutionTime m("expose_and_rdma");
+                local = conn_ctx.engine.expose(segments, tl::bulk_mode::write_only);
+                b.on(req.get_endpoint()) >> local;
+            }
 
             for (int64_t i = 0; i < num_cols; i++) {
                 std::shared_ptr<arrow::DataType> type = scan_ctx.schema->field(i)->type();  

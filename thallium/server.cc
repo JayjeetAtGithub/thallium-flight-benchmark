@@ -1,4 +1,5 @@
 #include <iostream>
+#include <chrono>
 #include <unordered_map>
 
 #include <arrow/api.h>
@@ -59,6 +60,18 @@ static char* read_input_file(const char* filename) {
     fclose(fp);
     return buf;
 }
+
+class MeasureExecutionTime{
+  private:
+      const std::chrono::steady_clock::time_point begin;
+      const std::string caller;
+  public:
+      MeasureExecutionTime(const std::string& caller):caller(caller),begin(std::chrono::steady_clock::now()){}
+      ~MeasureExecutionTime(){
+          const auto duration=std::chrono::steady_clock::now()-begin;
+          std::cout << caller << " : " << (double)std::chrono::duration_cast<std::chrono::microseconds>(duration).count()/1000 << " ms" <<std::endl;
+      }
+};
 
 int main(int argc, char** argv) {
 
