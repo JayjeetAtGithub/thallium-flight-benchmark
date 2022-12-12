@@ -92,8 +92,11 @@ arrow::Result<std::shared_ptr<arrow::RecordBatch>> GetNextBatch(ConnCtx &conn_ct
             
             std::vector<std::shared_ptr<arrow::Array>> columns;
             std::vector<std::pair<void*,std::size_t>> segments(1);
-            segments[0].first = (uint8_t*)malloc(total_size);
-            segments[0].second = total_size;
+            {
+                MeasureExecutionTime m("alloc_segments");
+                segments[0].first = (uint8_t*)malloc(total_size);
+                segments[0].second = total_size;
+            }
 
             tl::bulk local;
             {

@@ -159,7 +159,12 @@ int main(int argc, char** argv) {
             std::shared_ptr<arrow::RecordBatchReader> reader = reader_map[uuid];
             std::shared_ptr<arrow::RecordBatch> batch;
 
-            if (reader->ReadNext(&batch).ok() && batch != nullptr) {
+            {
+                MeasureExecutionTime m("read_next");
+                reader->ReadNext(&batch);
+            }
+
+            if (batch != nullptr) {
                 int32_t num_rows = batch->num_rows();
                 total_rows_written += num_rows;
 
