@@ -97,6 +97,7 @@ arrow::Result<std::shared_ptr<arrow::RecordBatch>> GetNextBatch(ConnCtx &conn_ct
                 segments[0].first = (uint8_t*)malloc(total_size);
                 segments[0].second = total_size;
             }
+            std::cout << "total_size: " << total_size << std::endl;
 
             tl::bulk local;
             {
