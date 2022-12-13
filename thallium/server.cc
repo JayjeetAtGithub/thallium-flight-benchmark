@@ -193,7 +193,11 @@ int main(int argc, char** argv) {
                     offset_buff_sizes.push_back(offset_size);
                 }
 
-                tl::bulk arrow_bulk = engine.expose(segments, tl::bulk_mode::read_only);
+                tl::bulk arrow_bulk;
+                {
+                    MeasureExecutionTime m("server:expose");
+                    arrow_bulk = engine.expose(segments, tl::bulk_mode::read_only);
+                }
                 do_rdma.on(req.get_endpoint())(num_rows, data_buff_sizes, offset_buff_sizes, arrow_bulk);
                 return req.respond(0);
             } else {
