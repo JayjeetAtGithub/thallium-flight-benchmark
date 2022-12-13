@@ -113,12 +113,12 @@ arrow::Result<std::shared_ptr<arrow::RecordBatch>> GetNextBatch(ConnCtx &conn_ct
             tl::bulk local;
             
             {
-                MeasureExecutionTime m("expose");
+                MeasureExecutionTime m("client::expose");
                 local = conn_ctx.engine.expose(segments, tl::bulk_mode::write_only);
 
             }
             {
-                MeasureExecutionTime m("rdma_pull");
+                MeasureExecutionTime m("client::rdma_pull");
                 b.on(req.get_endpoint()) >> local;
             }
 
