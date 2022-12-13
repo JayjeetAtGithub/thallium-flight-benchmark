@@ -84,25 +84,21 @@ ScanCtx Scan(ConnCtx &conn_ctx, ScanReq &scan_req) {
     return scan_ctx;
 }
 
+std::vector<std::pair<void*,std::size_t>> segments(1);
+segments[0].first = (uint8_t*)malloc(32*1024*1024);
+segments[0].second = 32*1024*1024;
+tl::bulk local;
+{
+    MeasureExecutionTime m("expose");
+    local = conn_ctx.engine.expose(segments, tl::bulk_mode::write_only);
+}
+
 arrow::Result<std::shared_ptr<arrow::RecordBatch>> GetNextBatch(ConnCtx &conn_ctx, ScanCtx &scan_ctx) {
     std::shared_ptr<arrow::RecordBatch> batch;
     std::function<void(const tl::request&, int32_t&, std::vector<int32_t>&, std::vector<int32_t>&, std::vector<int32_t>&, std::vector<int32_t>&, int32_t&, tl::bulk&)> f =
-        [&conn_ctx, &scan_ctx, &batch](const tl::request& req, int32_t& num_rows, std::vector<int32_t>& data_offsets, std::vector<int32_t>& data_sizes, std::vector<int32_t>& off_offsets, std::vector<int32_t>& off_sizes, int32_t& total_size, tl::bulk& b) {
+        [&conn_ctx, &scan_ctx, &batch, &local](const tl::request& req, int32_t& num_rows, std::vector<int32_t>& data_offsets, std::vector<int32_t>& data_sizes, std::vector<int32_t>& off_offsets, std::vector<int32_t>& off_sizes, int32_t& total_size, tl::bulk& b) {
             int num_cols = scan_ctx.schema->num_fields();
-            
             std::vector<std::shared_ptr<arrow::Array>> columns;
-            std::vector<std::pair<void*,std::size_t>> segments(1);
-            {
-                MeasureExecutionTime m("alloc_segments");
-                segments[0].first = (uint8_t*)malloc(total_size);
-                segments[0].second = total_size;
-            }
-
-            tl::bulk local;
-            {
-                MeasureExecutionTime m("expose");
-                local = conn_ctx.engine.expose(segments, tl::bulk_mode::write_only);
-            }
             {
                 MeasureExecutionTime m("rdma_pull");
                 b.on(req.get_endpoint()) >> local;
