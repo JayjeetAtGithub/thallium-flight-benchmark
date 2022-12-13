@@ -102,6 +102,7 @@ arrow::Result<std::shared_ptr<arrow::RecordBatch>> GetNextBatch(ConnCtx &conn_ct
             std::vector<std::shared_ptr<arrow::Array>> columns;
             {
                 MeasureExecutionTime m("rdma_pull");
+                segments[0].second = total_size;
                 b.on(req.get_endpoint()) >> local;
             }
 
