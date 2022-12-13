@@ -96,6 +96,7 @@ arrow::Result<std::shared_ptr<arrow::RecordBatch>> GetNextBatch(ConnCtx &conn_ct
             std::vector<std::pair<void*,std::size_t>> segments;
             segments.reserve(num_cols*2);
             
+            int32_t total_size = 0;
             for (int64_t i = 0; i < num_cols; i++) {
                 data_buffs[i] = arrow::AllocateBuffer(data_buff_sizes[i]).ValueOrDie();
                 offset_buffs[i] = arrow::AllocateBuffer(offset_buff_sizes[i]).ValueOrDie();
@@ -108,7 +109,10 @@ arrow::Result<std::shared_ptr<arrow::RecordBatch>> GetNextBatch(ConnCtx &conn_ct
                     (void*)offset_buffs[i]->mutable_data(),
                     offset_buff_sizes[i]
                 ));
+                total_size += (data_buff_sizes[i] + offset_buff_sizes[i]);
             }
+
+            std::cout << "total_size: " << total_size << std::endl;
 
             tl::bulk local;
             
