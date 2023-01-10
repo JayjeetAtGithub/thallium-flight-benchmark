@@ -102,7 +102,7 @@ int main(int argc, char** argv) {
     // bk::target tid = bp->list_targets()[0];
 
     std::function<void(const tl::request&, const ScanReqRPCStub&)> scan = 
-        [&reader_map, &mid, &svr_addr, &tid, &db, &backend, &selectivity](const tl::request &req, const ScanReqRPCStub& stub) {
+        [&reader_map, &mid, &svr_addr, &db, &backend, &selectivity](const tl::request &req, const ScanReqRPCStub& stub) {
             arrow::dataset::internal::Initialize();
             std::shared_ptr<arrow::RecordBatchReader> reader;
 
