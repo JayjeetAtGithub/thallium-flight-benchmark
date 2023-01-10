@@ -180,7 +180,7 @@ arrow::Status Main(int argc, char **argv) {
         ARROW_ASSIGN_OR_RAISE(auto scan_req, GetScanRequest(path, filter, schema, schema));
         ScanCtx scan_ctx = Scan(conn_ctx, scan_req);
         std::shared_ptr<arrow::RecordBatch> batch;
-        std::cout << "Starting to get batches";
+        std::cout << "Starting to get batches\n";
         {
             MEASURE_FUNCTION_EXECUTION_TIME
             while ((batch = GetNextBatch(conn_ctx, scan_ctx).ValueOrDie()) != nullptr) {
