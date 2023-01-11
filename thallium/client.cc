@@ -85,9 +85,12 @@ ScanCtx Scan(ConnCtx &conn_ctx, ScanReq &scan_req) {
     scan_ctx.uuid = uuid;
     scan_ctx.schema = scan_req.schema;
 
-    segments[0].first = (uint8_t*)malloc(32*1024*1024);
-    segments[0].second = 32*1024*1024;
-    local = conn_ctx.engine.expose(segments, tl::bulk_mode::write_only);
+    {
+        MeasureExecutionTime m("allocate and expose");
+        segments[0].first = (uint8_t*)malloc(32*1024*1024);
+        segments[0].second = 32*1024*1024;
+        local = conn_ctx.engine.expose(segments, tl::bulk_mode::write_only);
+    }
 
     return scan_ctx;
 }
@@ -100,10 +103,12 @@ arrow::Result<std::shared_ptr<arrow::RecordBatch>> GetNextBatch(ConnCtx &conn_ct
             int num_cols = scan_ctx.schema->num_fields();
                         
             {
-                // MeasureExecutionTime m("rdma_pull");
+                MeasureExecutionTime m("rdma_pull");
                 b.on(req.get_endpoint()) >> local;
                 segments[0].second = total_size;
             }
+
+            std::cout << "total_size: " << total_size;
             
             std::vector<std::shared_ptr<arrow::Array>> columns;
             for (int64_t i = 0; i < num_cols; i++) {
@@ -135,7 +140,7 @@ arrow::Result<std::shared_ptr<arrow::RecordBatch>> GetNextBatch(ConnCtx &conn_ct
 
     int e;
     {
-        // MeasureExecutionTime m("get_next_batch");
+        MeasureExecutionTime m("get_next_batch");
         e = get_next_batch.on(conn_ctx.endpoint)(scan_ctx.uuid);
     }
     
@@ -157,7 +162,7 @@ arrow::Status Main(int argc, char **argv) {
     std::string protocol = argv[3];
 
     auto filter = 
-        cp::greater(cp::field_ref("total_amount"), cp::literal(69));
+        cp::greater(cp::field_ref("total_amount"), cp::literal(-200));
 
     auto schema = arrow::schema({
         arrow::field("VendorID", arrow::int64()),
