@@ -144,9 +144,6 @@ arrow::Status Main(int argc, char **argv) {
         exit(1);
     }
 
-        std::cout << "here";
-
-
     std::string uri = argv[1];
     std::string backend = argv[2];
     std::string protocol = argv[3];
@@ -209,5 +206,7 @@ arrow::Status Main(int argc, char **argv) {
 }
 
 int main(int argc, char** argv) {
+            std::cout << "here";
+
     Main(argc, argv);
 }
