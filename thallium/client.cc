@@ -74,7 +74,9 @@ ConnCtx Init(std::string protocol, std::string host) {
     ctx.endpoint = endpoint;
     return ctx;
 }
+
 tl::bulk local;
+std::vector<std::pair<void*,std::size_t>> segments(1);
 
 ScanCtx Scan(ConnCtx &conn_ctx, ScanReq &scan_req) {
     tl::remote_procedure scan = conn_ctx.engine.define("scan");
@@ -83,7 +85,6 @@ ScanCtx Scan(ConnCtx &conn_ctx, ScanReq &scan_req) {
     scan_ctx.uuid = uuid;
     scan_ctx.schema = scan_req.schema;
 
-    std::vector<std::pair<void*,std::size_t>> segments(1);
     segments[0].first = (uint8_t*)malloc(32*1024*1024);
     segments[0].second = 32*1024*1024;
     local = conn_ctx.engine.expose(segments, tl::bulk_mode::write_only);
