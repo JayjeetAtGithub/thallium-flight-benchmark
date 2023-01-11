@@ -86,12 +86,9 @@ ScanCtx Scan(ConnCtx &conn_ctx, ScanReq &scan_req) {
 
 tl::bulk local;
 std::vector<std::pair<void*,std::size_t>> segments(1);
-{
-    MeasureExecutionTime m("alloc_segments");
-    segments[0].first = (uint8_t*)malloc(32*1024*1024);
-    segments[0].second = 32*1024*1024;
-    local = conn_ctx.engine.expose(segments, tl::bulk_mode::write_only);
-}
+segments[0].first = (uint8_t*)malloc(32*1024*1024);
+segments[0].second = 32*1024*1024;
+local = conn_ctx.engine.expose(segments, tl::bulk_mode::write_only);
 
 arrow::Result<std::shared_ptr<arrow::RecordBatch>> GetNextBatch(ConnCtx &conn_ctx, ScanCtx &scan_ctx) {
     std::shared_ptr<arrow::RecordBatch> batch;
