@@ -144,6 +144,9 @@ arrow::Status Main(int argc, char **argv) {
         exit(1);
     }
 
+        std::cout << "here";
+
+
     std::string uri = argv[1];
     std::string backend = argv[2];
     std::string protocol = argv[3];
@@ -173,8 +176,6 @@ arrow::Status Main(int argc, char **argv) {
 
     ConnCtx conn_ctx = Init(protocol, uri);
     int64_t total_rows = 0;
-
-    std::cout << "here";
 
     if (backend == "dataset") {
         std::string path = "/mnt/cephfs/dataset";
