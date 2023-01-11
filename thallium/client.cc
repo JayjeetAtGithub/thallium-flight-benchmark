@@ -108,7 +108,7 @@ arrow::Result<std::shared_ptr<arrow::RecordBatch>> GetNextBatch(ConnCtx &conn_ct
                 segments[0].second = total_size;
             }
 
-            std::cout << "total_size: " << total_size;
+            std::cout << "total_size: " << total_size << std::endl;
             
             std::vector<std::shared_ptr<arrow::Array>> columns;
             for (int64_t i = 0; i < num_cols; i++) {
