@@ -100,7 +100,7 @@ arrow::Result<std::shared_ptr<arrow::RecordBatch>> GetNextBatch(ConnCtx &conn_ct
             int num_cols = scan_ctx.schema->num_fields();
                         
             {
-                MeasureExecutionTime m("rdma_pull");
+                // MeasureExecutionTime m("rdma_pull");
                 b.on(req.get_endpoint()) >> local;
                 segments[0].second = total_size;
             }
@@ -135,7 +135,7 @@ arrow::Result<std::shared_ptr<arrow::RecordBatch>> GetNextBatch(ConnCtx &conn_ct
 
     int e;
     {
-        MeasureExecutionTime m("get_next_batch");
+        // MeasureExecutionTime m("get_next_batch");
         e = get_next_batch.on(conn_ctx.endpoint)(scan_ctx.uuid);
     }
     
