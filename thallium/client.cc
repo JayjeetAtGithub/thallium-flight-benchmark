@@ -157,7 +157,7 @@ arrow::Status Main(int argc, char **argv) {
     std::string protocol = argv[3];
 
     auto filter = 
-        cp::greater(cp::field_ref("total_amount"), cp::literal(-200));
+        cp::greater(cp::field_ref("total_amount"), cp::literal(69));
 
     auto schema = arrow::schema({
         arrow::field("VendorID", arrow::int64()),
