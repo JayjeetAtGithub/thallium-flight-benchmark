@@ -50,7 +50,7 @@ modprobe ib_ipoib
 ifconfig -a
 ```
 
-You should find a `ib0` or `ibp130s0` interface.
+You should find a `ib0`/`ibp8s0`/`ibp130s0` interface.
 
 4. Assign an IP address to the IB network interface.
 ```bash
