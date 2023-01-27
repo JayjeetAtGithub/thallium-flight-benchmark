@@ -1,5 +1,6 @@
 #include <iostream>
 #include <unordered_map>
+#include <fstream>
 
 #include <arrow/api.h>
 #include <arrow/compute/exec/expression.h>
