@@ -25,12 +25,6 @@
 #include <parquet/arrow/writer.h>
 
 #include <thallium.hpp>
-#include <bake-client.hpp>
-#include <bake-server.hpp>
-
-#include <yokan/cxx/server.hpp>
-#include <yokan/cxx/admin.hpp>
-#include <yokan/cxx/client.hpp>
 
 #include "ace.h"
 
@@ -81,28 +75,13 @@ int main(int argc, char** argv) {
         return -1;
     }
 
-    char *bake_config = read_input_file("bake_config.json");
-    bk::provider *bp = bk::provider::create(
-        mid, 0, ABT_POOL_NULL, std::string(bake_config, strlen(bake_config) + 1), ABT_IO_INSTANCE_NULL, NULL, NULL
-    );
-
-    char *yokan_config = read_input_file("yokan_config.json");
-    yk::Provider yp(mid, 0, "ABCD", yokan_config, ABT_POOL_NULL, nullptr);
-    yk::Client ycl(mid);
-    yk::Admin admin(mid);
-    yk_database_id_t db_id = admin.openDatabase(svr_addr, 0, "ABCD", "rocksdb", yokan_config);
-    yk::Database db(ycl.handle(), svr_addr, 0, db_id);
-
     tl::remote_procedure do_rdma = engine.define("do_rdma");
 
     std::unordered_map<std::string, std::shared_ptr<arrow::RecordBatchReader>> reader_map;
-    bk::client bcl(mid);
-    bk::provider_handle bph(bcl, svr_addr, 0);
-    bph.set_eager_limit(0);
-    bk::target tid = bp->list_targets()[0];
+
 
     std::function<void(const tl::request&, const ScanReqRPCStub&)> scan = 
-        [&reader_map, &mid, &svr_addr, &bp, &bcl, &bph, &tid, &db, &backend, &selectivity](const tl::request &req, const ScanReqRPCStub& stub) {
+        [&reader_map, &mid, &svr_addr, &backend, &selectivity](const tl::request &req, const ScanReqRPCStub& stub) {
             arrow::dataset::internal::Initialize();
             std::shared_ptr<arrow::RecordBatchReader> reader;
 
@@ -111,20 +90,10 @@ int main(int argc, char** argv) {
                 reader = ScanDataset(exec_ctx, stub, backend, selectivity).ValueOrDie();
             } else if (backend == "file" || backend == "file+mmap") {
                 reader = ScanFile(stub, backend, selectivity).ValueOrDie();
-            } else if (backend == "bake") {
-                size_t value_size = 28;
-                void *value_buf = malloc(28);
-                
-                db.get((void*)stub.path.c_str(), stub.path.length(), value_buf, &value_size);
-                bk::region rid(std::string((char*)value_buf, value_size));
-
-                uint8_t *ptr = (uint8_t*)bcl.get_data(bph, tid, rid);
-                reader = ScanBake(stub, ptr, selectivity).ValueOrDie();
             }
 
             std::string uuid = boost::uuids::to_string(boost::uuids::random_generator()());
             reader_map[uuid] = reader;
-            
             return req.respond(uuid);
         };
 
