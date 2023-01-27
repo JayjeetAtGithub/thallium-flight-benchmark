@@ -17,6 +17,10 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
 
 add_executable(tc client.cc)
 target_link_libraries(tc thallium arrow arrow_dataset)
+add_executable(tc2 client_2.cc)
+target_link_libraries(tc2 thallium arrow arrow_dataset)
 
 add_executable(ts server.cc)
 target_link_libraries(ts thallium yokan-admin yokan-client yokan-server arrow arrow_dataset PkgConfig::BAKECLIENT PkgConfig::BAKESERVER)
+add_executable(ts2 server_2.cc)
+target_link_libraries(ts2 thallium yokan-admin yokan-client yokan-server arrow arrow_dataset PkgConfig::BAKECLIENT PkgConfig::BAKESERVER)
