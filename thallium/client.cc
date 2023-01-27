@@ -32,7 +32,7 @@ class MeasureExecutionTime{
       std::ofstream log;
   public:
       MeasureExecutionTime(const std::string& caller):caller(caller),begin(std::chrono::steady_clock::now()){
-        log.open ("example.txt");
+        log.open ("result_100.txt");
       }
       ~MeasureExecutionTime(){
           const auto duration=std::chrono::steady_clock::now()-begin;
