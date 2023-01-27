@@ -35,10 +35,10 @@ class MeasureExecutionTime{
   private:
       const std::chrono::steady_clock::time_point begin;
       const std::string caller;
-      ofstream log;
+      std::ofstream log;
   public:
       MeasureExecutionTime(const std::string& caller):caller(caller),begin(std::chrono::steady_clock::now()){
-        log.open ("example.txt");
+        log.open("example.txt");
       }
       ~MeasureExecutionTime(){
           const auto duration=std::chrono::steady_clock::now()-begin;
