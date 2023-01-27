@@ -29,9 +29,7 @@
 #include "ace.h"
 
 namespace tl = thallium;
-namespace bk = bake;
 namespace cp = arrow::compute;
-namespace yk = yokan;
 
 static char* read_input_file(const char* filename) {
     size_t ret;
