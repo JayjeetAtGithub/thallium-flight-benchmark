@@ -31,18 +31,17 @@
 namespace tl = thallium;
 namespace cp = arrow::compute;
 
-class MET{
+class MeasureExecutionTime{
   private:
       const std::chrono::steady_clock::time_point begin;
       const std::string caller;
   public:
-      MET(const std::string& caller):caller(caller),begin(std::chrono::steady_clock::now()){}
-      ~MET(){
+      MeasureExecutionTime(const std::string& caller):caller(caller),begin(std::chrono::steady_clock::now()){}
+      ~MeasureExecutionTime(){
           const auto duration=std::chrono::steady_clock::now()-begin;
           std::cout << caller << " : " << (double)std::chrono::duration_cast<std::chrono::microseconds>(duration).count()/1000<<std::endl;
       }
 };
-
 
 static char* read_input_file(const char* filename) {
     size_t ret;
@@ -66,7 +65,6 @@ static char* read_input_file(const char* filename) {
 }
 
 int main(int argc, char** argv) {
-
     if (argc < 4) {
         std::cout << "./ts [selectivity] [backend] [protocol]" << std::endl;
         exit(1);
@@ -87,9 +85,7 @@ int main(int argc, char** argv) {
     }
 
     tl::remote_procedure do_rdma = engine.define("do_rdma");
-
     std::unordered_map<std::string, std::shared_ptr<arrow::RecordBatchReader>> reader_map;
-
 
     std::function<void(const tl::request&, const ScanReqRPCStub&)> scan = 
         [&reader_map, &mid, &svr_addr, &backend, &selectivity](const tl::request &req, const ScanReqRPCStub& stub) {
@@ -115,7 +111,12 @@ int main(int argc, char** argv) {
             std::shared_ptr<arrow::RecordBatchReader> reader = reader_map[uuid];
             std::shared_ptr<arrow::RecordBatch> batch;
 
-            if (reader->ReadNext(&batch).ok() && batch != nullptr) {
+            {
+                MeasureExecutionTime m("I/O");
+                reader->ReadNext(&batch);
+            }
+
+            if (batch != nullptr) {
 
                 std::vector<int64_t> data_buff_sizes;
                 std::vector<int64_t> offset_buff_sizes;
@@ -160,7 +161,12 @@ int main(int argc, char** argv) {
                     offset_buff_sizes.push_back(offset_size);
                 }
 
-                tl::bulk arrow_bulk = engine.expose(segments, tl::bulk_mode::read_only);
+                tl::bulk arrow_bulk;
+                {
+                    MeasureExecutionTime m("server_expose");
+                    arrow_bulk = engine.expose(segments, tl::bulk_mode::read_only);
+                }
+                
                 do_rdma.on(req.get_endpoint())(num_rows, data_buff_sizes, offset_buff_sizes, arrow_bulk);
                 return req.respond(0);
             } else {

@@ -24,28 +24,24 @@
 
 #include "payload.h"
 
-
-class MET{
+class MeasureExecutionTime{
   private:
       const std::chrono::steady_clock::time_point begin;
       const std::string caller;
   public:
-      MET(const std::string& caller):caller(caller),begin(std::chrono::steady_clock::now()){}
-      ~MET(){
+      MeasureExecutionTime(const std::string& caller):caller(caller),begin(std::chrono::steady_clock::now()){}
+      ~MeasureExecutionTime(){
           const auto duration=std::chrono::steady_clock::now()-begin;
           std::cout << caller << " : " << (double)std::chrono::duration_cast<std::chrono::microseconds>(duration).count()/1000<<std::endl;
       }
 };
 
-
 #ifndef MEASURE_FUNCTION_EXECUTION_TIME
 #define MEASURE_FUNCTION_EXECUTION_TIME const MeasureExecutionTime measureExecutionTime(__FUNCTION__);
 #endif
 
-
 namespace tl = thallium;
 namespace cp = arrow::compute;
-
 
 arrow::Result<ScanReq> GetScanRequest(std::string path,
                                       cp::Expression filter, 
@@ -96,22 +92,33 @@ arrow::Result<std::shared_ptr<arrow::RecordBatch>> GetNextBatch(ConnCtx &conn_ct
             std::vector<std::pair<void*,std::size_t>> segments;
             segments.reserve(num_cols*2);
             
-            for (int64_t i = 0; i < num_cols; i++) {
-                data_buffs[i] = arrow::AllocateBuffer(data_buff_sizes[i]).ValueOrDie();
-                offset_buffs[i] = arrow::AllocateBuffer(offset_buff_sizes[i]).ValueOrDie();
+            {
+                MeasureExecutionTime m("memory_allocate");
+                for (int64_t i = 0; i < num_cols; i++) {
+                    data_buffs[i] = arrow::AllocateBuffer(data_buff_sizes[i]).ValueOrDie();
+                    offset_buffs[i] = arrow::AllocateBuffer(offset_buff_sizes[i]).ValueOrDie();
 
-                segments.emplace_back(std::make_pair(
-                    (void*)data_buffs[i]->mutable_data(),
-                    data_buff_sizes[i]
-                ));
-                segments.emplace_back(std::make_pair(
-                    (void*)offset_buffs[i]->mutable_data(),
-                    offset_buff_sizes[i]
-                ));
+                    segments.emplace_back(std::make_pair(
+                        (void*)data_buffs[i]->mutable_data(),
+                        data_buff_sizes[i]
+                    ));
+                    segments.emplace_back(std::make_pair(
+                        (void*)offset_buffs[i]->mutable_data(),
+                        offset_buff_sizes[i]
+                    ));
+                }
             }
 
-            tl::bulk local = conn_ctx.engine.expose(segments, tl::bulk_mode::write_only);
-            b.on(req.get_endpoint()) >> local;
+            tl::bulk local;
+            {
+                MeasureExecutionTime m("client_expose");
+                local = conn_ctx.engine.expose(segments, tl::bulk_mode::write_only);
+            }
+
+            {
+                MeasureExecutionTime m("RDMA");
+                b.on(req.get_endpoint()) >> local;
+            }
 
             for (int64_t i = 0; i < num_cols; i++) {
                 std::shared_ptr<arrow::DataType> type = scan_ctx.schema->field(i)->type();  
