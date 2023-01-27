@@ -2,7 +2,6 @@
 set -e
 
 uri=$1
-protocol=$2
 
 export PROJECT_ROOT=$HOME/thallium-flight-benchmark
 
@@ -13,6 +12,6 @@ ssh node1 "sync"
 ssh node1 "echo 3 > /proc/sys/vm/drop_caches"
 ssh node1 "sync"
 
-$PROJECT_ROOT/bin/tc $uri dataset $protocol
+$PROJECT_ROOT/bin/tc $uri dataset ofi+verbs
 
 done
