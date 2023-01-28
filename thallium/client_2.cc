@@ -199,6 +199,7 @@ arrow::Status Main(int argc, char **argv) {
             int flag = (total_rows == 0);
             MEASURE_FUNCTION_EXECUTION_TIME
             while ((batch = GetNextBatch(conn_ctx, scan_ctx, flag).ValueOrDie()) != nullptr) {
+                flag = (total_rows == 0);
                 total_rows += batch->num_rows();
             }
         }
