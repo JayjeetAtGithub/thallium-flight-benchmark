@@ -96,15 +96,7 @@ int main(int argc, char** argv) {
     std::unordered_map<std::string, std::shared_ptr<arrow::RecordBatchReader>> reader_map;
 
     std::vector<std::pair<void*,std::size_t>> segments(1);
-    uint8_t *segment_buffer = (uint8_t*)malloc(32*1024*1024);
-    segments[0].first = (void*)segment_buffer;
-    segments[0].second = 32*1024*1024;
     tl::bulk arrow_bulk;
-    
-    {
-        MeasureExecutionTime m("server_expose");
-        arrow_bulk = engine.expose(segments, tl::bulk_mode::read_write);
-    }
 
     std::function<void(const tl::request&, const ScanReqRPCStub&)> scan = 
         [&reader_map, &mid, &svr_addr, &backend, &selectivity](const tl::request &req, const ScanReqRPCStub& stub) {
@@ -128,6 +120,16 @@ int main(int argc, char** argv) {
         [&mid, &svr_addr, &engine, &do_rdma, &reader_map, &total_rows_written, &segment_buffer, &segments, &arrow_bulk](const tl::request &req, const std::string& uuid) {
             std::shared_ptr<arrow::RecordBatchReader> reader = reader_map[uuid];
             std::shared_ptr<arrow::RecordBatch> batch;
+
+            if (total_rows_written == 0) {
+                std::cout << "Start exposing" << std::endl;
+                segments[0].first = (void*)segment_buffer;
+                segments[0].second = 32*1024*1024;
+                {
+                    MeasureExecutionTime m("server_expose");
+                    arrow_bulk = engine.expose(segments, tl::bulk_mode::read_write);
+                }
+            }
 
             {
                 MeasureExecutionTime m("I/O");

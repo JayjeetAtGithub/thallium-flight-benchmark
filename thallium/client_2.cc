@@ -94,9 +94,10 @@ ScanCtx Scan(ConnCtx &conn_ctx, ScanReq &scan_req) {
 arrow::Result<std::shared_ptr<arrow::RecordBatch>> GetNextBatch(ConnCtx &conn_ctx, ScanCtx &scan_ctx, int32_t flag) {
     std::shared_ptr<arrow::RecordBatch> batch;
     std::function<void(const tl::request&, int32_t&, std::vector<int32_t>&, std::vector<int32_t>&, std::vector<int32_t>&, std::vector<int32_t>&, int32_t&, tl::bulk&)> f =
-        [&conn_ctx, &scan_ctx, &batch, &segments, &local, &initial](const tl::request& req, int32_t& num_rows, std::vector<int32_t>& data_offsets, std::vector<int32_t>& data_sizes, std::vector<int32_t>& off_offsets, std::vector<int32_t>& off_sizes, int32_t& total_size, tl::bulk& b) {
+        [&conn_ctx, &scan_ctx, &batch, &segments, &local, &flag](const tl::request& req, int32_t& num_rows, std::vector<int32_t>& data_offsets, std::vector<int32_t>& data_sizes, std::vector<int32_t>& off_offsets, std::vector<int32_t>& off_sizes, int32_t& total_size, tl::bulk& b) {
             
-            if (initial == 1) {
+            if (flag == 1) {
+                std::cout << "Start exposing" << std::endl;
                 {
                     MeasureExecutionTime m("memory_allocate");
                     segments[0].first = (uint8_t*)malloc(32*1024*1024);
