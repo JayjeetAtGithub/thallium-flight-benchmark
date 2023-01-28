@@ -94,7 +94,8 @@ int main(int argc, char** argv) {
 
     tl::remote_procedure do_rdma = engine.define("do_rdma");
     std::unordered_map<std::string, std::shared_ptr<arrow::RecordBatchReader>> reader_map;
-
+    
+    uint8_t *segment_buffer = (uint8_t*)malloc(32*1024*1024);
     std::vector<std::pair<void*,std::size_t>> segments(1);
     tl::bulk arrow_bulk;
 
@@ -117,13 +118,12 @@ int main(int argc, char** argv) {
 
     int32_t total_rows_written = 0;
     std::function<void(const tl::request&, const std::string&)> get_next_batch = 
-        [&mid, &svr_addr, &engine, &do_rdma, &reader_map, &total_rows_written, &segments, &arrow_bulk](const tl::request &req, const std::string& uuid) {
+        [&mid, &svr_addr, &engine, &do_rdma, &reader_map, &total_rows_written, &segment_buffer, &segments, &arrow_bulk](const tl::request &req, const std::string& uuid) {
             std::shared_ptr<arrow::RecordBatchReader> reader = reader_map[uuid];
             std::shared_ptr<arrow::RecordBatch> batch;
 
             if (total_rows_written == 0) {
                 std::cout << "Start exposing" << std::endl;
-                uint8_t *segment_buffer = (uint8_t*)malloc(32*1024*1024);
                 segments[0].first = (void*)segment_buffer;
                 segments[0].second = 32*1024*1024;
                 {
