@@ -88,23 +88,27 @@ ScanCtx Scan(ConnCtx &conn_ctx, ScanReq &scan_req) {
     std::string uuid = scan.on(conn_ctx.endpoint)(scan_req.stub);
     scan_ctx.uuid = uuid;
     scan_ctx.schema = scan_req.schema;
-    {
-        MeasureExecutionTime m("memory_allocate");
-        segments[0].first = (uint8_t*)malloc(32*1024*1024);
-        segments[0].second = 32*1024*1024;
-    }
-
-    {
-        MeasureExecutionTime m("client_expose");
-        local = conn_ctx.engine.expose(segments, tl::bulk_mode::write_only);
-    }
     return scan_ctx;
 }
 
-arrow::Result<std::shared_ptr<arrow::RecordBatch>> GetNextBatch(ConnCtx &conn_ctx, ScanCtx &scan_ctx) {
+arrow::Result<std::shared_ptr<arrow::RecordBatch>> GetNextBatch(ConnCtx &conn_ctx, ScanCtx &scan_ctx, int32_t flag) {
     std::shared_ptr<arrow::RecordBatch> batch;
     std::function<void(const tl::request&, int32_t&, std::vector<int32_t>&, std::vector<int32_t>&, std::vector<int32_t>&, std::vector<int32_t>&, int32_t&, tl::bulk&)> f =
-        [&conn_ctx, &scan_ctx, &batch, &segments, &local](const tl::request& req, int32_t& num_rows, std::vector<int32_t>& data_offsets, std::vector<int32_t>& data_sizes, std::vector<int32_t>& off_offsets, std::vector<int32_t>& off_sizes, int32_t& total_size, tl::bulk& b) {
+        [&conn_ctx, &scan_ctx, &batch, &segments, &local, &initial](const tl::request& req, int32_t& num_rows, std::vector<int32_t>& data_offsets, std::vector<int32_t>& data_sizes, std::vector<int32_t>& off_offsets, std::vector<int32_t>& off_sizes, int32_t& total_size, tl::bulk& b) {
+            
+            if (initial == 1) {
+                {
+                    MeasureExecutionTime m("memory_allocate");
+                    segments[0].first = (uint8_t*)malloc(32*1024*1024);
+                    segments[0].second = 32*1024*1024;
+                }
+
+                {
+                    MeasureExecutionTime m("client_expose");
+                    local = conn_ctx.engine.expose(segments, tl::bulk_mode::write_only);
+                }
+            }
+            
             int num_cols = scan_ctx.schema->num_fields();
                         
             {
@@ -185,15 +189,15 @@ arrow::Status Main(int argc, char **argv) {
     ConnCtx conn_ctx = Init(protocol, uri);
     int64_t total_rows = 0;
 
-
     if (backend == "dataset") {
         std::string path = "/mnt/cephfs/dataset";
         ARROW_ASSIGN_OR_RAISE(auto scan_req, GetScanRequest(path, filter, schema, schema));
         ScanCtx scan_ctx = Scan(conn_ctx, scan_req);
         std::shared_ptr<arrow::RecordBatch> batch;
         {
+            int flag = (total_rows == 0);
             MEASURE_FUNCTION_EXECUTION_TIME
-            while ((batch = GetNextBatch(conn_ctx, scan_ctx).ValueOrDie()) != nullptr) {
+            while ((batch = GetNextBatch(conn_ctx, scan_ctx, flag).ValueOrDie()) != nullptr) {
                 total_rows += batch->num_rows();
             }
         }
