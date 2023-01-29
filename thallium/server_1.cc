@@ -113,12 +113,12 @@ int main(int argc, char** argv) {
         };
 
     int64_t total_rows_written = 0;
-    std::vector<sts::pair<void*, std::size_t>> segments;
+    std::vector<std::pair<void*, std::size_t>> segments;
     std::vector<int64_t> data_buff_sizes;
     std::vector<int64_t> offset_buff_sizes;
 
     std::function<void(const tl::request&, const std::string&)> get_next_batch = 
-        [&mid, &svr_addr, &engine, &do_rdma, &reader_map, &total_rows_written](const tl::request &req, const std::string& uuid) {
+        [&mid, &svr_addr, &engine, &do_rdma, &reader_map, &segments, &total_rows_written, &data_buff_sizes, &offset_buff_sizes](const tl::request &req, const std::string& uuid) {
             std::shared_ptr<arrow::RecordBatchReader> reader = reader_map[uuid];
             std::shared_ptr<arrow::RecordBatch> batch;
 
