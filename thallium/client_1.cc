@@ -215,7 +215,7 @@ arrow::Status Main(int argc, char **argv) {
                 std::string filepath = "/mnt/cephfs/dataset/16MB.uncompressed.parquet." + std::to_string(i);
                 ARROW_ASSIGN_OR_RAISE(auto scan_req, GetScanRequest(filepath, filter, schema, schema));
                 ScanCtx scan_ctx = Scan(conn_ctx, scan_req);
-                while ((batch = GetNextBatch(conn_ctx, scan_ctx).ValueOrDie()) != nullptr) {
+                while ((batch = GetNextBatch(conn_ctx, scan_ctx, (total_rows == 0)).ValueOrDie()) != nullptr) {
                     total_rows += batch->num_rows();
                 }
             }
