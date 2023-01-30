@@ -4,7 +4,7 @@ import matplotlib.pyplot as plt
 if __name__ == "__main__":
     selectivity = ["1", "10", "100"]
     mode = ["client", "server"]
-    benchmark = ["0", "2"]
+    benchmark = ["0", "2", "2-fix"]
 
     for b in benchmark:
         for s in selectivity:
