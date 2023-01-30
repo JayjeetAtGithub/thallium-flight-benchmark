@@ -196,10 +196,8 @@ arrow::Status Main(int argc, char **argv) {
         ScanCtx scan_ctx = Scan(conn_ctx, scan_req);
         std::shared_ptr<arrow::RecordBatch> batch;
         {
-            int flag = (total_rows == 0);
             MEASURE_FUNCTION_EXECUTION_TIME
-            while ((batch = GetNextBatch(conn_ctx, scan_ctx, flag).ValueOrDie()) != nullptr) {
-                flag = (total_rows == 0);
+            while ((batch = GetNextBatch(conn_ctx, scan_ctx, (total_rows == 0)).ValueOrDie()) != nullptr) {
                 total_rows += batch->num_rows();
             }
         }
