@@ -125,7 +125,7 @@ arrow::Result<std::shared_ptr<arrow::RecordBatch>> GetNextBatch(ConnCtx &conn_ct
 
                 {
                     MeasureExecutionTime m("client_expose");
-                    local = conn_ctx.engine.expose(segments, tl::bulk_mode::read_write);
+                    local = conn_ctx.engine.expose(segments, tl::bulk_mode::write_only);
                 }
             }
 
