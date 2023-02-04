@@ -101,6 +101,14 @@ arrow::Result<std::shared_ptr<arrow::RecordBatch>> GetNextBatch(ConnCtx &conn_ct
             int num_cols = scan_ctx.schema->num_fields();
             tl::bulk local;
 
+            {
+
+                for (int64_t i = 0; i < num_cols; i++) {
+                    std::cout << "data_buff_sizes[" << i << "] = " << data_buff_sizes[i] << std::endl;
+                    std::cout << "offset_buff_sizes[" << i << "] = " << offset_buff_sizes[i] << std::endl;
+                }
+            }
+
             std::vector<std::shared_ptr<arrow::Array>> columns;
             if (flag == 1) {
                 {
