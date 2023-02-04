@@ -118,7 +118,7 @@ arrow::Result<std::shared_ptr<arrow::RecordBatch>> GetNextBatch(ConnCtx &conn_ct
                         segments[i*2].first = (uint8_t*)malloc(BUFFER_SIZE);
                         segments[i*2].second = BUFFER_SIZE;
 
-                        segments[i*2+1] = (uint8_t*)malloc(BUFFER_SIZE);
+                        segments[i*2+1].first = (uint8_t*)malloc(BUFFER_SIZE);
                         segments[i*2+1].second = BUFFER_SIZE;
                     }
                 }
@@ -137,10 +137,20 @@ arrow::Result<std::shared_ptr<arrow::RecordBatch>> GetNextBatch(ConnCtx &conn_ct
             for (int64_t i = 0; i < num_cols; i++) {
                 std::shared_ptr<arrow::DataType> type = scan_ctx.schema->field(i)->type();  
                 if (is_binary_like(type->id())) {
-                    std::shared_ptr<arrow::Array> col_arr = std::make_shared<arrow::StringArray>(num_rows, std::move(segments[i*2+1].first), std::move(segments[i*2].first));
+                    std::shared_ptr<arrow::Buffer> data_buff = arrow::Buffer::Wrap(
+                        (uint8_t*)segments[i*2].first, data_buff_sizes[i]
+                    );
+                    std::shared_ptr<arrow::Buffer> offset_buff = arrow::Buffer::Wrap(
+                        (uint8_t*)segments[i*2+1].first, offset_buff_sizes[i]
+                    );
+
+                    std::shared_ptr<arrow::Array> col_arr = std::make_shared<arrow::StringArray>(num_rows, std::move(data_buff), std::move(offset_buff));
                     columns.push_back(col_arr);
                 } else {
-                    std::shared_ptr<arrow::Array> col_arr = std::make_shared<arrow::PrimitiveArray>(type, num_rows, std::move(segments[i*2].first));
+                    std::shared_ptr<arrow::Buffer> data_buff = arrow::Buffer::Wrap(
+                        (uint8_t*)segments[i*2].first, data_buff_sizes[i]
+                    );
+                    std::shared_ptr<arrow::Array> col_arr = std::make_shared<arrow::PrimitiveArray>(type, num_rows, std::move(data_buff));
                     columns.push_back(col_arr);
                 }
             }
