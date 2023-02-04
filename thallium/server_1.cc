@@ -172,9 +172,9 @@ int main(int argc, char** argv) {
                         offset_size = offset_buff->size();
 
                         memcpy(segments[i*2].first, (void*)data_buff->data(), data_size);
-                        memcpy(segments[i*2+1].first, (void*)offset_buff->data(), offset_size);
+                        memcpy(segments[(i*2)+1].first, (void*)offset_buff->data(), offset_size);
                         segments[i*2].second = data_size;
-                        segments[i*2+1].second = offset_size;
+                        segments[(i*2)+1].second = offset_size;
                     } else {
 
                         std::shared_ptr<arrow::Buffer> data_buff = 
@@ -184,9 +184,9 @@ int main(int argc, char** argv) {
                         offset_size = null_buff.size() + 1;
 
                         memcpy(segments[i*2].first, (void*)data_buff->data(), data_size);
-                        memcpy(segments[i*2+1].first, (void*)(&null_buff[0]), offset_size);
+                        memcpy(segments[(i*2)+1].first, (void*)(&null_buff[0]), offset_size);
                         segments[i*2].second = data_size;
-                        segments[i*2+1].second = offset_size;
+                        segments[(i*2)+1].second = offset_size;
                     }
 
                     data_buff_sizes.push_back(data_size);
