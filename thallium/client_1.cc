@@ -25,7 +25,7 @@
 
 #include "payload.h"
 
-const int32_t BUFFER_SIZE = 2*1024*1024;
+const int32_t BUFFER_SIZE = 1*1024*1024;
 
 class MeasureExecutionTime{
     private:
@@ -143,7 +143,7 @@ arrow::Result<std::shared_ptr<arrow::RecordBatch>> GetNextBatch(ConnCtx &conn_ct
                 MeasureExecutionTime m("RDMA");
                 b.on(req.get_endpoint()) >> local;
             }
-            
+
             for (int64_t i = 0; i < num_cols; i++) {
                 std::shared_ptr<arrow::DataType> type = scan_ctx.schema->field(i)->type();  
                 if (is_binary_like(type->id())) {
