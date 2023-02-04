@@ -25,7 +25,7 @@
 
 #include "payload.h"
 
-const BUFFER_SIZE = 2*1024*1024;
+const int32_t BUFFER_SIZE = 2*1024*1024;
 
 class MeasureExecutionTime{
     private:
@@ -115,7 +115,7 @@ arrow::Result<std::shared_ptr<arrow::RecordBatch>> GetNextBatch(ConnCtx &conn_ct
 
                         segments.emplace_back(std::make_pair(
                             (void*)data_buffs[i]->mutable_data(),
-                            data_buff[i]->size()
+                            data_buffs[i]->size()
                         ));
                         segments.emplace_back(std::make_pair(
                             (void*)offset_buffs[i]->mutable_data(),

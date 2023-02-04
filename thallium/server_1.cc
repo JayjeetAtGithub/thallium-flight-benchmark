@@ -32,6 +32,8 @@
 namespace tl = thallium;
 namespace cp = arrow::compute;
 
+const int32_t BUFFER_SIZE = 2*1024*1024;
+
 class MeasureExecutionTime{
     private:
         const std::chrono::steady_clock::time_point begin;
@@ -134,8 +136,8 @@ int main(int argc, char** argv) {
                     segments.reserve(batch->num_columns()*2);
                     for (int32_t i = 0; i < batch->num_columns()*2; i++) {
 
-                        auto dbuff = arrow::AllocateBuffer(2*1024*1024).ValueOrDie();
-                        auto obuff = arrow::AllocateBuffer(2*1024*1024).ValueOrDie();
+                        auto dbuff = arrow::AllocateBuffer(BUFFER_SIZE).ValueOrDie();
+                        auto obuff = arrow::AllocateBuffer(BUFFER_SIZE).ValueOrDie();
 
                         segments.push_back(std::make_pair((void*)dbuff->mutable_data(), dbuff->size()));
                         segments.push_back(std::make_pair((void*)obuff->mutable_data(), obuff->size()));
