@@ -133,8 +133,12 @@ int main(int argc, char** argv) {
                     std::cout << "Expose" << std::endl;
                     segments.reserve(batch->num_columns()*2);
                     for (int32_t i = 0; i < batch->num_columns()*2; i++) {
-                        segments.push_back(arrow::AllocateBuffer(2*1024*1024).ValueOrDie());
-                        segments.push_back(arrow::AllocateBuffer(2*1024*1024).ValueOrDie());
+
+                        auto dbuff = arrow::AllocateBuffer(2*1024*1024).ValueOrDie();
+                        auto obuff = arrow::AllocateBuffer(2*1024*1024).ValueOrDie();
+
+                        segments.push_back(std::make_pair((void*)dbuff->mutable_data(), dbuff->size()));
+                        segments.push_back(std::make_pair((void*)obuff->mutable_data(), obuff->size()));
                     }
 
                     {
