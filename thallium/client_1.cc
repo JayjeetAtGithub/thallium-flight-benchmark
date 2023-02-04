@@ -25,6 +25,8 @@
 
 #include "payload.h"
 
+const BUFFER_SIZE = 2*1024*1024;
+
 class MeasureExecutionTime{
     private:
         const std::chrono::steady_clock::time_point begin;
@@ -108,16 +110,16 @@ arrow::Result<std::shared_ptr<arrow::RecordBatch>> GetNextBatch(ConnCtx &conn_ct
 
                     MeasureExecutionTime m("memory_allocate");
                     for (int64_t i = 0; i < num_cols; i++) {
-                        data_buffs[i] = arrow::AllocateBuffer(data_buff_sizes[i]).ValueOrDie();
-                        offset_buffs[i] = arrow::AllocateBuffer(offset_buff_sizes[i]).ValueOrDie();
+                        data_buffs[i] = arrow::AllocateBuffer(BUFFER_SIZE).ValueOrDie();
+                        offset_buffs[i] = arrow::AllocateBuffer(BUFFER_SIZE).ValueOrDie();
 
                         segments.emplace_back(std::make_pair(
                             (void*)data_buffs[i]->mutable_data(),
-                            data_buff_sizes[i]
+                            BUFFER_SIZE
                         ));
                         segments.emplace_back(std::make_pair(
                             (void*)offset_buffs[i]->mutable_data(),
-                            offset_buff_sizes[i]
+                            BUFFER_SIZE
                         ));
                     }
                 }
@@ -131,6 +133,11 @@ arrow::Result<std::shared_ptr<arrow::RecordBatch>> GetNextBatch(ConnCtx &conn_ct
             {
                 MeasureExecutionTime m("RDMA");
                 b.on(req.get_endpoint()) >> local;
+            }
+
+            for (int64_t i = 0; i < num_cols; i++) {
+                segments[i].second = data_buff_sizes[i];
+                segments[2*i+1].second = offset_buff_sizes[i];
             }
 
             for (int64_t i = 0; i < num_cols; i++) {
