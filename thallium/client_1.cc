@@ -111,6 +111,7 @@ arrow::Result<std::shared_ptr<arrow::RecordBatch>> GetNextBatch(ConnCtx &conn_ct
 
             std::vector<std::shared_ptr<arrow::Array>> columns;
             if (flag == 1) {
+                std::cout << "Start exposing" << std::endl;
                 {
                     MeasureExecutionTime m("memory_allocate");
                     data_buffs.resize(num_cols);
