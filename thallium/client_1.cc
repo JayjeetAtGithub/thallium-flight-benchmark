@@ -115,10 +115,10 @@ arrow::Result<std::shared_ptr<arrow::RecordBatch>> GetNextBatch(ConnCtx &conn_ct
                     segments.reserve(num_cols*2);
 
                     for (int64_t i = 0; i < num_cols; i++) {
-                        segments[i*2].first = (uint8_t*)malloc(BUFFER_SIZE);
+                        segments[i*2].first = (void*)malloc(BUFFER_SIZE);
                         segments[i*2].second = BUFFER_SIZE;
 
-                        segments[i*2+1] = (uint8_t*)malloc(BUFFER_SIZE);
+                        segments[i*2+1] = (void*)malloc(BUFFER_SIZE);
                         segments[i*2+1].second = BUFFER_SIZE;
                     }
                 }
