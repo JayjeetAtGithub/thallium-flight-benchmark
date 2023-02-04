@@ -156,6 +156,7 @@ arrow::Result<std::shared_ptr<arrow::RecordBatch>> GetNextBatch(ConnCtx &conn_ct
             }
 
             batch = arrow::RecordBatch::Make(scan_ctx.schema, num_rows, columns);
+            std::cout << batch->num_rows() << std::endl;
             return req.respond(0);
         };
     conn_ctx.engine.define("do_rdma", f);
