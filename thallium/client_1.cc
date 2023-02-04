@@ -104,11 +104,11 @@ arrow::Result<std::shared_ptr<arrow::RecordBatch>> GetNextBatch(ConnCtx &conn_ct
             std::vector<std::shared_ptr<arrow::Array>> columns;
             if (flag == 1) {
                 {
+                    MeasureExecutionTime m("memory_allocate");
                     data_buffs.resize(num_cols);
                     offset_buffs.resize(num_cols);
                     segments.reserve(num_cols*2);
 
-                    MeasureExecutionTime m("memory_allocate");
                     for (int64_t i = 0; i < num_cols; i++) {
                         data_buffs[i] = arrow::AllocateBuffer(BUFFER_SIZE).ValueOrDie();
                         offset_buffs[i] = arrow::AllocateBuffer(BUFFER_SIZE).ValueOrDie();
@@ -200,7 +200,6 @@ arrow::Status Main(int argc, char **argv) {
 
     ConnCtx conn_ctx = Init(protocol, uri);
     int64_t total_rows = 0;
-
 
     if (backend == "dataset") {
         std::string path = "/mnt/cephfs/dataset";

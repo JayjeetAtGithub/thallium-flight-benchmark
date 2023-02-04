@@ -145,7 +145,7 @@ int main(int argc, char** argv) {
 
                     {
                         MeasureExecutionTime m("server_expose");
-                        arrow_bulk = engine.expose(segments, tl::bulk_mode::read_only);
+                        arrow_bulk = engine.expose(segments, tl::bulk_mode::read_write);
                     }
                 }
 
