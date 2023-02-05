@@ -83,7 +83,7 @@ int main(int argc, char** argv) {
 
     bool flag = true;
     std::function<void(const tl::request&)> get_next = 
-        [&mid, &svr_addr, &engine, &do_rdma, &data_buff](const tl::request &req) {            
+        [&mid, &svr_addr, &engine, &do_rdma, &data_buff, &flag](const tl::request &req) {            
             std::vector<std::pair<void*,std::size_t>> segments(1);
             tl::bulk bulk;
             uint8_t* buff = nullptr;
