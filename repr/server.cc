@@ -53,12 +53,7 @@ static char* read_input_file(const char* filename) {
 }
 
 int main(int argc, char** argv) {
-    if (argc < 4) {
-        std::cout << "./ts [protocol]" << std::endl;
-        exit(1);
-    }
-
-    std::string protocol = argv[1];
+    std::string protocol = "ofi+verbs";
 
     tl::engine engine(protocol, THALLIUM_SERVER_MODE, true);
     margo_instance_id mid = engine.get_margo_instance();
