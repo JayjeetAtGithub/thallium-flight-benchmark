@@ -75,7 +75,7 @@ int main(int argc, char** argv) {
     uint8_t *data_buff = (uint8_t*)malloc(32*1024*1024);
 
     std::function<void(const tl::request&)> scan = 
-        [&mid, &svr_addr](const tl::request &req) {
+        [&mid, &svr_addr, &data_buff](const tl::request &req) {
             {
                 MeasureExecutionTime m("I/O");
                 std::string filename = "blob";
