@@ -95,17 +95,17 @@ int main(int argc, char** argv) {
             if (flag) {
                 {
                     MeasureExecutionTime m("server_expose");
-                    segments[0].first = data_buff;
+                    segments[0].first = buff;
                     segments[0].second = 32*1024*1024;
                     bulk = engine.expose(segments, tl::bulk_mode::read_write);
                 }
                 flag = false;
             }
             
-            // {
-            //     MeasureExecutionTime m("memcpy");
-            //     memcpy(buff, data_buff, 32*1024*1024);
-            // }
+            {
+                MeasureExecutionTime m("memcpy");
+                memcpy(segments[0].first, data_buff, 32*1024*1024);
+            }
             do_rdma.on(req.get_endpoint())(bulk);
             return req.respond(0);
         };

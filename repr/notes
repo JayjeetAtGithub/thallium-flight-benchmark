@@ -1,0 +1,1 @@
+1. Exposing empty buffer takes ~10ms while exposing filled buffer takes ~1.2ms
