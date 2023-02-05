@@ -81,6 +81,7 @@ int main(int argc, char **argv) {
     {
         MEASURE_FUNCTION_EXECUTION_TIME
         for (int i = 0; i < 100; i++) {
+            std::cout << "Iteration " << i << std::endl;
             GetNext(engine, endpoint, (i == 0));
         }
     }
