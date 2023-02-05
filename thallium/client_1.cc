@@ -112,15 +112,21 @@ arrow::Result<std::shared_ptr<arrow::RecordBatch>> GetNextBatch(ConnCtx &conn_ct
                 std::cout << "Start exposing" << std::endl;
                 {
                     MeasureExecutionTime m("memory_allocate");
-                    segments.reserve(num_cols*2);
 
-                    for (int64_t i = 0; i < num_cols; i++) {
-                        segments[i*2].first = (uint8_t*)malloc(BUFFER_SIZE);
-                        segments[i*2].second = BUFFER_SIZE;
+                    segments.resize(1);
+                    segments[0].first = (uint8_t*)malloc(BUFFER_SIZE);
+                    segments[0].second = BUFFER_SIZE;
 
-                        segments[(i*2)+1].first = (uint8_t*)malloc(BUFFER_SIZE);
-                        segments[(i*2)+1].second = BUFFER_SIZE;
-                    }
+                    // segments.reserve(num_cols*2);
+                    
+
+                    // for (int64_t i = 0; i < num_cols; i++) {
+                    //     segments[i*2].first = (uint8_t*)malloc(BUFFER_SIZE);
+                    //     segments[i*2].second = BUFFER_SIZE;
+
+                    //     segments[(i*2)+1].first = (uint8_t*)malloc(BUFFER_SIZE);
+                    //     segments[(i*2)+1].second = BUFFER_SIZE;
+                    // }
                 }
 
                 {
