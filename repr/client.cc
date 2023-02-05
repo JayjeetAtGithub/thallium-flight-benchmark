@@ -59,12 +59,7 @@ size_t GetNext(const tl::engine& engine, const tl::endpoint& endpoint) {
     engine.define("do_rdma", f);
     tl::remote_procedure get_next = engine.define("get_next");
 
-    int e = get_next.on(endpoint)();
-    if (e == 0) {
-        return buff_size;
-    } else {
-        return 0;
-    }
+    return get_next.on(endpoint)();
 }
 
 int main(int argc, char **argv) {
@@ -82,12 +77,10 @@ int main(int argc, char **argv) {
     tl::remote_procedure scan = engine.define("scan");
     int e = scan.on(endpoint)();
 
-    size_t bytes_read = 0;
-    size_t total_bytes_read = 0;
     {
         MEASURE_FUNCTION_EXECUTION_TIME
-        while ((bytes_read = GetNext(engine, endpoint)) > 0) {
-            total_bytes_read += bytes_read;
+        for (int i = 0; i < 100; i++) {
+            GetNext(engine, endpoint);
         }
     }
 
