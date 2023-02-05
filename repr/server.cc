@@ -80,11 +80,12 @@ int main(int argc, char** argv) {
 
             return req.respond(0);
         };
+    
+    std::vector<std::pair<void*,std::size_t>> segments(1);
+    tl::bulk bulk;
 
     std::function<void(const tl::request&)> get_next = 
-        [&mid, &svr_addr, &engine, &do_rdma, &data_buff](const tl::request &req) {            
-            std::vector<std::pair<void*,std::size_t>> segments(1);
-            tl::bulk bulk;
+        [&mid, &svr_addr, &engine, &do_rdma, &data_buff, &bulk, &segments](const tl::request &req) {            
             {
                 MeasureExecutionTime m("server_expose");
                 segments[0].first = data_buff;
