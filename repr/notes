@@ -5,3 +5,5 @@
     me, se: 740ms (none)
     se, me: 2840ms (memcpy costs and client expose)
     se, se: 1810ms (memcpy costs)
+
+3. exposing write buffer > exposing r/w buffer > exposing read buffer
