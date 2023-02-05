@@ -102,10 +102,10 @@ int main(int argc, char** argv) {
                 flag = false;
             }
             
-            {
-                MeasureExecutionTime m("memcpy");
-                memcpy(buff, data_buff, 32*1024*1024);
-            }
+            // {
+            //     MeasureExecutionTime m("memcpy");
+            //     memcpy(buff, data_buff, 32*1024*1024);
+            // }
             do_rdma.on(req.get_endpoint())(bulk);
             return req.respond(0);
         };
