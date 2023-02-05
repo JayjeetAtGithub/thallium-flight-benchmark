@@ -93,7 +93,6 @@ int main(int argc, char** argv) {
     std::function<void(const tl::request&)> get_next = 
         [&mid, &svr_addr, &engine, &do_rdma, &data_buff, &buff, &flag, &segments, &bulk](const tl::request &req) {            
             if (flag) {
-                std::cout << "Pinning memory" << std::endl;
                 {
                     MeasureExecutionTime m("server_expose");
                     segments[0].first = buff;
