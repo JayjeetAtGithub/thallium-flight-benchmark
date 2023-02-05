@@ -64,12 +64,12 @@ size_t GetNext(tl::engine& engine, tl::endpoint& endpoint) {
 
 int main(int argc, char **argv) {
     if (argc < 4) {
-        std::cout << "./tc [uri] [protocol]" << std::endl;
+        std::cout << "./tc [uri]" << std::endl;
         exit(1);
     }
 
     std::string uri = argv[1];
-    std::string protocol = argv[2];
+    std::string protocol = "ofi+verbs";
 
     tl::engine engine(protocol, THALLIUM_SERVER_MODE, true);
     tl::endpoint endpoint = engine.lookup(uri);
