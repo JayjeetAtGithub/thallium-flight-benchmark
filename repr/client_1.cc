@@ -36,13 +36,14 @@ size_t GetNext(tl::engine& engine, tl::endpoint& endpoint, bool flag) {
         [&engine, &endpoint, &flag](const tl::request& req, tl::bulk& b) {
             
             std::vector<std::pair<void*,std::size_t>> segments(1);     
+            tl::bulk local;
+
             if (flag) {       
                 {
                     MeasureExecutionTime m("memory_allocate");
                     segments[0].first = (uint8_t*)malloc(32*1024*1024);
                     segments[0].second = 32*1024*1024;
                 }
-                tl::bulk local;
                 {
                     MeasureExecutionTime m("client_expose");
                     local = engine.expose(segments, tl::bulk_mode::write_only);
