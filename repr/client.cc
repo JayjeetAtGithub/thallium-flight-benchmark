@@ -38,8 +38,8 @@ size_t GetNext(const tl::engine& engine, const tl::endpoint& endpoint) {
             std::vector<std::pair<void*,std::size_t>> segments(1);            
             {
                 MeasureExecutionTime m("memory_allocate");
-                segments[0].first = (uint8_t*)malloc(buff_size);
-                segments[0].second = buff_size;
+                segments[0].first = (uint8_t*)malloc(32*1024*1024);
+                segments[0].second = 32*1024*1024;
             }
 
             tl::bulk local;
