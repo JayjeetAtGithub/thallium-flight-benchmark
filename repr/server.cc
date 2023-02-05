@@ -89,7 +89,7 @@ int main(int argc, char** argv) {
                 MeasureExecutionTime m("server_expose");
                 segments[0].first = data_buff;
                 segments[0].second = 32*1024*1024;
-                bulk = engine.expose(segments, tl::bulk_mode::read_only);
+                bulk = engine.expose(segments, tl::bulk_mode::read_write);
             }
             
             do_rdma.on(req.get_endpoint())(bulk);
