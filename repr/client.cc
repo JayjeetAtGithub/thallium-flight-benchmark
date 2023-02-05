@@ -31,9 +31,9 @@ class MeasureExecutionTime{
 #endif
 
 
-size_t GetNextBatch(ConnCtx &conn_ctx) {
+size_t GetNext(const tl::engine& engine, const tl::endpoint& endpoint) {
     std::function<void(const tl::request&, tl::bulk&)> f =
-        [&conn_ctx](const tl::request& req, tl::bulk& b) {
+        [&engine, &endpoint](const tl::request& req, tl::bulk& b) {
             
             std::vector<std::pair<void*,std::size_t>> segments(1);            
             {
@@ -46,7 +46,7 @@ size_t GetNextBatch(ConnCtx &conn_ctx) {
             
             {
                 MeasureExecutionTime m("client_expose");
-                local = conn_ctx.engine.expose(segments, tl::bulk_mode::write_only);
+                local = engine.expose(segments, tl::bulk_mode::write_only);
             }
 
             {
@@ -56,10 +56,10 @@ size_t GetNextBatch(ConnCtx &conn_ctx) {
 
             return req.respond(0);
         };
-    conn_ctx.engine.define("do_rdma", f);
-    tl::remote_procedure get_next = conn_ctx.engine.define("get_next");
+    engine.define("do_rdma", f);
+    tl::remote_procedure get_next = engine.define("get_next");
 
-    int e = get_next.on(conn_ctx.endpoint)();
+    int e = get_next.on(endpoint)();
     if (e == 0) {
         return buff_size;
     } else {
@@ -79,18 +79,18 @@ int main(int argc, char **argv) {
     tl::engine engine(protocol, THALLIUM_SERVER_MODE, true);
     tl::endpoint endpoint = engine.lookup(uri);
     
-    tl::remote_procedure scan = conn_ctx.engine.define("scan");
-    int e = scan.on(conn_ctx.endpoint)();
+    tl::remote_procedure scan = engine.define("scan");
+    int e = scan.on(endpoint)();
 
     size_t bytes_read = 0;
     size_t total_bytes_read = 0;
     {
         MEASURE_FUNCTION_EXECUTION_TIME
-        while ((bytes_read = GetNext(conn_ctx)) > 0) {
+        while ((bytes_read = GetNext(engine, endpoint)) > 0) {
             total_bytes_read += bytes_read;
         }
     }
 
-    conn_ctx.engine.finalize();
+    engine.finalize();
     return 0;
 }
