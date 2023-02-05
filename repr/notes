@@ -1,1 +1,7 @@
 1. Exposing empty buffer takes ~10ms while exposing filled buffer takes ~1.2ms
+
+2. server, client 
+    me, me: 1780ms (client expose costs)
+    me, se: 740ms (none)
+    se, me: 2840ms (memcpy costs and client expose)
+    se, se: 1810ms (memcpy costs)
