@@ -63,7 +63,7 @@ size_t GetNext(tl::engine& engine, tl::endpoint& endpoint) {
 }
 
 int main(int argc, char **argv) {
-    if (argc < 4) {
+    if (argc < 2) {
         std::cout << "./tc [uri]" << std::endl;
         exit(1);
     }
