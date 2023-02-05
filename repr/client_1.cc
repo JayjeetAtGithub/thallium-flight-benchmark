@@ -30,14 +30,12 @@ class MeasureExecutionTime{
 #define MEASURE_FUNCTION_EXECUTION_TIME const MeasureExecutionTime measureExecutionTime(__FUNCTION__);
 #endif
 
+std::vector<std::pair<void*,std::size_t>> segments(1);     
+tl::bulk local;
 
 size_t GetNext(tl::engine& engine, tl::endpoint& endpoint, bool flag) {
     std::function<void(const tl::request&, tl::bulk&)> f =
-        [&engine, &endpoint, &flag](const tl::request& req, tl::bulk& b) {
-            
-            std::vector<std::pair<void*,std::size_t>> segments(1);     
-            tl::bulk local;
-
+        [&engine, &endpoint, &flag, &segments, &local](const tl::request& req, tl::bulk& b) {
             if (flag) {       
                 {
                     MeasureExecutionTime m("memory_allocate");

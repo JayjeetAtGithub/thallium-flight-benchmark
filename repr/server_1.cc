@@ -87,11 +87,11 @@ int main(int argc, char** argv) {
         MeasureExecutionTime m("memory_allocate");
         buff = (uint8_t*)malloc(32*1024*1024);
     }
+    std::vector<std::pair<void*,std::size_t>> segments(1);
+    tl::bulk bulk;
 
     std::function<void(const tl::request&)> get_next = 
-        [&mid, &svr_addr, &engine, &do_rdma, &data_buff, &buff, &flag](const tl::request &req) {            
-            std::vector<std::pair<void*,std::size_t>> segments(1);
-            tl::bulk bulk;
+        [&mid, &svr_addr, &engine, &do_rdma, &data_buff, &buff, &flag, &segments, &bulk](const tl::request &req) {            
             if (flag) {
                 std::cout << "Pinning memory" << std::endl;
                 {
