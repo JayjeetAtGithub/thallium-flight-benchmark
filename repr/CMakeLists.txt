@@ -15,7 +15,10 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
 
 add_executable(rtc client.cc)
 target_link_libraries(rtc thallium)
+add_executable(rtc1 client_1.cc)
+target_link_libraries(rtc1 thallium)
 
 add_executable(rts server.cc)
 target_link_libraries(rts thallium)
-
+add_executable(rts1 server_1.cc)
+target_link_libraries(rts1 thallium)
