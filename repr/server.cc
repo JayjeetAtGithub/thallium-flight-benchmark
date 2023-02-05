@@ -87,7 +87,7 @@ int main(int argc, char** argv) {
         };
 
     std::function<void(const tl::request&)> get_next = 
-        [&mid, &svr_addr, &engine, &do_rdma](const tl::request &req) {            
+        [&mid, &svr_addr, &engine, &do_rdma, &data_buff](const tl::request &req) {            
             std::vector<std::pair<void*,std::size_t>> segments(1);
             segments[0].first = data_buff;
             segments[0].second = 32*1024*1024;
