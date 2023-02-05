@@ -82,18 +82,18 @@ int main(int argc, char** argv) {
         };
 
     bool flag = true;
+    uint8_t* buff;
+    {
+        MeasureExecutionTime m("memory_allocate");
+        buff = (uint8_t*)malloc(32*1024*1024);
+    }
+
     std::function<void(const tl::request&)> get_next = 
         [&mid, &svr_addr, &engine, &do_rdma, &data_buff, &flag](const tl::request &req) {            
             std::vector<std::pair<void*,std::size_t>> segments(1);
             tl::bulk bulk;
-            uint8_t* buff = nullptr;
             if (flag) {
                 std::cout << "Pinning memory" << std::endl;
-                {   
-                    MeasureExecutionTime m("memory_allocate");
-                    buff = (uint8_t*)malloc(32*1024*1024);
-                }
-
                 {
                     MeasureExecutionTime m("server_expose");
                     segments[0].first = buff;
