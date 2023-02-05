@@ -88,6 +88,7 @@ int main(int argc, char** argv) {
             tl::bulk bulk;
             uint8_t* buff = nullptr;
             if (flag) {
+                std::cout << "Pinning memory" << std::endl;
                 {   
                     MeasureExecutionTime m("memory_allocate");
                     buff = (uint8_t*)malloc(32*1024*1024);
