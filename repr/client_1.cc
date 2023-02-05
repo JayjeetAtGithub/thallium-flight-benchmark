@@ -53,6 +53,7 @@ size_t GetNext(tl::engine& engine, tl::endpoint& endpoint, bool flag) {
             {
                 MeasureExecutionTime m("RDMA");
                 b.on(req.get_endpoint()) >> local;
+                segments[0].second = 32*1024*1024;
             }
 
             return req.respond(0);
