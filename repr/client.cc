@@ -31,7 +31,7 @@ class MeasureExecutionTime{
 #endif
 
 
-size_t GetNext(const tl::engine& engine, const tl::endpoint& endpoint) {
+size_t GetNext(tl::engine& engine, tl::endpoint& endpoint) {
     std::function<void(const tl::request&, tl::bulk&)> f =
         [&engine, &endpoint](const tl::request& req, tl::bulk& b) {
             
