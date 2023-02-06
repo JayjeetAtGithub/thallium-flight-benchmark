@@ -131,6 +131,7 @@ int main(int argc, char** argv) {
             }
 
             if (batch != nullptr) {
+                std::cout << batch->ToString() << std::endl;
                 if (total_rows_written == 0) {
                     std::cout << "Pinning server side buffers" << std::endl;
                     segments.reserve(batch->num_columns()*2);
