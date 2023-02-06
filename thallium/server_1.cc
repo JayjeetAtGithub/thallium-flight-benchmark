@@ -115,7 +115,7 @@ int main(int argc, char** argv) {
         };
 
     int64_t total_rows_written = 0;
-    std::vector<std::pair<void*, std::size_t>> segments;
+    std::vector<std::pair<void*, std::size_t>> segments(34);
     std::vector<int64_t> data_buff_sizes;
     std::vector<int64_t> offset_buff_sizes;
     tl::bulk arrow_bulk;
@@ -123,9 +123,10 @@ int main(int argc, char** argv) {
     // uint8_t* data_buff = (uint8_t*)malloc(BUFFER_SIZE);
     // uint8_t* offset_buff = (uint8_t*)malloc(BUFFER_SIZE);
 
-    std::vector<uint8_t*> pointers(34);
-    for (int i = 0; i < pointers.size(); i++) {
-        pointers[i] = arrow::AllocateBuffer(BUFFER_SIZE).ValueOrDie()->mutable_data();
+    // std::vector<uint8_t*> pointers(34);
+    for (int i = 0; i < segments.size(); i++) {
+        segments[i].first = arrow::AllocateBuffer(BUFFER_SIZE).ValueOrDie()->mutable_data();
+        segments[i].second = BUFFER_SIZE;
     }
 
     std::function<void(const tl::request&, const std::string&)> get_next_batch = 
@@ -143,18 +144,18 @@ int main(int argc, char** argv) {
                 if (total_rows_written == 0) {
                     std::cout << "Pinning server side buffers" << std::endl;
                     
-                    std::cout << pointers.size() << std::endl;
-                    for (int i = 0; i < pointers.size(); i++) {
-                        std::cout << sizeof(pointers[i]) << std::endl;
-                    }
+                    // std::cout << pointers.size() << std::endl;
+                    // for (int i = 0; i < pointers.size(); i++) {
+                    //     std::cout << sizeof(pointers[i]) << std::endl;
+                    // }
 
-                    segments.reserve(batch->num_columns()*2);
-                    for (int32_t i = 0; i < batch->num_columns()*2; i++) {
-                        segments[i*2].first = pointers[i*2];
-                        segments[i*2].second = BUFFER_SIZE;
-                        segments[(i*2)+1].first = pointers[(i*2)+1];
-                        segments[(i*2)+1].second = BUFFER_SIZE;
-                    }
+                    // segments.reserve(batch->num_columns()*2);
+                    // for (int32_t i = 0; i < batch->num_columns()*2; i++) {
+                    //     segments[i*2].first = pointers[i*2];
+                    //     segments[i*2].second = BUFFER_SIZE;
+                    //     segments[(i*2)+1].first = pointers[(i*2)+1];
+                    //     segments[(i*2)+1].second = BUFFER_SIZE;
+                    // }
 
                     {
                         MeasureExecutionTime m("server_expose");
