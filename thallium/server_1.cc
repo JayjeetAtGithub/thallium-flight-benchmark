@@ -139,8 +139,8 @@ int main(int argc, char** argv) {
                         auto dbuff = arrow::AllocateBuffer(BUFFER_SIZE).ValueOrDie();
                         auto obuff = arrow::AllocateBuffer(BUFFER_SIZE).ValueOrDie();
 
-                        segments.push_back(std::make_pair((void*)dbuff->mutable_data(), dbuff->size()));
-                        segments.push_back(std::make_pair((void*)obuff->mutable_data(), obuff->size()));
+                        segments.emplace_back(std::make_pair((void*)dbuff->mutable_data(), dbuff->size()));
+                        segments.emplace_back(std::make_pair((void*)obuff->mutable_data(), obuff->size()));
                     }
 
                     {

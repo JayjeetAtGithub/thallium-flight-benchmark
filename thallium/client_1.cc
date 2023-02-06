@@ -115,8 +115,8 @@ arrow::Result<std::shared_ptr<arrow::RecordBatch>> GetNextBatch(ConnCtx &conn_ct
                     for (int64_t i = 0; i < num_cols; i++) {
                         auto db = arrow::AllocateBuffer(BUFFER_SIZE).ValueOrDie();
                         auto ob = arrow::AllocateBuffer(BUFFER_SIZE).ValueOrDie();
-                        segments.push_back(std::make_pair(db->mutable_data(), BUFFER_SIZE));
-                        segments.push_back(std::make_pair(ob->mutable_data(), BUFFER_SIZE));
+                        segments.emplace_back(std::make_pair(db->mutable_data(), BUFFER_SIZE));
+                        segments.emplace_back(std::make_pair(ob->mutable_data(), BUFFER_SIZE));
                     }
                 }
 
