@@ -97,7 +97,7 @@ arrow::Result<std::shared_ptr<arrow::RecordBatch>> GetNextBatch(ConnCtx &conn_ct
     std::shared_ptr<arrow::RecordBatch> batch;
     std::function<void(const tl::request&, int64_t&, std::vector<int64_t>&, std::vector<int64_t>&, tl::bulk&)> f =
         [&conn_ctx, &scan_ctx, &batch, &segments, &flag, &local](const tl::request& req, int64_t& num_rows, std::vector<int64_t>& data_buff_sizes, std::vector<int64_t>& offset_buff_sizes, tl::bulk& b) {
-            int num_cols = scan_ctx.schema->num_fields();
+            // int num_cols = scan_ctx.schema->num_fields();
 
             // {
             //     for (int i = 0; i < num_cols; i++) {
@@ -106,53 +106,53 @@ arrow::Result<std::shared_ptr<arrow::RecordBatch>> GetNextBatch(ConnCtx &conn_ct
             //     }
             // }
 
-            std::vector<std::shared_ptr<arrow::Array>> columns;
-            if (flag == 1) {
-                std::cout << "Start exposing" << std::endl;
-                // {
-                    // MeasureExecutionTime m("memory_allocate");
-                    segments.reserve(num_cols*2);
-                    for (int64_t i = 0; i < num_cols; i++) {
-                        auto db = arrow::AllocateBuffer(BUFFER_SIZE).ValueOrDie();
-                        auto ob = arrow::AllocateBuffer(BUFFER_SIZE).ValueOrDie();
-                        segments.push_back(std::make_pair(db->mutable_data(), BUFFER_SIZE));
-                        segments.push_back(std::make_pair(ob->mutable_data(), BUFFER_SIZE));
-                    }
-                // }
+            // std::vector<std::shared_ptr<arrow::Array>> columns;
+            // if (flag == 1) {
+            //     std::cout << "Start exposing" << std::endl;
+            //     // {
+            //         // MeasureExecutionTime m("memory_allocate");
+            //         segments.reserve(num_cols*2);
+            //         for (int64_t i = 0; i < num_cols; i++) {
+            //             auto db = arrow::AllocateBuffer(BUFFER_SIZE).ValueOrDie();
+            //             auto ob = arrow::AllocateBuffer(BUFFER_SIZE).ValueOrDie();
+            //             segments.push_back(std::make_pair(db->mutable_data(), BUFFER_SIZE));
+            //             segments.push_back(std::make_pair(ob->mutable_data(), BUFFER_SIZE));
+            //         }
+            //     // }
 
-                // {
-                //     MeasureExecutionTime m("client_expose");
-                    local = conn_ctx.engine.expose(segments, tl::bulk_mode::write_only);
-                // }
-            }
+            //     // {
+            //     //     MeasureExecutionTime m("client_expose");
+            //         local = conn_ctx.engine.expose(segments, tl::bulk_mode::write_only);
+            //     // }
+            // }
 
             // {
                 // MeasureExecutionTime m("RDMA");
-                b.on(req.get_endpoint()) >> local;
+                // b.on(req.get_endpoint()) >> local;
             // }
 
-            for (int64_t i = 0; i < num_cols; i++) {
-                std::shared_ptr<arrow::DataType> type = scan_ctx.schema->field(i)->type();  
-                if (is_binary_like(type->id())) {
-                    std::shared_ptr<arrow::Buffer> data_buff = arrow::Buffer::Wrap(
-                        (uint8_t*)segments[i*2].first, data_buff_sizes[i]
-                    );
-                    std::shared_ptr<arrow::Buffer> offset_buff = arrow::Buffer::Wrap(
-                        (uint8_t*)segments[(i*2)+1].first, offset_buff_sizes[i]
-                    );
+            // for (int64_t i = 0; i < num_cols; i++) {
+            //     std::shared_ptr<arrow::DataType> type = scan_ctx.schema->field(i)->type();  
+            //     if (is_binary_like(type->id())) {
+            //         std::shared_ptr<arrow::Buffer> data_buff = arrow::Buffer::Wrap(
+            //             (uint8_t*)segments[i*2].first, data_buff_sizes[i]
+            //         );
+            //         std::shared_ptr<arrow::Buffer> offset_buff = arrow::Buffer::Wrap(
+            //             (uint8_t*)segments[(i*2)+1].first, offset_buff_sizes[i]
+            //         );
 
-                    std::shared_ptr<arrow::Array> col_arr = std::make_shared<arrow::StringArray>(num_rows, std::move(data_buff), std::move(offset_buff));
-                    columns.push_back(col_arr);
-                } else {
-                    std::shared_ptr<arrow::Buffer> data_buff = arrow::Buffer::Wrap(
-                        (uint8_t*)segments[i*2].first, data_buff_sizes[i]
-                    );
-                    std::shared_ptr<arrow::Array> col_arr = std::make_shared<arrow::PrimitiveArray>(type, num_rows, std::move(data_buff));
-                    columns.push_back(col_arr);
-                }
-            }
+            //         std::shared_ptr<arrow::Array> col_arr = std::make_shared<arrow::StringArray>(num_rows, std::move(data_buff), std::move(offset_buff));
+            //         columns.push_back(col_arr);
+            //     } else {
+            //         std::shared_ptr<arrow::Buffer> data_buff = arrow::Buffer::Wrap(
+            //             (uint8_t*)segments[i*2].first, data_buff_sizes[i]
+            //         );
+            //         std::shared_ptr<arrow::Array> col_arr = std::make_shared<arrow::PrimitiveArray>(type, num_rows, std::move(data_buff));
+            //         columns.push_back(col_arr);
+            //     }
+            // }
 
-            batch = arrow::RecordBatch::Make(scan_ctx.schema, num_rows, columns);
+            // batch = arrow::RecordBatch::Make(scan_ctx.schema, num_rows, columns);
             return req.respond(0);
         };
     conn_ctx.engine.define("do_rdma", f);
