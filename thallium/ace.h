@@ -184,6 +184,7 @@ arrow::Result<std::shared_ptr<arrow::RecordBatchReader>> ScanDataset(cp::ExecCon
       auto im_ds = std::make_shared<arrow::dataset::InMemoryDataset>(table);
       ARROW_ASSIGN_OR_RAISE(auto im_ds_scanner_builder, im_ds->NewScan());
       ARROW_ASSIGN_OR_RAISE(auto im_ds_scanner, im_ds_scanner_builder->Finish());
+      std::cout << im_ds_scanner->options()->batch_size << std::endl;
       ARROW_ASSIGN_OR_RAISE(reader, im_ds_scanner->ToRecordBatchReader());
     }
 
