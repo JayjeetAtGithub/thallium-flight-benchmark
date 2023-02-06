@@ -129,6 +129,11 @@ arrow::Result<std::shared_ptr<arrow::RecordBatch>> GetNextBatch(ConnCtx &conn_ct
             {
                 MeasureExecutionTime m("RDMA");
                 b.on(req.get_endpoint()) >> local;
+
+                for (int i = 0; i < num_cols; i++) {
+                    segments[i*2].second = data_buff_sizes[i];
+                    segments[(i*2)+1].second = offset_buff_sizes[i];
+                }
             }
 
             for (int64_t i = 0; i < num_cols; i++) {

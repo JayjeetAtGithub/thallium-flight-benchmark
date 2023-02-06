@@ -132,7 +132,7 @@ int main(int argc, char** argv) {
 
             if (batch != nullptr) {
                 if (total_rows_written == 0) {
-                    std::cout << "Start exposing" << std::endl;
+                    std::cout << "Pinning server side buffers" << std::endl;
                     segments.reserve(batch->num_columns()*2);
                     for (int32_t i = 0; i < batch->num_columns()*2; i++) {
 
