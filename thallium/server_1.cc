@@ -116,8 +116,8 @@ int main(int argc, char** argv) {
 
     int64_t total_rows_written = 0;
     std::vector<std::pair<void*, std::size_t>> segments;
-    std::vector<int64_t> data_buff_sizes = {1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17};
-    std::vector<int64_t> offset_buff_sizes = {1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17};
+    std::vector<int64_t> data_buff_sizes;
+    std::vector<int64_t> offset_buff_sizes;
     tl::bulk arrow_bulk;
 
     std::function<void(const tl::request&, const std::string&)> get_next_batch = 
@@ -198,6 +198,8 @@ int main(int argc, char** argv) {
             //         data_buff_sizes.push_back(data_size);
             //         offset_buff_sizes.push_back(offset_size);
             //     }
+            data_buff_sizes = {1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17};
+            offset_buff_sizes = {1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17};
                 
                 int e = do_rdma.on(req.get_endpoint())(131072, data_buff_sizes, offset_buff_sizes, arrow_bulk);
                 return req.respond(e);
