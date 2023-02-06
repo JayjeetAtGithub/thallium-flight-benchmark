@@ -108,9 +108,9 @@ arrow::Result<std::shared_ptr<arrow::RecordBatch>> GetNextBatch(ConnCtx &conn_ct
 
             std::vector<std::shared_ptr<arrow::Array>> columns;
             if (flag == 1) {
-                std::cout << "Start exposing" << std::endl;
-                // {
-                    // MeasureExecutionTime m("memory_allocate");
+                std::cout << "Pinning client side buffers" << std::endl;
+                {
+                    MeasureExecutionTime m("memory_allocate");
                     segments.reserve(num_cols*2);
                     for (int64_t i = 0; i < num_cols; i++) {
                         auto db = arrow::AllocateBuffer(BUFFER_SIZE).ValueOrDie();
@@ -118,18 +118,18 @@ arrow::Result<std::shared_ptr<arrow::RecordBatch>> GetNextBatch(ConnCtx &conn_ct
                         segments.push_back(std::make_pair(db->mutable_data(), BUFFER_SIZE));
                         segments.push_back(std::make_pair(ob->mutable_data(), BUFFER_SIZE));
                     }
-                // }
+                }
 
-                // {
-                //     MeasureExecutionTime m("client_expose");
+                {
+                    MeasureExecutionTime m("client_expose");
                     local = conn_ctx.engine.expose(segments, tl::bulk_mode::write_only);
-                // }
+                }
             }
 
-            // {
-                // MeasureExecutionTime m("RDMA");
+            {
+                MeasureExecutionTime m("RDMA");
                 b.on(req.get_endpoint()) >> local;
-            // }
+            }
 
             for (int64_t i = 0; i < num_cols; i++) {
                 std::shared_ptr<arrow::DataType> type = scan_ctx.schema->field(i)->type();  
@@ -209,10 +209,7 @@ arrow::Status Main(int argc, char **argv) {
     if (backend == "dataset") {
         std::string path = "/mnt/cephfs/dataset";
         ScanReq scan_req;
-        // {
-            // MeasureExecutionTime m("get_scan_request");
-            ARROW_ASSIGN_OR_RAISE(scan_req, GetScanRequest(path, filter, schema, schema));
-        // }
+        ARROW_ASSIGN_OR_RAISE(scan_req, GetScanRequest(path, filter, schema, schema));
         ScanCtx scan_ctx = Scan(conn_ctx, scan_req);
         std::shared_ptr<arrow::RecordBatch> batch;
         {
