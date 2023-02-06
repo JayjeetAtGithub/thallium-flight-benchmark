@@ -125,10 +125,10 @@ int main(int argc, char** argv) {
             std::shared_ptr<arrow::RecordBatchReader> reader = reader_map[uuid];
             std::shared_ptr<arrow::RecordBatch> batch;
 
-            {
-                MeasureExecutionTime m("I/O");
+            // {
+                // MeasureExecutionTime m("I/O");
                 reader->ReadNext(&batch);
-            }
+            // }
 
             if (batch != nullptr) {
                 if (total_rows_written == 0) {
@@ -143,10 +143,10 @@ int main(int argc, char** argv) {
                         segments.push_back(std::make_pair((void*)obuff->mutable_data(), obuff->size()));
                     }
 
-                    {
-                        MeasureExecutionTime m("server_expose");
+                    // {
+                    //     MeasureExecutionTime m("server_expose");
                         arrow_bulk = engine.expose(segments, tl::bulk_mode::read_write);
-                    }
+                    // }
                 }
 
                 int64_t num_rows = batch->num_rows();
@@ -171,11 +171,11 @@ int main(int argc, char** argv) {
                         data_size = data_buff->size();
                         offset_size = offset_buff->size();
 
-                        {
-                            MeasureExecutionTime m("memcpy1");
+                        // {
+                            // MeasureExecutionTime m("memcpy1");
                             memcpy(segments[i*2].first, (void*)data_buff->data(), data_size);
                             memcpy(segments[(i*2)+1].first, (void*)offset_buff->data(), offset_size);
-                        }
+                        // }
                         segments[i*2].second = data_size;
                         segments[(i*2)+1].second = offset_size;
                     } else {
@@ -186,11 +186,11 @@ int main(int argc, char** argv) {
                         data_size = data_buff->size();
                         offset_size = null_buff.size() + 1;
 
-                        {
-                            MeasureExecutionTime m("memcpy2");
+                        // {
+                        //     MeasureExecutionTime m("memcpy2");
                             memcpy(segments[i*2].first, (void*)data_buff->data(), data_size);
                             memcpy(segments[(i*2)+1].first, (void*)(&null_buff[0]), offset_size);
-                        }
+                        // }
                         segments[i*2].second = data_size;
                         segments[(i*2)+1].second = offset_size;
                     }
