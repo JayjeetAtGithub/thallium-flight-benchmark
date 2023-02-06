@@ -203,6 +203,13 @@ int main(int argc, char** argv) {
                     data_buff_sizes.push_back(data_size);
                     offset_buff_sizes.push_back(offset_size);
                 }
+
+                {
+                    for (int64_t i = 0; i < batch->num_columns(); i++) {
+                        std::cout << "data_buff_sizes[" << i << "] = " << data_buff_sizes[i] << std::endl;
+                        std::cout << "offset_buff_sizes[" << i << "] = " << offset_buff_sizes[i] << std::endl;
+                    }
+                }
                 
                 do_rdma.on(req.get_endpoint())(num_rows, data_buff_sizes, offset_buff_sizes, arrow_bulk);
                 return req.respond(0);
