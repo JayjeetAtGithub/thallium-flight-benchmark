@@ -99,14 +99,6 @@ arrow::Result<std::shared_ptr<arrow::RecordBatch>> GetNextBatch(ConnCtx &conn_ct
         [&conn_ctx, &scan_ctx, &batch, &segments, &flag, &local](const tl::request& req, int64_t& num_rows, std::vector<int64_t>& data_buff_sizes, std::vector<int64_t>& offset_buff_sizes, tl::bulk& b) {
             int num_cols = scan_ctx.schema->num_fields();
 
-            {
-
-                for (int64_t i = 0; i < num_cols; i++) {
-                    std::cout << "data_buff_sizes[" << i << "] = " << data_buff_sizes[i] << std::endl;
-                    std::cout << "offset_buff_sizes[" << i << "] = " << offset_buff_sizes[i] << std::endl;
-                }
-            }
-
             std::vector<std::shared_ptr<arrow::Array>> columns;
             if (flag == 1) {
                 std::cout << "Start exposing" << std::endl;
