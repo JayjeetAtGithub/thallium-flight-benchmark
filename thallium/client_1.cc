@@ -204,6 +204,7 @@ arrow::Status Main(int argc, char **argv) {
 
     ConnCtx conn_ctx = Init(protocol, uri);
     int64_t total_rows = 0;
+    int64_t num_batches = 0;
 
     if (backend == "dataset") {
         std::string path = "/mnt/cephfs/dataset";
@@ -218,9 +219,10 @@ arrow::Status Main(int argc, char **argv) {
             MEASURE_FUNCTION_EXECUTION_TIME
             while ((batch = GetNextBatch(conn_ctx, scan_ctx, (total_rows == 0)).ValueOrDie()) != nullptr) {
                 total_rows += batch->num_rows();
+                num_batches++;
             }
         }
-        std::cout << "Read " << total_rows << " rows" << std::endl;
+        std::cout << "Read " << total_rows << " rows"  << in << num_batches << "batches" << std::endl;
     } else {
         {
             MEASURE_FUNCTION_EXECUTION_TIME
