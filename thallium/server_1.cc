@@ -142,6 +142,12 @@ int main(int argc, char** argv) {
                 std::cout << batch->ToString() << std::endl;
                 if (total_rows_written == 0) {
                     std::cout << "Pinning server side buffers" << std::endl;
+                    
+                    std::cout << pointers.size() << std::endl;
+                    for (int i = 0; i < pointers.size(); i++) {
+                        std::cout << sizeof(pointers[i]) << std::endl;
+                    }
+
                     segments.reserve(batch->num_columns()*2);
                     for (int32_t i = 0; i < batch->num_columns()*2; i++) {
                         segments[i*2].first = pointers[i*2];
