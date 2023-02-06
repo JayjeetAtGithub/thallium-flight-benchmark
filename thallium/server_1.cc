@@ -136,12 +136,10 @@ int main(int argc, char** argv) {
                     std::cout << "Pinning server side buffers" << std::endl;
                     segments.reserve(batch->num_columns()*2);
                     for (int32_t i = 0; i < batch->num_columns()*2; i++) {
-
-                        auto dbuff = arrow::AllocateBuffer(BUFFER_SIZE).ValueOrDie();
-                        auto obuff = arrow::AllocateBuffer(BUFFER_SIZE).ValueOrDie();
-
-                        segments.emplace_back(std::make_pair((void*)dbuff->mutable_data(), dbuff->size()));
-                        segments.emplace_back(std::make_pair((void*)obuff->mutable_data(), obuff->size()));
+                        segments[i*2].first = (uint8_t*)malloc(BUFFER_SIZE);
+                        segments[i*2].second = BUFFER_SIZE;
+                        segments[(i*2)+1].first = (uint8_t*)malloc(BUFFER_SIZE);
+                        segments[(i*2)+1].second = BUFFER_SIZE;
                     }
 
                     {

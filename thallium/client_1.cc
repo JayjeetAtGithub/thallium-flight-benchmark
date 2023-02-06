@@ -113,10 +113,10 @@ arrow::Result<std::shared_ptr<arrow::RecordBatch>> GetNextBatch(ConnCtx &conn_ct
                     MeasureExecutionTime m("memory_allocate");
                     segments.reserve(num_cols*2);
                     for (int64_t i = 0; i < num_cols; i++) {
-                        auto db = arrow::AllocateBuffer(BUFFER_SIZE).ValueOrDie();
-                        auto ob = arrow::AllocateBuffer(BUFFER_SIZE).ValueOrDie();
-                        segments.emplace_back(std::make_pair((void*)db->mutable_data(), db->size()));
-                        segments.emplace_back(std::make_pair((void*)ob->mutable_data(), ob->size()));
+                        segments[i*2].first = (uint8_t*)malloc(BUFFER_SIZE);
+                        segments[i*2].second = BUFFER_SIZE;
+                        segments[(i*2)+1].first = (uint8_t*)malloc(BUFFER_SIZE);
+                        segments[(i*2)+1].second = BUFFER_SIZE;
                     }
                 }
 
