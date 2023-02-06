@@ -81,21 +81,24 @@ ConnCtx Init(std::string protocol, std::string host) {
     return ctx;
 }
 
+std::vector<std::pair<void*,std::size_t>> segments(34);
+tl::bulk local;
+
 ScanCtx Scan(ConnCtx &conn_ctx, ScanReq &scan_req) {
     tl::remote_procedure scan = conn_ctx.engine.define("scan");
     ScanCtx scan_ctx;
     std::string uuid = scan.on(conn_ctx.endpoint)(scan_req.stub);
     scan_ctx.uuid = uuid;
     scan_ctx.schema = scan_req.schema;
+    for (int i = 0; i < segments.size(); i++) {
+        segments[i].first = arrow::AllocateBuffer(BUFFER_SIZE).ValueOrDie()->mutable_data();
+        segments[i].second = BUFFER_SIZE;
+    }
     return scan_ctx;
 }
 
-std::vector<std::pair<void*,std::size_t>> segments(34);
-tl::bulk local;
-for (int i = 0; i < segments.size(); i++) {
-    segments[i].first = arrow::AllocateBuffer(BUFFER_SIZE).ValueOrDie()->mutable_data();
-    segments[i].second = BUFFER_SIZE;
-}
+
+
 
 arrow::Result<std::shared_ptr<arrow::RecordBatch>> GetNextBatch(ConnCtx &conn_ctx, ScanCtx &scan_ctx, int flag) {
     std::shared_ptr<arrow::RecordBatch> batch;
