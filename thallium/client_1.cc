@@ -218,6 +218,7 @@ arrow::Status Main(int argc, char **argv) {
         {
             MEASURE_FUNCTION_EXECUTION_TIME
             while ((batch = GetNextBatch(conn_ctx, scan_ctx, (total_rows == 0)).ValueOrDie()) != nullptr) {
+                std::cout << "Read " << batch->num_rows() << " rows" << std::endl;
                 total_rows += batch->num_rows();
                 num_batches++;
             }
