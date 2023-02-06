@@ -222,7 +222,7 @@ arrow::Status Main(int argc, char **argv) {
                 num_batches++;
             }
         }
-        std::cout << "Read " << total_rows << " rows in " << num_batches << "batches" << std::endl;
+        std::cout << "Read " << total_rows << " rows in " << num_batches << " batches" << std::endl;
     } else {
         {
             MEASURE_FUNCTION_EXECUTION_TIME
