@@ -32,7 +32,7 @@
 namespace tl = thallium;
 namespace cp = arrow::compute;
 
-const int32_t BUFFER_SIZE = 14*1024;
+const int32_t BUFFER_SIZE = 1024*1024;
 
 class MeasureExecutionTime{
     private:
