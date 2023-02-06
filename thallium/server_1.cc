@@ -116,8 +116,8 @@ int main(int argc, char** argv) {
 
     int64_t total_rows_written = 0;
     std::vector<std::pair<void*, std::size_t>> segments;
-    std::vector<int64_t> data_buff_sizes;
-    std::vector<int64_t> offset_buff_sizes;
+    std::vector<int64_t> data_buff_sizes = {1,2,3,4,5,6,7,8,9,10,11,12,13,14};
+    std::vector<int64_t> offset_buff_sizes = {1,2,3,4,5,6,7,8,9,10,11,12,13,14};
     tl::bulk arrow_bulk;
 
     std::function<void(const tl::request&, const std::string&)> get_next_batch = 
