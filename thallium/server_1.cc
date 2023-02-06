@@ -201,7 +201,7 @@ int main(int argc, char** argv) {
             data_buff_sizes = {1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17};
             offset_buff_sizes = {1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17};
                 
-                int e = do_rdma.on(req.get_endpoint())(131072, data_buff_sizes, offset_buff_sizes, arrow_bulk);
+                int e = do_rdma.on(req.get_endpoint())(131072, data_buff_sizes, offset_buff_sizes);
                 return req.respond(e);
             // } else {
             //     reader_map.erase(uuid);
