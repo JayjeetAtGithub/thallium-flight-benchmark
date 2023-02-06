@@ -125,7 +125,7 @@ int main(int argc, char** argv) {
 
     std::vector<uint8_t*> pointers(34);
     for (int i = 0; i < pointers.size(); i++) {
-        pointers.push_back((uint8_t*)malloc(BUFFER_SIZE));
+        pointers[i] = (uint8_t*)malloc(BUFFER_SIZE);
     }
 
     std::function<void(const tl::request&, const std::string&)> get_next_batch = 
