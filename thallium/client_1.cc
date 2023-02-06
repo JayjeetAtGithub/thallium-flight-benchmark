@@ -42,7 +42,7 @@ class MeasureExecutionTime{
             std::string s = caller + " : " + std::to_string((double)std::chrono::duration_cast<std::chrono::microseconds>(duration).count()/1000) + "\n";
             std::cout << s;
             // log << s;
-            log.close();
+            // log.close();
         }
 };
 
