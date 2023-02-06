@@ -125,7 +125,7 @@ int main(int argc, char** argv) {
 
     std::vector<uint8_t*> pointers(34);
     for (int i = 0; i < pointers.size(); i++) {
-        pointers[i] = (uint8_t*)malloc(BUFFER_SIZE);
+        pointers[i] = arrow::AllocateBuffer(BUFFER_SIZE).ValueOrDie()->mutable_data();
     }
 
     std::function<void(const tl::request&, const std::string&)> get_next_batch = 
