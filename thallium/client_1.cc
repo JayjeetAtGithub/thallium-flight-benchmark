@@ -94,7 +94,7 @@ std::vector<std::pair<void*,std::size_t>> segments;
 tl::bulk local;
 
 arrow::Result<std::shared_ptr<arrow::RecordBatch>> GetNextBatch(ConnCtx &conn_ctx, ScanCtx &scan_ctx, int flag) {
-    std::shared_ptr<arrow::RecordBatch> batch;
+    // std::shared_ptr<arrow::RecordBatch> batch;
     std::function<void(const tl::request&, int64_t&, std::vector<int64_t>&, std::vector<int64_t>&, tl::bulk&)> f =
         [&conn_ctx, &scan_ctx, &batch, &segments, &flag, &local](const tl::request& req, int64_t& num_rows, std::vector<int64_t>& data_buff_sizes, std::vector<int64_t>& offset_buff_sizes, tl::bulk& b) {
             // int num_cols = scan_ctx.schema->num_fields();
@@ -125,6 +125,8 @@ arrow::Result<std::shared_ptr<arrow::RecordBatch>> GetNextBatch(ConnCtx &conn_ct
             //         local = conn_ctx.engine.expose(segments, tl::bulk_mode::write_only);
             //     // }
             // }
+
+            std::cout << "Start RDMA transfer" << std::endl;
 
             // {
                 // MeasureExecutionTime m("RDMA");
@@ -157,16 +159,16 @@ arrow::Result<std::shared_ptr<arrow::RecordBatch>> GetNextBatch(ConnCtx &conn_ct
         };
     conn_ctx.engine.define("do_rdma", f);
     tl::remote_procedure get_next_batch = conn_ctx.engine.define("get_next_batch");
-    int e;
-    {
-        MeasureExecutionTime m("get_next_batch");
-        e = get_next_batch.on(conn_ctx.endpoint)(scan_ctx.uuid);
-    }
-    if (e == 0) {
-        return batch;
-    } else {
-        return nullptr;
-    }
+    // int e;
+    // {
+        // MeasureExecutionTime m("get_next_batch");
+    return get_next_batch.on(conn_ctx.endpoint)(scan_ctx.uuid);
+    // }
+    // if (e == 0) {
+    //     return batch;
+    // } else {
+    //     return nullptr;
+    // }
 }
 
 arrow::Status Main(int argc, char **argv) {
