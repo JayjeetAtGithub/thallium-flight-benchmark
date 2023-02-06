@@ -204,7 +204,11 @@ arrow::Status Main(int argc, char **argv) {
 
     if (backend == "dataset") {
         std::string path = "/mnt/cephfs/dataset";
-        ARROW_ASSIGN_OR_RAISE(auto scan_req, GetScanRequest(path, filter, schema, schema));
+        ScanRequest scan_req;
+        {
+            MeasureExecutionTime m("get_scan_request");
+            ARROW_ASSIGN_OR_RAISE(scan_req, GetScanRequest(path, filter, schema, schema));
+        }
         ScanCtx scan_ctx = Scan(conn_ctx, scan_req);
         std::shared_ptr<arrow::RecordBatch> batch;
         {
