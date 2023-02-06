@@ -120,11 +120,16 @@ int main(int argc, char** argv) {
     std::vector<int64_t> offset_buff_sizes;
     tl::bulk arrow_bulk;
 
-    uint8_t* data_buff = (uint8_t*)malloc(BUFFER_SIZE);
-    uint8_t* offset_buff = (uint8_t*)malloc(BUFFER_SIZE);
+    // uint8_t* data_buff = (uint8_t*)malloc(BUFFER_SIZE);
+    // uint8_t* offset_buff = (uint8_t*)malloc(BUFFER_SIZE);
+
+    std::vector<uint8_t*> pointers(34);
+    for (int i = 0; i < pointers.size(); i++) {
+        pointers.push_back((uint8_t*)malloc(BUFFER_SIZE));
+    }
 
     std::function<void(const tl::request&, const std::string&)> get_next_batch = 
-        [&mid, &svr_addr, &engine, &do_rdma, &reader_map, &segments, &total_rows_written, &data_buff_sizes, &offset_buff_sizes, &data_buff, &offset_buff, &arrow_bulk](const tl::request &req, const std::string& uuid) {
+        [&mid, &svr_addr, &engine, &do_rdma, &reader_map, &segments, &total_rows_written, &data_buff_sizes, &offset_buff_sizes, &pointers, &arrow_bulk](const tl::request &req, const std::string& uuid) {
             std::shared_ptr<arrow::RecordBatchReader> reader = reader_map[uuid];
             std::shared_ptr<arrow::RecordBatch> batch;
 
@@ -139,9 +144,9 @@ int main(int argc, char** argv) {
                     std::cout << "Pinning server side buffers" << std::endl;
                     segments.reserve(batch->num_columns()*2);
                     for (int32_t i = 0; i < batch->num_columns()*2; i++) {
-                        segments[i*2].first = data_buff;
+                        segments[i*2].first = pointers[i*2];
                         segments[i*2].second = BUFFER_SIZE;
-                        segments[(i*2)+1].first = offset_buff;
+                        segments[(i*2)+1].first = pointers[(i*2)+1];
                         segments[(i*2)+1].second = BUFFER_SIZE;
                     }
 
