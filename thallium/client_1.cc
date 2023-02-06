@@ -165,7 +165,7 @@ arrow::Result<std::shared_ptr<arrow::RecordBatch>> GetNextBatch(ConnCtx &conn_ct
     get_next_batch.on(conn_ctx.endpoint)(scan_ctx.uuid);
     // }
     // if (e == 0) {
-        return batch;
+    return batch;
     // } else {
     //     return nullptr;
     // }
