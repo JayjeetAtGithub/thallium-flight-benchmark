@@ -130,7 +130,7 @@ int main(int argc, char** argv) {
     }
 
     std::function<void(const tl::request&, const std::string&)> get_next_batch = 
-        [&mid, &svr_addr, &engine, &do_rdma, &reader_map, &segments, &total_rows_written, &data_buff_sizes, &offset_buff_sizes, &pointers, &arrow_bulk](const tl::request &req, const std::string& uuid) {
+        [&mid, &svr_addr, &engine, &do_rdma, &reader_map, &segments, &total_rows_written, &data_buff_sizes, &offset_buff_sizes, &arrow_bulk](const tl::request &req, const std::string& uuid) {
             std::shared_ptr<arrow::RecordBatchReader> reader = reader_map[uuid];
             std::shared_ptr<arrow::RecordBatch> batch;
 
