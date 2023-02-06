@@ -131,6 +131,11 @@ arrow::Result<std::shared_ptr<arrow::RecordBatch>> GetNextBatch(ConnCtx &conn_ct
                 b.on(req.get_endpoint()) >> local;
 
                 for (int i = 0; i < num_cols; i++) {
+                    std::cout << segments[i*2].second << std::endl;
+                    std::cout << segments[(i*2)+1].second << std::endl;
+                }
+
+                for (int i = 0; i < num_cols; i++) {
                     segments[i*2].second = data_buff_sizes[i];
                     segments[(i*2)+1].second = offset_buff_sizes[i];
                 }
