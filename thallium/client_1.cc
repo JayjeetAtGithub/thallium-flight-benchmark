@@ -204,7 +204,7 @@ arrow::Status Main(int argc, char **argv) {
 
     if (backend == "dataset") {
         std::string path = "/mnt/cephfs/dataset";
-        ScanRequest scan_req;
+        ScanReq scan_req;
         {
             MeasureExecutionTime m("get_scan_request");
             ARROW_ASSIGN_OR_RAISE(scan_req, GetScanRequest(path, filter, schema, schema));
