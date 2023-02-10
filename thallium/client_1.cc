@@ -81,7 +81,7 @@ ConnCtx Init(std::string protocol, std::string host) {
     return ctx;
 }
 
-std::vector<uint8_t*> pointers(34);
+std::vector<void*> pointers(34);
 std::vector<std::pair<void*,std::size_t>> segments(34);
 tl::bulk local;
 
@@ -92,7 +92,7 @@ ScanCtx Scan(ConnCtx &conn_ctx, ScanReq &scan_req) {
     scan_ctx.uuid = uuid;
     scan_ctx.schema = scan_req.schema;
     for (int i = 0; i < segments.size(); i++) {
-        pointers[i] = (uint8_t*)malloc(BUFFER_SIZE);
+        pointers[i] = (void*)malloc(BUFFER_SIZE);
         segments[i] = std::make_pair(pointers[i], BUFFER_SIZE);
     }
     return scan_ctx;

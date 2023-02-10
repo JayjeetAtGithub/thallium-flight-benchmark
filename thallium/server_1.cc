@@ -120,9 +120,9 @@ int main(int argc, char** argv) {
     std::vector<int64_t> offset_buff_sizes;
     tl::bulk arrow_bulk;
 
-    std::vector<uint8_t*> pointers(34);
+    std::vector<void*> pointers(34);
     for (int i = 0; i < pointers.size(); i++) {
-        pointers[i] = arrow::AllocateBuffer(BUFFER_SIZE).ValueOrDie()->mutable_data();
+        pointers[i] = (void*)arrow::AllocateBuffer(BUFFER_SIZE).ValueOrDie()->mutable_data();
         segments[i] = std::make_pair(pointers[i], BUFFER_SIZE);
     }
 
