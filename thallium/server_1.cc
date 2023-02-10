@@ -191,8 +191,8 @@ int main(int argc, char** argv) {
                             MeasureExecutionTime m("memcpy2");
                             memcpy(pointers[(i*2)+1], (void*)offset_buff->data(), offset_size);
                         }
-                        // segments[i*2].second = data_size;
-                        // segments[(i*2)+1].second = offset_size;
+                        segments[i*2].second = data_size;
+                        segments[(i*2)+1].second = offset_size;
                     } else {
 
                         std::shared_ptr<arrow::Buffer> data_buff = 
@@ -209,8 +209,8 @@ int main(int argc, char** argv) {
                             MeasureExecutionTime m("memcpy4");
                             memcpy(pointers[(i*2)+1], (void*)(&null_buff[0]), offset_size);
                         }
-                        // segments[i*2].second = data_size;
-                        // segments[(i*2)+1].second = offset_size;
+                        segments[i*2].second = data_size;
+                        segments[(i*2)+1].second = offset_size;
                     }
 
                     data_buff_sizes.push_back(data_size);
