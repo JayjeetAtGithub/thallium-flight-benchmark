@@ -120,17 +120,16 @@ int main(int argc, char** argv) {
     std::vector<int64_t> offset_buff_sizes;
     tl::bulk arrow_bulk;
 
-    // uint8_t* data_buff = (uint8_t*)malloc(BUFFER_SIZE);
-    // uint8_t* offset_buff = (uint8_t*)malloc(BUFFER_SIZE);
-
-    // std::vector<uint8_t*> pointers(34);
-    for (int i = 0; i < segments.size(); i++) {
-        segments[i].first = arrow::AllocateBuffer(BUFFER_SIZE).ValueOrDie()->mutable_data();
-        segments[i].second = BUFFER_SIZE;
+    std::vector<uint8_t*> pointers(34);
+    for (int i = 0; i < pointers.size(); i++) {
+        pointers[i] = arrow::AllocateBuffer(BUFFER_SIZE).ValueOrDie()->mutable_data();
+        segments[i] = std::make_pair(pointers[i], BUFFER_SIZE);
     }
 
+    
+
     std::function<void(const tl::request&, const std::string&)> get_next_batch = 
-        [&mid, &svr_addr, &engine, &do_rdma, &reader_map, &segments, &total_rows_written, &data_buff_sizes, &offset_buff_sizes, &arrow_bulk](const tl::request &req, const std::string& uuid) {
+        [&mid, &svr_addr, &engine, &do_rdma, &reader_map, &segments, &pointers, &total_rows_written, &data_buff_sizes, &offset_buff_sizes, &arrow_bulk](const tl::request &req, const std::string& uuid) {
             std::shared_ptr<arrow::RecordBatchReader> reader = reader_map[uuid];
             std::shared_ptr<arrow::RecordBatch> batch;
 
@@ -186,11 +185,11 @@ int main(int argc, char** argv) {
                         offset_size = offset_buff->size();
                         {
                             MeasureExecutionTime m("memcpy1");
-                            memcpy(segments[i*2].first, (void*)data_buff->data(), data_size);
+                            memcpy(pointers[i*2], (void*)data_buff->data(), data_size);
                         }
                         {
                             MeasureExecutionTime m("memcpy2");
-                            memcpy(segments[(i*2)+1].first, (void*)offset_buff->data(), offset_size);
+                            memcpy(pointers[(i*2)+1], (void*)offset_buff->data(), offset_size);
                         }
                         // segments[i*2].second = data_size;
                         // segments[(i*2)+1].second = offset_size;
@@ -204,11 +203,11 @@ int main(int argc, char** argv) {
 
                         {
                             MeasureExecutionTime m("memcpy3");
-                            memcpy(segments[i*2].first, (void*)data_buff->data(), data_size);
+                            memcpy(pointers[i*2], (void*)data_buff->data(), data_size);
                         }
                         {
                             MeasureExecutionTime m("memcpy4");
-                            memcpy(segments[(i*2)+1].first, (void*)(&null_buff[0]), offset_size);
+                            memcpy(pointers[(i*2)+1], (void*)(&null_buff[0]), offset_size);
                         }
                         // segments[i*2].second = data_size;
                         // segments[(i*2)+1].second = offset_size;
