@@ -12,7 +12,7 @@
 
 namespace tl = thallium;
 
-uint32_t calc_crc(const string& my_string) {
+uint32_t calc_crc(const std::string& my_string) {
     boost::crc_32_type result;
     result.process_bytes(my_string.data(), my_string.length());
     return result.checksum();
