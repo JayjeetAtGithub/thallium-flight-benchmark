@@ -81,6 +81,7 @@ ConnCtx Init(std::string protocol, std::string host) {
     return ctx;
 }
 
+std::vector<uint8_t*> pointers(34);
 std::vector<std::pair<void*,std::size_t>> segments(34);
 tl::bulk local;
 
@@ -91,19 +92,16 @@ ScanCtx Scan(ConnCtx &conn_ctx, ScanReq &scan_req) {
     scan_ctx.uuid = uuid;
     scan_ctx.schema = scan_req.schema;
     for (int i = 0; i < segments.size(); i++) {
-        segments[i].first = arrow::AllocateBuffer(BUFFER_SIZE).ValueOrDie()->mutable_data();
-        segments[i].second = BUFFER_SIZE;
+        pointers[i] = (uint8_t*)malloc(BUFFER_SIZE);
+        segments[i] = std::make_pair(pointers[i], BUFFER_SIZE);
     }
     return scan_ctx;
 }
 
-
-
-
 arrow::Result<std::shared_ptr<arrow::RecordBatch>> GetNextBatch(ConnCtx &conn_ctx, ScanCtx &scan_ctx, int flag) {
     std::shared_ptr<arrow::RecordBatch> batch;
     std::function<void(const tl::request&, int64_t&, std::vector<int64_t>&, std::vector<int64_t>&, tl::bulk&)> f =
-        [&conn_ctx, &scan_ctx, &batch, &segments, &flag, &local](const tl::request& req, int64_t& num_rows, std::vector<int64_t>& data_buff_sizes, std::vector<int64_t>& offset_buff_sizes, tl::bulk& b) {
+        [&conn_ctx, &scan_ctx, &batch, &segments, &pointers, &flag, &local](const tl::request& req, int64_t& num_rows, std::vector<int64_t>& data_buff_sizes, std::vector<int64_t>& offset_buff_sizes, tl::bulk& b) {
             int num_cols = scan_ctx.schema->num_fields();
 
             {
@@ -118,13 +116,6 @@ arrow::Result<std::shared_ptr<arrow::RecordBatch>> GetNextBatch(ConnCtx &conn_ct
                 std::cout << "Pinning client side buffers" << std::endl;
                 {
                     MeasureExecutionTime m("memory_allocate");
-                    // segments.reserve(num_cols*2);
-                    // for (int64_t i = 0; i < num_cols; i++) {
-                    //     segments[i*2].first = (uint8_t*)malloc(BUFFER_SIZE);
-                    //     segments[i*2].second = BUFFER_SIZE;
-                    //     segments[(i*2)+1].first = (uint8_t*)malloc(BUFFER_SIZE);
-                    //     segments[(i*2)+1].second = BUFFER_SIZE;
-                    // }
                 }
 
                 {
@@ -137,15 +128,10 @@ arrow::Result<std::shared_ptr<arrow::RecordBatch>> GetNextBatch(ConnCtx &conn_ct
                 MeasureExecutionTime m("RDMA");
                 b.on(req.get_endpoint()) >> local;
 
-                for (int i = 0; i < num_cols; i++) {
-                    std::cout << sizeof(segments[i*2].first) << std::endl;
-                    std::cout << sizeof(segments[(i*2)+1].first) << std::endl;
-                }
-
-                for (int i = 0; i < num_cols; i++) {
-                    segments[i*2].second = data_buff_sizes[i];
-                    segments[(i*2)+1].second = offset_buff_sizes[i];
-                }
+                // for (int i = 0; i < num_cols; i++) {
+                //     segments[i*2].second = data_buff_sizes[i];
+                //     segments[(i*2)+1].second = offset_buff_sizes[i];
+                // }
             }
 
             for (int64_t i = 0; i < num_cols; i++) {
