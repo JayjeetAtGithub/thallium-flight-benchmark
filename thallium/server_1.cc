@@ -126,8 +126,6 @@ int main(int argc, char** argv) {
         segments[i] = std::make_pair(pointers[i], BUFFER_SIZE);
     }
 
-    
-
     std::function<void(const tl::request&, const std::string&)> get_next_batch = 
         [&mid, &svr_addr, &engine, &do_rdma, &reader_map, &segments, &pointers, &total_rows_written, &data_buff_sizes, &offset_buff_sizes, &arrow_bulk](const tl::request &req, const std::string& uuid) {
             std::shared_ptr<arrow::RecordBatchReader> reader = reader_map[uuid];
@@ -142,19 +140,6 @@ int main(int argc, char** argv) {
                 std::cout << batch->ToString() << std::endl;
                 if (total_rows_written == 0) {
                     std::cout << "Pinning server side buffers" << std::endl;
-                    
-                    // std::cout << pointers.size() << std::endl;
-                    // for (int i = 0; i < pointers.size(); i++) {
-                    //     std::cout << sizeof(pointers[i]) << std::endl;
-                    // }
-
-                    // segments.reserve(batch->num_columns()*2);
-                    // for (int32_t i = 0; i < batch->num_columns()*2; i++) {
-                    //     segments[i*2].first = pointers[i*2];
-                    //     segments[i*2].second = BUFFER_SIZE;
-                    //     segments[(i*2)+1].first = pointers[(i*2)+1];
-                    //     segments[(i*2)+1].second = BUFFER_SIZE;
-                    // }
 
                     {
                         MeasureExecutionTime m("server_expose");
