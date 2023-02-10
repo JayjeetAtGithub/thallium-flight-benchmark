@@ -5,12 +5,18 @@
 #include <boost/uuid/uuid.hpp>
 #include <boost/uuid/uuid_generators.hpp>
 #include <boost/uuid/uuid_io.hpp>
+#include <boost/crc.hpp>
 
 #include <thallium.hpp>
 
 
 namespace tl = thallium;
 
+uint32_t calc_crc(const string& my_string) {
+    boost::crc_32_type result;
+    result.process_bytes(my_string.data(), my_string.length());
+    return result.checksum();
+}
 
 class MeasureExecutionTime{
     private:
@@ -105,6 +111,11 @@ int main(int argc, char** argv) {
             {
                 MeasureExecutionTime m("memcpy");
                 memcpy(buff, data_buff, 32*1024*1024);
+            }
+            {
+                MeasureExecutionTime m("calc_crc");
+                uint32_t crc = calc_crc(std::string((char*)data_buff, 32*1024*1024));
+                std::cout << "crc: " << crc << std::endl;
             }
             do_rdma.on(req.get_endpoint())(bulk);
             return req.respond(0);
