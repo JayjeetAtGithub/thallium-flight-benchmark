@@ -117,7 +117,7 @@ int main(int argc, char** argv) {
             }
             {
                 MeasureExecutionTime m("calc_crc");
-                uint32_t crc = calc_crc(std::string((char*)data_buff, 32*1024*1024));
+                uint32_t crc = calc_crc(std::string((char*)buff, 32*1024*1024));
                 std::cout << "crc: " << crc << std::endl;
             }
             do_rdma.on(req.get_endpoint())(bulk);
