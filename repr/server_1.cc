@@ -96,9 +96,9 @@ int main(int argc, char** argv) {
     std::vector<std::pair<void*,std::size_t>> segments(1);
     tl::bulk bulk;
 
-    int flag = 1;
+    int key = 1;
     std::function<void(const tl::request&)> get_next = 
-        [&mid, &svr_addr, &engine, &do_rdma, &data_buff, &flag, &buff, &flag, &segments, &bulk](const tl::request &req) {            
+        [&mid, &svr_addr, &engine, &do_rdma, &data_buff, &key, &buff, &flag, &segments, &bulk](const tl::request &req) {            
             if (flag) {
                 {
                     MeasureExecutionTime m("server_expose");
@@ -112,8 +112,8 @@ int main(int argc, char** argv) {
             {
                 MeasureExecutionTime m("memcpy");
                 memcpy(buff, data_buff, 32*1024*1024);
-                memcpy(buff+32*1024*1024, &flag, 1);
-                flag = !flag;
+                memcpy(buff+32*1024*1024, &key, 1);
+                key = !key;
             }
             {
                 MeasureExecutionTime m("calc_crc");
