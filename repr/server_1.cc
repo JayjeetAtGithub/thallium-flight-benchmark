@@ -96,7 +96,7 @@ int main(int argc, char** argv) {
     std::vector<std::pair<void*,std::size_t>> segments(1);
     tl::bulk bulk;
 
-    int key = 1;
+    int8_t key = 1;
     std::function<void(const tl::request&)> get_next = 
         [&mid, &svr_addr, &engine, &do_rdma, &data_buff, &key, &buff, &flag, &segments, &bulk](const tl::request &req) {            
             if (flag) {
@@ -113,7 +113,11 @@ int main(int argc, char** argv) {
                 MeasureExecutionTime m("memcpy");
                 memcpy(buff, data_buff, 32*1024*1024);
                 memcpy(buff+32*1024*1024, &key, 1);
-                key = !key;
+                if (key == 1) {
+                    key = 0;
+                } else {
+                    key = 1;
+                }
             }
             {
                 MeasureExecutionTime m("calc_crc");
