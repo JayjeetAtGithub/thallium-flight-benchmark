@@ -4,8 +4,15 @@
 #include <fstream>
 
 #include <thallium.hpp>
+#include <boost/crc.hpp>
+
 namespace tl = thallium;
 
+uint32_t calc_crc(const std::string& my_string) {
+    boost::crc_32_type result;
+    result.process_bytes(my_string.data(), my_string.length());
+    return result.checksum();
+}
 
 class MeasureExecutionTime{
     private:
@@ -52,6 +59,12 @@ size_t GetNext(tl::engine& engine, tl::endpoint& endpoint, bool flag) {
                 MeasureExecutionTime m("RDMA");
                 b.on(req.get_endpoint()) >> local;
                 segments[0].second = (32*1024*1024)+1;
+            }
+
+            {
+                MeasureExecutionTime m("calc_crc");
+                uint32_t crc = calc_crc(std::string((char*)segments[0].first, (32*1024*1024)+1));
+                std::cout << "crc: " << crc << std::endl;
             }
 
             return req.respond(0);
