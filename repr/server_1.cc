@@ -5,12 +5,18 @@
 #include <boost/uuid/uuid.hpp>
 #include <boost/uuid/uuid_generators.hpp>
 #include <boost/uuid/uuid_io.hpp>
+#include <boost/crc.hpp>
 
 #include <thallium.hpp>
 
 
 namespace tl = thallium;
 
+uint32_t calc_crc(const std::string& my_string) {
+    boost::crc_32_type result;
+    result.process_bytes(my_string.data(), my_string.length());
+    return result.checksum();
+}
 
 class MeasureExecutionTime{
     private:
@@ -85,18 +91,19 @@ int main(int argc, char** argv) {
     uint8_t* buff;
     {
         MeasureExecutionTime m("memory_allocate");
-        buff = (uint8_t*)malloc(32*1024*1024);
+        buff = (uint8_t*)malloc((32*1024*1024)+1);
     }
     std::vector<std::pair<void*,std::size_t>> segments(1);
     tl::bulk bulk;
 
+    int8_t key = 1;
     std::function<void(const tl::request&)> get_next = 
-        [&mid, &svr_addr, &engine, &do_rdma, &data_buff, &buff, &flag, &segments, &bulk](const tl::request &req) {            
+        [&mid, &svr_addr, &engine, &do_rdma, &data_buff, &key, &buff, &flag, &segments, &bulk](const tl::request &req) {            
             if (flag) {
                 {
                     MeasureExecutionTime m("server_expose");
                     segments[0].first = buff;
-                    segments[0].second = 32*1024*1024;
+                    segments[0].second = (32*1024*1024)+1;
                     bulk = engine.expose(segments, tl::bulk_mode::read_write);
                 }
                 flag = false;
@@ -105,6 +112,17 @@ int main(int argc, char** argv) {
             {
                 MeasureExecutionTime m("memcpy");
                 memcpy(buff, data_buff, 32*1024*1024);
+                memcpy(buff+32*1024*1024, &key, 1);
+                if (key == 1) {
+                    key = 0;
+                } else {
+                    key = 1;
+                }
+            }
+            {
+                MeasureExecutionTime m("calc_crc");
+                uint32_t crc = calc_crc(std::string((char*)buff, (32*1024*1024)+1));
+                std::cout << "crc: " << crc << std::endl;
             }
             do_rdma.on(req.get_endpoint())(bulk);
             return req.respond(0);
