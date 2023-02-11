@@ -39,8 +39,8 @@ size_t GetNext(tl::engine& engine, tl::endpoint& endpoint, bool flag) {
             if (flag) {       
                 {
                     MeasureExecutionTime m("memory_allocate");
-                    segments[0].first = (uint8_t*)malloc(32*1024*1024);
-                    segments[0].second = 32*1024*1024;
+                    segments[0].first = (uint8_t*)malloc((32*1024*1024)+1);
+                    segments[0].second = (32*1024*1024)+1;
                 }
                 {
                     MeasureExecutionTime m("client_expose");
@@ -51,7 +51,7 @@ size_t GetNext(tl::engine& engine, tl::endpoint& endpoint, bool flag) {
             {
                 MeasureExecutionTime m("RDMA");
                 b.on(req.get_endpoint()) >> local;
-                segments[0].second = 32*1024*1024;
+                segments[0].second = (32*1024*1024)+1;
             }
 
             return req.respond(0);

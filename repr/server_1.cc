@@ -91,18 +91,19 @@ int main(int argc, char** argv) {
     uint8_t* buff;
     {
         MeasureExecutionTime m("memory_allocate");
-        buff = (uint8_t*)malloc(32*1024*1024);
+        buff = (uint8_t*)malloc((32*1024*1024)+1);
     }
     std::vector<std::pair<void*,std::size_t>> segments(1);
     tl::bulk bulk;
 
+    int flag = 1;
     std::function<void(const tl::request&)> get_next = 
-        [&mid, &svr_addr, &engine, &do_rdma, &data_buff, &buff, &flag, &segments, &bulk](const tl::request &req) {            
+        [&mid, &svr_addr, &engine, &do_rdma, &data_buff, &flag, &buff, &flag, &segments, &bulk](const tl::request &req) {            
             if (flag) {
                 {
                     MeasureExecutionTime m("server_expose");
                     segments[0].first = buff;
-                    segments[0].second = 32*1024*1024;
+                    segments[0].second = (32*1024*1024)+1;
                     bulk = engine.expose(segments, tl::bulk_mode::read_write);
                 }
                 flag = false;
@@ -111,6 +112,8 @@ int main(int argc, char** argv) {
             {
                 MeasureExecutionTime m("memcpy");
                 memcpy(buff, data_buff, 32*1024*1024);
+                memcpy(buff+32*1024*1024, &flag, 1);
+                flag = !flag;
             }
             {
                 MeasureExecutionTime m("calc_crc");
