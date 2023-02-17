@@ -236,7 +236,6 @@ arrow::Status Main(int argc, char **argv) {
                 ScanCtx scan_ctx = Scan(conn_ctx, scan_req);
                 while ((batch = GetNextBatch(conn_ctx, scan_ctx, (total_rows == 0)).ValueOrDie()) != nullptr) {
                     total_rows += batch->num_rows();
-                    break;
                 }
             }
         }
