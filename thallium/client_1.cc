@@ -25,7 +25,7 @@
 
 #include "payload.h"
 
-const int32_t BUFFER_SIZE = 2*1024*1024;
+const int32_t BUFFER_SIZE = 1024*1024;
 
 class MeasureExecutionTime{
     private:
