@@ -148,8 +148,8 @@ arrow::Result<std::shared_ptr<arrow::RecordBatch>> GetNextBatch(ConnCtx &conn_ct
 
             for (int64_t i = 0; i < num_cols; i++) {
                 std::shared_ptr<arrow::DataType> type = scan_ctx.schema->field(i)->type();  
-                std::shared_ptr<arrow::Buffer> data_buff = std::make_shared<arrow::Buffer>(data_buffs[i]->data(), data_buff_sizes[i]);
-                std::shared_ptr<arrow::Buffer> offset_buff = std::make_shared<arrow::Buffer>(offset_buffs[i]->data(), offset_buff_sizes[i]);
+                std::shared_ptr<arrow::Buffer> data_buff = std::make_shared<arrow::Buffer>((uint8_t*)pointers[i*2], data_buff_sizes[i]);
+                std::shared_ptr<arrow::Buffer> offset_buff = std::make_shared<arrow::Buffer>((uint8_t*)pointers[(i*2)+1], offset_buff_sizes[i]);
 
                 if (is_binary_like(type->id())) {
                     std::shared_ptr<arrow::Array> col_arr = std::make_shared<arrow::StringArray>(num_rows, std::move(data_buff), std::move(offset_buff));
