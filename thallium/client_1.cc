@@ -83,8 +83,8 @@ ConnCtx Init(std::string protocol, std::string host) {
     return ctx;
 }
 
-std::vector<void*> pointers(34);
-std::vector<std::pair<void*,std::size_t>> segments(34);
+std::vector<void*> pointers;
+std::vector<std::pair<void*,std::size_t>> segments;
 tl::bulk local;
 
 ScanCtx Scan(ConnCtx &conn_ctx, ScanReq &scan_req) {
@@ -93,6 +93,9 @@ ScanCtx Scan(ConnCtx &conn_ctx, ScanReq &scan_req) {
     std::string uuid = scan.on(conn_ctx.endpoint)(scan_req.stub);
     scan_ctx.uuid = uuid;
     scan_ctx.schema = scan_req.schema;
+    
+    pointers.reserve(scan_ctx.schema->num_fields()*2);
+    segments.reserve(scan_ctx.schema->num_fields()*2);
 
     for (int i = 0; i < scan_ctx.schema->num_fields(); i++) {
         std::shared_ptr<arrow::DataType> type = scan_ctx.schema->field(i)->type();
