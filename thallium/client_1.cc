@@ -107,12 +107,12 @@ ScanCtx Scan(ConnCtx &conn_ctx, ScanReq &scan_req) {
                 pointers.emplace_back((uint8_t*)malloc(BUFFER_SIZE));
                 pointers.emplace_back((uint8_t*)malloc(BINARY_OFFSET_BUFFER_SIZE));
                 segments.emplace_back(std::make_pair((void*)pointers[i*2], BUFFER_SIZE));
-                segments.emplace_back(std::make_pair((void*)pointers[i*2+1], BINARY_OFFSET_BUFFER_SIZE));
+                segments.emplace_back(std::make_pair((void*)pointers[(i*2)+1], BINARY_OFFSET_BUFFER_SIZE));
             } else {
                 pointers.emplace_back((uint8_t*)malloc(BUFFER_SIZE));
                 pointers.emplace_back((uint8_t*)malloc(PRIMITIVE_OFFSET_BUFFER_SIZE));
                 segments.emplace_back(std::make_pair((void*)pointers[i*2], BUFFER_SIZE));
-                segments.emplace_back(std::make_pair((void*)pointers[i*2+1], PRIMITIVE_OFFSET_BUFFER_SIZE));
+                segments.emplace_back(std::make_pair((void*)pointers[(i*2)+1], PRIMITIVE_OFFSET_BUFFER_SIZE));
             }
         }
     }
