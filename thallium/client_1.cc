@@ -26,6 +26,8 @@
 #include "payload.h"
 
 const int32_t BUFFER_SIZE = 1024*1024;
+const int32_t PRIMITIVE_OFFSET_BUFFER_SIZE = 3;
+const int32_t BINARY_OFFSET_BUFFER_SIZE = 1024*1024;
 
 class MeasureExecutionTime{
     private:
@@ -91,9 +93,24 @@ ScanCtx Scan(ConnCtx &conn_ctx, ScanReq &scan_req) {
     std::string uuid = scan.on(conn_ctx.endpoint)(scan_req.stub);
     scan_ctx.uuid = uuid;
     scan_ctx.schema = scan_req.schema;
-    for (int i = 0; i < segments.size(); i++) {
-        pointers[i] = (void*)malloc(BUFFER_SIZE);
-        segments[i] = std::make_pair(pointers[i], BUFFER_SIZE);
+
+    for (int i = 0; i < scan_ctx.schema->num_fields(); i++) {
+        std::shared_ptr<arrow::DataType> type = scan_ctx.schema->field(i)->type();
+        int64_t data_size;
+        int64_t offset_size;
+        if (is_binary_like(type->id())) {
+            pointers[i*2] = (void*)malloc(BUFFER_SIZE);
+            pointers[(i*2)+1] = (void*)malloc(BINARY_OFFSET_BUFFER_SIZE);
+            data_size = BUFFER_SIZE;
+            offset_size = BINARY_OFFSET_BUFFER_SIZE;
+        } else {
+            pointers[i*2] = (void*)malloc(BUFFER_SIZE);
+            pointers[(i*2)+1] = (void*)malloc(PRIMITIVE_OFFSET_BUFFER_SIZE);
+            data_size = BUFFER_SIZE;
+            offset_size = PRIMITIVE_OFFSET_BUFFER_SIZE;
+        }
+        segments.emplace_back(std::make_pair(pointers[i*2], data_size));
+        segments.emplace_back(std::make_pair(pointers[(i*2)+1], offset_size));
     }
     return scan_ctx;
 }
