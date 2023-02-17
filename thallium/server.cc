@@ -134,7 +134,7 @@ int main(int argc, char** argv) {
                 std::vector<std::pair<void*,std::size_t>> segments;
                 segments.reserve(batch->num_columns()*2);
 
-                std::string null_buff = "xx";
+                std::string null_buff = "x";
 
                 for (int64_t i = 0; i < batch->num_columns(); i++) {
                     std::shared_ptr<arrow::Array> col_arr = batch->column(i);
@@ -160,7 +160,7 @@ int main(int argc, char** argv) {
                             std::static_pointer_cast<arrow::PrimitiveArray>(col_arr)->values();
 
                         data_size = data_buff->size();
-                        offset_size = null_buff.size() + 1; 
+                        offset_size = null_buff.size(); 
                         segments.emplace_back(std::make_pair((void*)data_buff->data(), data_size));
                         segments.emplace_back(std::make_pair((void*)(&null_buff[0]), offset_size));
                     }

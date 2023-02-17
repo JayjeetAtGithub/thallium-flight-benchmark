@@ -25,9 +25,9 @@
 
 #include "payload.h"
 
-const int32_t BUFFER_SIZE = 1024*1024;
-const int32_t PRIMITIVE_OFFSET_BUFFER_SIZE = 3;
-const int32_t BINARY_OFFSET_BUFFER_SIZE = 1024*1024;
+const int32_t BUFFER_SIZE = 1 << 20;
+const int32_t PRIMITIVE_OFFSET_BUFFER_SIZE = 1;
+const int32_t BINARY_OFFSET_BUFFER_SIZE = 1 << 20;
 
 class MeasureExecutionTime{
     private:
@@ -93,7 +93,7 @@ ScanCtx Scan(ConnCtx &conn_ctx, ScanReq &scan_req) {
     std::string uuid = scan.on(conn_ctx.endpoint)(scan_req.stub);
     scan_ctx.uuid = uuid;
     scan_ctx.schema = scan_req.schema;
-    
+
     pointers.reserve(scan_ctx.schema->num_fields()*2);
     segments.reserve(scan_ctx.schema->num_fields()*2);
 
