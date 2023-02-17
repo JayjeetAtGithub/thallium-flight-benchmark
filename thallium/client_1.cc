@@ -106,8 +106,8 @@ arrow::Result<std::shared_ptr<arrow::RecordBatch>> GetNextBatch(ConnCtx &conn_ct
 
             {
                 for (int i = 0; i < num_cols; i++) {
-                    std::cout << "data_buff_sizes[" << i << "] = " << data_buff_sizes[i] << std::endl;
-                    std::cout << "offset_buff_sizes[" << i << "] = " << offset_buff_sizes[i] << std::endl;
+                    segments[i*2].second = data_buff_sizes[i];
+                    segments[(i*2)+1].second = offset_buff_sizes[i];
                 }
             }
 
