@@ -101,19 +101,22 @@ ScanCtx Scan(ConnCtx &conn_ctx, ScanReq &scan_req) {
         std::shared_ptr<arrow::DataType> type = scan_ctx.schema->field(i)->type();
         int64_t data_size;
         int64_t offset_size;
-        if (is_binary_like(type->id())) {
-            pointers[i*2] = (void*)malloc(BUFFER_SIZE);
-            pointers[(i*2)+1] = (void*)malloc(BINARY_OFFSET_BUFFER_SIZE);
-            data_size = BUFFER_SIZE;
-            offset_size = BINARY_OFFSET_BUFFER_SIZE;
-        } else {
-            pointers[i*2] = (void*)malloc(BUFFER_SIZE);
-            pointers[(i*2)+1] = (void*)malloc(PRIMITIVE_OFFSET_BUFFER_SIZE);
-            data_size = BUFFER_SIZE;
-            offset_size = PRIMITIVE_OFFSET_BUFFER_SIZE;
+        {
+            MeasureExecutionTime m("memory_allocate");
+            if (is_binary_like(type->id())) {
+                pointers[i*2] = (void*)malloc(BUFFER_SIZE);
+                pointers[(i*2)+1] = (void*)malloc(BINARY_OFFSET_BUFFER_SIZE);
+                data_size = BUFFER_SIZE;
+                offset_size = BINARY_OFFSET_BUFFER_SIZE;
+            } else {
+                pointers[i*2] = (void*)malloc(BUFFER_SIZE);
+                pointers[(i*2)+1] = (void*)malloc(PRIMITIVE_OFFSET_BUFFER_SIZE);
+                data_size = BUFFER_SIZE;
+                offset_size = PRIMITIVE_OFFSET_BUFFER_SIZE;
+            }
+            segments.emplace_back(std::make_pair(pointers[i*2], data_size));
+            segments.emplace_back(std::make_pair(pointers[(i*2)+1], offset_size));
         }
-        segments.emplace_back(std::make_pair(pointers[i*2], data_size));
-        segments.emplace_back(std::make_pair(pointers[(i*2)+1], offset_size));
     }
     return scan_ctx;
 }
@@ -134,10 +137,6 @@ arrow::Result<std::shared_ptr<arrow::RecordBatch>> GetNextBatch(ConnCtx &conn_ct
             std::vector<std::shared_ptr<arrow::Array>> columns;
             if (flag == 1) {
                 std::cout << "Pinning client side buffers" << std::endl;
-                {
-                    MeasureExecutionTime m("memory_allocate");
-                }
-
                 {
                     MeasureExecutionTime m("client_expose");
                     local = conn_ctx.engine.expose(segments, tl::bulk_mode::write_only);
