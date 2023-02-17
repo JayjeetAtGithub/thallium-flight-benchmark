@@ -130,6 +130,8 @@ arrow::Result<std::shared_ptr<arrow::RecordBatch>> GetNextBatch(ConnCtx &conn_ct
                 }
             }
 
+            // on setting segment sizes here corrupt second time 
+
             std::vector<std::shared_ptr<arrow::Array>> columns;
             if (flag == 1) {
                 std::cout << "Pinning client side buffers" << std::endl;
