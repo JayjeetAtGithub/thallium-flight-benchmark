@@ -130,11 +130,6 @@ arrow::Result<std::shared_ptr<arrow::RecordBatch>> GetNextBatch(ConnCtx &conn_ct
                 }
             }
 
-            for (int i = 0; i < num_cols; i++) {
-                segments[i*2].second = data_buff_sizes[i];
-                segments[(i*2)+1].second = offset_buff_sizes[i];
-            }
-
             std::vector<std::shared_ptr<arrow::Array>> columns;
             if (flag == 1) {
                 std::cout << "Pinning client side buffers" << std::endl;
@@ -142,6 +137,11 @@ arrow::Result<std::shared_ptr<arrow::RecordBatch>> GetNextBatch(ConnCtx &conn_ct
                     MeasureExecutionTime m("client_expose");
                     local = conn_ctx.engine.expose(segments, tl::bulk_mode::write_only);
                 }
+            }
+
+            for (int i = 0; i < num_cols; i++) {
+                segments[i*2].second = data_buff_sizes[i];
+                segments[(i*2)+1].second = offset_buff_sizes[i];
             }
 
             {
