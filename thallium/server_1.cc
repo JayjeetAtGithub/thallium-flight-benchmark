@@ -120,10 +120,10 @@ int main(int argc, char** argv) {
     std::vector<int64_t> offset_buff_sizes;
     tl::bulk arrow_bulk;
 
-    std::vector<void*> pointers(34);
-    for (int i = 0; i < pointers.size(); i++) {
-        pointers[i] = (void*)arrow::AllocateBuffer(BUFFER_SIZE).ValueOrDie()->mutable_data();
-        segments[i] = std::make_pair(pointers[i], BUFFER_SIZE);
+    // allocate pointers
+    std::vector<uint8_t*> pointers;
+    for (int i = 0; i < 34; i++) {
+        pointers.push_back((uint8_t*)malloc(BUFFER_SIZE));
     }
 
     std::function<void(const tl::request&, const std::string&)> get_next_batch = 
@@ -143,6 +143,9 @@ int main(int argc, char** argv) {
 
                     {
                         MeasureExecutionTime m("server_expose");
+                        for (int i = 0; i < 34; i++) {
+                            segments[i] = std::make_pair((void*)pointers[i], BUFFER_SIZE);
+                        }
                         arrow_bulk = engine.expose(segments, tl::bulk_mode::read_write);
                     }
                 }
