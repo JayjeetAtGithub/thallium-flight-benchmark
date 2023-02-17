@@ -215,7 +215,7 @@ arrow::Status Main(int argc, char **argv) {
             total_rows += batch->num_rows();
             num_batches++;
             std::cout << batch->ToString() << std::endl;
-            if (num_batches == 2) break;
+            if (num_batches == 100) break;
             
         }
     }
