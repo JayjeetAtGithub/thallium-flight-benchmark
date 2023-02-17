@@ -215,7 +215,8 @@ arrow::Status Main(int argc, char **argv) {
         while ((batch = GetNextBatch(conn_ctx, scan_ctx, (total_rows == 0)).ValueOrDie()) != nullptr) {
             total_rows += batch->num_rows();
             num_batches++;
-            std::cout << batch->ToString() << std::endl;            
+            std::cout << batch->ToString() << std::endl;       
+            if (num_batches == 1) break; // just read 10 batches (for testing
         }
     }
     std::cout << "Read " << total_rows << " rows in " << num_batches << " batches" << std::endl;
