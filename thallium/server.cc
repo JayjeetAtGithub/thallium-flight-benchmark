@@ -125,6 +125,8 @@ int main(int argc, char** argv) {
             }
 
             if (batch != nullptr) {
+                std::cout << batch->ToString() << std::endl;
+                
 
                 std::vector<int64_t> data_buff_sizes;
                 std::vector<int64_t> offset_buff_sizes;
