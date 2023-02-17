@@ -135,11 +135,9 @@ arrow::Result<std::shared_ptr<arrow::RecordBatch>> GetNextBatch(ConnCtx &conn_ct
                     std::shared_ptr<arrow::Buffer> data_buff = arrow::Buffer::Wrap(
                         (uint8_t*)segments[i*2].first, data_buff_sizes[i]
                     );
-                    std::cout << "XXXXX: " << offset_buff_sizes[i] << std::endl;
                     std::shared_ptr<arrow::Buffer> offset_buff = arrow::Buffer::Wrap(
                         (uint8_t*)segments[(i*2)+1].first, offset_buff_sizes[i]
                     );
-
                     std::shared_ptr<arrow::Array> col_arr = std::make_shared<arrow::StringArray>(num_rows, std::move(data_buff), std::move(offset_buff));
                     columns.push_back(col_arr);
                 } else {
