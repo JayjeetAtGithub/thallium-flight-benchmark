@@ -83,8 +83,7 @@ ConnCtx Init(std::string protocol, std::string host) {
     return ctx;
 }
 
-std::vector<std::unique_ptr<arrow::Buffer>> data_buffs;
-std::vector<std::unique_ptr<arrow::Buffer>> offset_buffs;
+std::vector<uint8_t*> pointers;
 std::vector<std::pair<void*,std::size_t>> segments;
 tl::bulk local;
 
@@ -95,8 +94,7 @@ ScanCtx Scan(ConnCtx &conn_ctx, ScanReq &scan_req) {
     scan_ctx.uuid = uuid;
     scan_ctx.schema = scan_req.schema;
 
-    data_buffs.reserve(scan_ctx.schema->num_fields());
-    offset_buffs.reserve(scan_ctx.schema->num_fields());
+    pointers.reserve(scan_ctx.schema->num_fields()*2);
     segments.reserve(scan_ctx.schema->num_fields()*2);
 
     for (int i = 0; i < scan_ctx.schema->num_fields(); i++) {
@@ -106,15 +104,15 @@ ScanCtx Scan(ConnCtx &conn_ctx, ScanReq &scan_req) {
         {
             MeasureExecutionTime m("memory_allocate");
             if (is_binary_like(type->id())) {
-                data_buffs.emplace_back(arrow::AllocateBuffer(BUFFER_SIZE).ValueOrDie());
-                offset_buffs.emplace_back(arrow::AllocateBuffer(BINARY_OFFSET_BUFFER_SIZE).ValueOrDie());
-                segments.emplace_back(std::make_pair((void*)data_buffs[i]->mutable_data(), BUFFER_SIZE));
-                segments.emplace_back(std::make_pair((void*)offset_buffs[i]->mutable_data(), BINARY_OFFSET_BUFFER_SIZE));
+                pointers.emplace_back((uint8_t*)malloc(BUFFER_SIZE));
+                pointers.emplace_back((uint8_t*)malloc(BINARY_OFFSET_BUFFER_SIZE));
+                segments.emplace_back(std::make_pair((void*)pointers[i*2], BUFFER_SIZE));
+                segments.emplace_back(std::make_pair((void*)pointers[i*2+1], BINARY_OFFSET_BUFFER_SIZE));
             } else {
-                data_buffs.emplace_back(arrow::AllocateBuffer(BUFFER_SIZE).ValueOrDie());
-                offset_buffs.emplace_back(arrow::AllocateBuffer(PRIMITIVE_OFFSET_BUFFER_SIZE).ValueOrDie());
-                segments.emplace_back(std::make_pair((void*)data_buffs[i]->mutable_data(), BUFFER_SIZE));
-                segments.emplace_back(std::make_pair((void*)offset_buffs[i]->mutable_data(), PRIMITIVE_OFFSET_BUFFER_SIZE));
+                pointers.emplace_back((uint8_t*)malloc(BUFFER_SIZE));
+                pointers.emplace_back((uint8_t*)malloc(PRIMITIVE_OFFSET_BUFFER_SIZE));
+                segments.emplace_back(std::make_pair((void*)pointers[i*2], BUFFER_SIZE));
+                segments.emplace_back(std::make_pair((void*)pointers[i*2+1], PRIMITIVE_OFFSET_BUFFER_SIZE));
             }
         }
     }
@@ -124,7 +122,7 @@ ScanCtx Scan(ConnCtx &conn_ctx, ScanReq &scan_req) {
 arrow::Result<std::shared_ptr<arrow::RecordBatch>> GetNextBatch(ConnCtx &conn_ctx, ScanCtx &scan_ctx, int flag) {
     std::shared_ptr<arrow::RecordBatch> batch;
     std::function<void(const tl::request&, int64_t&, std::vector<int64_t>&, std::vector<int64_t>&, tl::bulk&)> f =
-        [&conn_ctx, &scan_ctx, &batch, &segments, &data_buffs, &offset_buffs, &flag, &local](const tl::request& req, int64_t& num_rows, std::vector<int64_t>& data_buff_sizes, std::vector<int64_t>& offset_buff_sizes, tl::bulk& b) {
+        [&conn_ctx, &scan_ctx, &batch, &segments, &pointers, &flag, &local](const tl::request& req, int64_t& num_rows, std::vector<int64_t>& data_buff_sizes, std::vector<int64_t>& offset_buff_sizes, tl::bulk& b) {
             int num_cols = scan_ctx.schema->num_fields();
 
             {
