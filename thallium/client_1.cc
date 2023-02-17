@@ -83,7 +83,8 @@ ConnCtx Init(std::string protocol, std::string host) {
     return ctx;
 }
 
-std::vector<void*> pointers;
+std::vector<std::unique_ptr<arrow::Buffer>> data_buffs;
+std::vector<std::unique_ptr<arrow::Buffer>> offset_buffs;
 std::vector<std::pair<void*,std::size_t>> segments;
 tl::bulk local;
 
@@ -94,7 +95,8 @@ ScanCtx Scan(ConnCtx &conn_ctx, ScanReq &scan_req) {
     scan_ctx.uuid = uuid;
     scan_ctx.schema = scan_req.schema;
 
-    pointers.reserve(scan_ctx.schema->num_fields()*2);
+    data_buffs.reserve(scan_ctx.schema->num_fields());
+    offset_buffs.reserve(scan_ctx.schema->num_fields());
     segments.reserve(scan_ctx.schema->num_fields()*2);
 
     for (int i = 0; i < scan_ctx.schema->num_fields(); i++) {
@@ -104,18 +106,16 @@ ScanCtx Scan(ConnCtx &conn_ctx, ScanReq &scan_req) {
         {
             MeasureExecutionTime m("memory_allocate");
             if (is_binary_like(type->id())) {
-                pointers[i*2] = (void*)malloc(BUFFER_SIZE);
-                pointers[(i*2)+1] = (void*)malloc(BINARY_OFFSET_BUFFER_SIZE);
-                data_size = BUFFER_SIZE;
-                offset_size = BINARY_OFFSET_BUFFER_SIZE;
+                data_buffs.emplace_back(arrow::AllocateBuffer(BUFFER_SIZE).ValueOrDie());
+                offset_buffs.emplace_back(arrow::AllocateBuffer(BINARY_OFFSET_BUFFER_SIZE).ValueOrDie());
+                segments.emplace_back(std::make_pair((void*)data_buffs[i]->mutable_data(), BUFFER_SIZE));
+                segments.emplace_back(std::make_pair((void*)offset_buffs[i]->mutable_data(), BINARY_OFFSET_BUFFER_SIZE));
             } else {
-                pointers[i*2] = (void*)malloc(BUFFER_SIZE);
-                pointers[(i*2)+1] = (void*)malloc(PRIMITIVE_OFFSET_BUFFER_SIZE);
-                data_size = BUFFER_SIZE;
-                offset_size = PRIMITIVE_OFFSET_BUFFER_SIZE;
+                data_buffs.emplace_back(arrow::AllocateBuffer(BUFFER_SIZE).ValueOrDie());
+                offset_buffs.emplace_back(arrow::AllocateBuffer(PRIMITIVE_OFFSET_BUFFER_SIZE).ValueOrDie());
+                segments.emplace_back(std::make_pair((void*)data_buffs[i]->mutable_data(), BUFFER_SIZE));
+                segments.emplace_back(std::make_pair((void*)offset_buffs[i]->mutable_data(), PRIMITIVE_OFFSET_BUFFER_SIZE));
             }
-            segments.emplace_back(std::make_pair(pointers[i*2], data_size));
-            segments.emplace_back(std::make_pair(pointers[(i*2)+1], offset_size));
         }
     }
     return scan_ctx;
@@ -124,7 +124,7 @@ ScanCtx Scan(ConnCtx &conn_ctx, ScanReq &scan_req) {
 arrow::Result<std::shared_ptr<arrow::RecordBatch>> GetNextBatch(ConnCtx &conn_ctx, ScanCtx &scan_ctx, int flag) {
     std::shared_ptr<arrow::RecordBatch> batch;
     std::function<void(const tl::request&, int64_t&, std::vector<int64_t>&, std::vector<int64_t>&, tl::bulk&)> f =
-        [&conn_ctx, &scan_ctx, &batch, &segments, &pointers, &flag, &local](const tl::request& req, int64_t& num_rows, std::vector<int64_t>& data_buff_sizes, std::vector<int64_t>& offset_buff_sizes, tl::bulk& b) {
+        [&conn_ctx, &scan_ctx, &batch, &segments, &data_buffs, &offset_buffs, &flag, &local](const tl::request& req, int64_t& num_rows, std::vector<int64_t>& data_buff_sizes, std::vector<int64_t>& offset_buff_sizes, tl::bulk& b) {
             int num_cols = scan_ctx.schema->num_fields();
 
             {
@@ -150,10 +150,8 @@ arrow::Result<std::shared_ptr<arrow::RecordBatch>> GetNextBatch(ConnCtx &conn_ct
 
             for (int64_t i = 0; i < num_cols; i++) {
                 std::shared_ptr<arrow::DataType> type = scan_ctx.schema->field(i)->type();  
-                std::shared_ptr<arrow::Buffer> data_buff = std::make_shared<arrow::Buffer>((uint8_t*)segments[i*2].first, segments[i*2].second);
-                data_buff = arrow::SliceBufferSafe(data_buff, 0, data_buff_sizes[i]).ValueOrDie();
-                std::shared_ptr<arrow::Buffer> offset_buff = std::make_shared<arrow::Buffer>((uint8_t*)segments[(i*2)+1].first, segments[(i*2)+1].second);
-                offset_buff = arrow::SliceBufferSafe(offset_buff, 0, offset_buff_sizes[i]).ValueOrDie();
+                std::shared_ptr<arrow::Buffer> data_buff = arrow::SliceBufferSafe(data_buffs[i], 0, data_buff_sizes[i]).ValueOrDie();
+                std::shared_ptr<arrow::Buffer> offset_buff = arrow::SliceBufferSafe(offset_buffs[i], 0, offset_buff_sizes[i]).ValueOrDie();
 
                 if (is_binary_like(type->id())) {
                     std::shared_ptr<arrow::Array> col_arr = std::make_shared<arrow::StringArray>(num_rows, std::move(data_buff), std::move(offset_buff));
