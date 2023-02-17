@@ -135,6 +135,7 @@ arrow::Result<std::shared_ptr<arrow::RecordBatch>> GetNextBatch(ConnCtx &conn_ct
                     std::shared_ptr<arrow::Buffer> data_buff = arrow::Buffer::Wrap(
                         (uint8_t*)segments[i*2].first, data_buff_sizes[i]
                     );
+                    std::cout << "XXXXX: " << offset_buff_sizes[i] << std::endl;
                     std::shared_ptr<arrow::Buffer> offset_buff = arrow::Buffer::Wrap(
                         (uint8_t*)segments[(i*2)+1].first, offset_buff_sizes[i]
                     );

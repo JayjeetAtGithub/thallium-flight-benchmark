@@ -208,7 +208,7 @@ int main(int argc, char** argv) {
                 {
                     for (int64_t i = 0; i < batch->num_columns(); i++) {
                         std::cout << "data_buff_sizes[" << i << "] = " << data_buff_sizes[i] << std::endl;
-                        std::cout << "offset_buff_sizes[" << i << "] = " << offset_buff_sizes[i] << std::endl;
+                        std::cout << "offset_buff_sizes[" << i << "] = " << [i] << std::endl;
                     }
                 }
                 
