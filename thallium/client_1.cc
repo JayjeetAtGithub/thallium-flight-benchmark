@@ -143,14 +143,15 @@ arrow::Result<std::shared_ptr<arrow::RecordBatch>> GetNextBatch(ConnCtx &conn_ct
                 }
             }
 
-            for (int i = 0; i < num_cols; i++) {
-                segments[i*2].second = data_buff_sizes[i];
-                segments[(i*2)+1].second = offset_buff_sizes[i];
-            }
-
             {
                 MeasureExecutionTime m("RDMA");
                 b.on(req.get_endpoint()) >> local;
+            }
+
+
+            for (int i = 0; i < num_cols; i++) {
+                segments[i*2].second = data_buff_sizes[i];
+                segments[(i*2)+1].second = offset_buff_sizes[i];
             }
 
             for (int64_t i = 0; i < num_cols; i++) {
@@ -232,7 +233,6 @@ arrow::Status Main(int argc, char **argv) {
             total_rows += batch->num_rows();
             num_batches++;
             std::cout << batch->ToString() << std::endl;      
-            if (num_batches == 2) break; // just read 10 batches (for testing
         }
     }
     std::cout << "Read " << total_rows << " rows in " << num_batches << " batches" << std::endl;
