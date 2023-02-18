@@ -80,7 +80,7 @@ int main(int argc, char *argv[]) {
         std::shared_ptr<arrow::Table> table;
         std::unique_ptr<arrow::flight::FlightStreamReader> stream;
         client->DoGet(flight_info->endpoints()[0].ticket, &stream);
-        ARROW_ASSIGN_OR_RAISE(auto res_batches, stream->ToRecordBatches());
+        auto res_batches = stream->ToRecordBatches().ValueOrDie();
         std::cout << "Read " << res_batches.size() << " batches" << std::endl;
       }
     }
