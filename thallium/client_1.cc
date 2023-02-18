@@ -26,9 +26,8 @@
 #include "payload.h"
 
 const int32_t BUFFER_SIZE = 1 << 20;
-const int32_t BINARY_SIZE = 131072;
 const int32_t PRIMITIVE_OFFSET_BUFFER_SIZE = 1;
-const int32_t BINARY_OFFSET_BUFFER_SIZE = 524292;
+const int32_t BINARY_OFFSET_BUFFER_SIZE = 1 << 20;
 
 class MeasureExecutionTime{
     private:
@@ -103,7 +102,7 @@ ScanCtx Scan(ConnCtx &conn_ctx, ScanReq &scan_req) {
         {
             MeasureExecutionTime m("memory_allocate");
             if (is_binary_like(type->id())) {
-                pointers.emplace_back((uint8_t*)malloc(BINARY_SIZE));
+                pointers.emplace_back((uint8_t*)malloc(BUFFER_SIZE));
                 pointers.emplace_back((uint8_t*)malloc(BINARY_OFFSET_BUFFER_SIZE));
                 segments.emplace_back(std::make_pair((void*)pointers[i*2], BUFFER_SIZE));
                 segments.emplace_back(std::make_pair((void*)pointers[(i*2)+1], BINARY_OFFSET_BUFFER_SIZE));
@@ -151,8 +150,6 @@ arrow::Result<std::shared_ptr<arrow::RecordBatch>> GetNextBatch(ConnCtx &conn_ct
                 MeasureExecutionTime m("RDMA");
                 b.on(req.get_endpoint()) >> local;
             }
-
-
 
             for (int64_t i = 0; i < num_cols; i++) {
                 std::shared_ptr<arrow::DataType> type = scan_ctx.schema->field(i)->type();  
