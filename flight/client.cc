@@ -62,10 +62,9 @@ int main(int argc, char *argv[]) {
     client->DoGet(flight_info->endpoints()[0].ticket, &stream);
     {
       MEASURE_FUNCTION_EXECUTION_TIME
-      stream->ReadAll(&table);
+      auto res_batches = stream->ToRecordBatches().ValueOrDie();
+      std::cout << "Read " << res_batches.size() << " batches" << std::endl;    
     }
-    std::cout << "Read " << table->num_rows() << " rows and " << table->num_columns() << " columns" << std::endl;
-
   } else {  
     int64_t total_rows = 0;
     {
