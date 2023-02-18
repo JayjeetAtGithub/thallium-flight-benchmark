@@ -64,6 +64,9 @@ int main(int argc, char *argv[]) {
       MEASURE_FUNCTION_EXECUTION_TIME
       auto res_batches = stream->ToRecordBatches().ValueOrDie();
       std::cout << "Read " << res_batches.size() << " batches" << std::endl;    
+      for (auto batch : res_batches) {
+        std::cout << "Read " << batch->num_rows() << " rows" << std::endl;
+      }
     }
   } else {  
     int64_t total_rows = 0;
