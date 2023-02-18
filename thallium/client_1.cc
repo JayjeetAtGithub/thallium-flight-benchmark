@@ -26,8 +26,9 @@
 #include "payload.h"
 
 const int32_t BUFFER_SIZE = 1 << 20;
+const int32_t BINARY_SIZE = 131072;
 const int32_t PRIMITIVE_OFFSET_BUFFER_SIZE = 1;
-const int32_t BINARY_OFFSET_BUFFER_SIZE = 1 << 20;
+const int32_t BINARY_OFFSET_BUFFER_SIZE = 524292;
 
 class MeasureExecutionTime{
     private:
@@ -102,7 +103,7 @@ ScanCtx Scan(ConnCtx &conn_ctx, ScanReq &scan_req) {
         {
             MeasureExecutionTime m("memory_allocate");
             if (is_binary_like(type->id())) {
-                pointers.emplace_back((uint8_t*)malloc(BUFFER_SIZE));
+                pointers.emplace_back((uint8_t*)malloc(BINARY_SIZE));
                 pointers.emplace_back((uint8_t*)malloc(BINARY_OFFSET_BUFFER_SIZE));
                 segments.emplace_back(std::make_pair((void*)pointers[i*2], BUFFER_SIZE));
                 segments.emplace_back(std::make_pair((void*)pointers[(i*2)+1], BINARY_OFFSET_BUFFER_SIZE));
