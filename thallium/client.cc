@@ -149,7 +149,7 @@ arrow::Result<std::vector<std::shared_ptr<arrow::RecordBatch>>> GetNextBatch(Con
     if (e == 0) {
         return batches;
     } else {
-        return nullptr;
+        return std::vector<std::shared_ptr<arrow::RecordBatch>>();
     }
 }
 
@@ -195,7 +195,7 @@ arrow::Status Main(int argc, char **argv) {
     std::vector<std::shared_ptr<arrow::RecordBatch>> batches;
     {
         MEASURE_FUNCTION_EXECUTION_TIME
-        while ((batches = GetNextBatch(conn_ctx, scan_ctx).ValueOrDie()) != nullptr) {
+        while ((batches = GetNextBatch(conn_ctx, scan_ctx).ValueOrDie()).size() != 0) {
             for (auto batch : batches) {
                 total_rows += batch->num_rows();
             }
