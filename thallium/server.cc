@@ -129,7 +129,7 @@ int main(int argc, char** argv) {
             while (total_rows_in_transfer_batch <= 131072) {
                 
                 reader->ReadNext(&next_batch);
-                if (batch == nullptr) {
+                if (next_batch == nullptr) {
                     break;
                 }
                 batches.push_back(next_batch);
