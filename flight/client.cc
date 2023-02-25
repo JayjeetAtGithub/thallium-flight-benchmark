@@ -53,7 +53,7 @@ int main(int argc, char *argv[]) {
   auto client = ConnectToFlightServer(info).ValueOrDie();
 
   if (backend == "dataset") {
-    std::string filepath = "/mnt/cephfs/dataset";
+    std::string filepath = "/mnt/data";
     auto descriptor = arrow::flight::FlightDescriptor::Path({filepath});
     std::unique_ptr<arrow::flight::FlightInfo> flight_info;
     client->GetFlightInfo(descriptor, &flight_info);
@@ -71,7 +71,7 @@ int main(int argc, char *argv[]) {
     {
       MEASURE_FUNCTION_EXECUTION_TIME
       for (int i = 1; i <= 200; i++) {
-        std::string filepath = "/mnt/cephfs/dataset/16MB.uncompressed.parquet." + std::to_string(i);
+        std::string filepath = "/mnt/data/16MB.uncompressed.parquet." + std::to_string(i);
         auto descriptor = arrow::flight::FlightDescriptor::Path({filepath});
 
         std::unique_ptr<arrow::flight::FlightInfo> flight_info;
