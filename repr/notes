@@ -7,3 +7,5 @@
     se, se: 1810ms (memcpy costs)
 
 3. exposing write buffer > exposing r/w buffer > exposing read buffer
+
+4. Can't work with so many round trips, basically O(n) where n is the number of batches.
