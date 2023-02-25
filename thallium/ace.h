@@ -130,7 +130,7 @@ arrow::compute::Expression GetFilter(std::string selectivity) {
 }
 
 arrow::Result<std::shared_ptr<arrow::RecordBatchReader>> ScanDataset(cp::ExecContext& exec_context, const ScanReqRPCStub& stub, std::string backend, std::string selectivity) {
-    std::string uri = "file:///mnt/cephfs/dataset";
+    std::string uri = "file:///mnt/data";
 
     auto schema = arrow::schema({
       arrow::field("VendorID", arrow::int64()),

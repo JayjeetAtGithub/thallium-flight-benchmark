@@ -191,13 +191,14 @@ arrow::Status Main(int argc, char **argv) {
 
 
     if (backend == "dataset") {
-        std::string path = "/mnt/cephfs/dataset";
+        std::string path = "/mnt/data";
         ARROW_ASSIGN_OR_RAISE(auto scan_req, GetScanRequest(path, filter, schema, schema));
         ScanCtx scan_ctx = Scan(conn_ctx, scan_req);
         std::shared_ptr<arrow::RecordBatch> batch;
         {
             MEASURE_FUNCTION_EXECUTION_TIME
             while ((batch = GetNextBatch(conn_ctx, scan_ctx).ValueOrDie()) != nullptr) {
+                std::cout << batch->ToString() << std::endl;
                 total_rows += batch->num_rows();
             }
         }
@@ -207,7 +208,7 @@ arrow::Status Main(int argc, char **argv) {
             MEASURE_FUNCTION_EXECUTION_TIME
             std::shared_ptr<arrow::RecordBatch> batch;
             for (int i = 1; i <= 200; i++) {
-                std::string filepath = "/mnt/cephfs/dataset/16MB.uncompressed.parquet." + std::to_string(i);
+                std::string filepath = "/mnt/data/16MB.uncompressed.parquet." + std::to_string(i);
                 ARROW_ASSIGN_OR_RAISE(auto scan_req, GetScanRequest(filepath, filter, schema, schema));
                 ScanCtx scan_ctx = Scan(conn_ctx, scan_req);
                 while ((batch = GetNextBatch(conn_ctx, scan_ctx).ValueOrDie()) != nullptr) {
