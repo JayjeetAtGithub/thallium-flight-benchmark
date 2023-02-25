@@ -132,7 +132,7 @@ arrow::Result<std::vector<std::shared_ptr<arrow::RecordBatch>>> GetNextBatch(Con
                         std::shared_ptr<arrow::Array> col_arr = std::make_shared<arrow::StringArray>(num_rows, std::move(offset_buffs[buff_idx]), std::move(data_buffs[buff_idx]));
                         columns.push_back(col_arr);
                     } else {
-                        std::shared_ptr<arrow::Array> col_arr = std::make_shared<arrow::PrimitiveArray>(type, num_rows, std::move(data_buffs[buff_idxi]));
+                        std::shared_ptr<arrow::Array> col_arr = std::make_shared<arrow::PrimitiveArray>(type, num_rows, std::move(data_buffs[buff_idx]));
                         columns.push_back(col_arr);
                     }
                 }
