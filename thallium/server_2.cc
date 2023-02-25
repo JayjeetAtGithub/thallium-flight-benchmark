@@ -96,9 +96,9 @@ int main(int argc, char** argv) {
     std::unordered_map<std::string, std::shared_ptr<arrow::RecordBatchReader>> reader_map;
 
     std::vector<std::pair<void*,std::size_t>> segments(1);
-    uint8_t *segment_buffer = (uint8_t*)malloc(32*1024*1024);
+    uint8_t *segment_buffer = (uint8_t*)malloc(16*1024*1024);
     segments[0].first = (void*)segment_buffer;
-    segments[0].second = 32*1024*1024;
+    segments[0].second = 16*1024*1024;
     tl::bulk arrow_bulk;
     
     {

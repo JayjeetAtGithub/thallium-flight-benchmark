@@ -90,8 +90,8 @@ ScanCtx Scan(ConnCtx &conn_ctx, ScanReq &scan_req) {
     scan_ctx.schema = scan_req.schema;
     {
         MeasureExecutionTime m("memory_allocate");
-        segments[0].first = (uint8_t*)malloc(32*1024*1024);
-        segments[0].second = 32*1024*1024;
+        segments[0].first = (uint8_t*)malloc(16*1024*1024);
+        segments[0].second = 16*1024*1024;
     }
 
     {
