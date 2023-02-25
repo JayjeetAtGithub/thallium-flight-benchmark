@@ -88,58 +88,58 @@ ScanCtx Scan(ConnCtx &conn_ctx, ScanReq &scan_req) {
     return scan_ctx;
 }
 
-arrow::Result<std::shared_ptr<arrow::RecordBatch>> GetNextBatch(ConnCtx &conn_ctx, ScanCtx &scan_ctx) {
-    std::shared_ptr<arrow::RecordBatch> batch;
-    std::function<void(const tl::request&, int64_t&, std::vector<int64_t>&, std::vector<int64_t>&, tl::bulk&)> f =
-        [&conn_ctx, &scan_ctx, &batch](const tl::request& req, int64_t& num_rows, std::vector<int64_t>& data_buff_sizes, std::vector<int64_t>& offset_buff_sizes, tl::bulk& b) {
+arrow::Result<std::vector<std::shared_ptr<arrow::RecordBatch>>> GetNextBatch(ConnCtx &conn_ctx, ScanCtx &scan_ctx) {
+    // store batches
+    std::vector<std::shared_ptr<arrow::RecordBatch>> batches;
+
+    std::function<void(const tl::request&, std::vector<int32_t>&, std::vector<int32_t>&, std::vector<int32_t>&, tl::bulk&)> f =
+        [&conn_ctx, &scan_ctx, &batches](const tl::request& req, std::vector<int32_t>& batch_sizes, std::vector<int32_t>& data_buff_sizes, std::vector<int32_t>& offset_buff_sizes, tl::bulk& b) {
             int num_cols = scan_ctx.schema->num_fields();
             
-            std::vector<std::shared_ptr<arrow::Array>> columns;
-            std::vector<std::unique_ptr<arrow::Buffer>> data_buffs(num_cols);
-            std::vector<std::unique_ptr<arrow::Buffer>> offset_buffs(num_cols);
-            std::vector<std::pair<void*,std::size_t>> segments;
-            segments.reserve(num_cols*2);
-            
-            {
-                MeasureExecutionTime m("memory_allocate");
-                for (int64_t i = 0; i < num_cols; i++) {
-                    data_buffs[i] = arrow::AllocateBuffer(data_buff_sizes[i]).ValueOrDie();
-                    offset_buffs[i] = arrow::AllocateBuffer(offset_buff_sizes[i]).ValueOrDie();
+            // std::vector<std::shared_ptr<arrow::Array>> columns;
+            std::vector<std::unique_ptr<arrow::Buffer>> data_buffs(num_cols * batch_sizes.size());
+            std::vector<std::unique_ptr<arrow::Buffer>> offset_buffs(num_cols * batch_sizes.size());
+            std::vector<std::pair<void*, std::size_t>> segments;
+            segments.reserve(num_cols * 2 * batch_sizes.size());
 
-                    segments.emplace_back(std::make_pair(
-                        (void*)data_buffs[i]->mutable_data(),
-                        data_buff_sizes[i]
-                    ));
-                    segments.emplace_back(std::make_pair(
-                        (void*)offset_buffs[i]->mutable_data(),
-                        offset_buff_sizes[i]
-                    ));
+            // allocate buffers for recieving data from server            
+            for (int32_t i = 0; i < num_cols * batch_sizes.size(); i++) {
+                data_buffs[i] = arrow::AllocateBuffer(data_buff_sizes[i]).ValueOrDie();
+                offset_buffs[i] = arrow::AllocateBuffer(offset_buff_sizes[i]).ValueOrDie();
+
+                segments.emplace_back(std::make_pair(
+                    (void*)data_buffs[i]->mutable_data(),
+                    data_buff_sizes[i]
+                ));
+                segments.emplace_back(std::make_pair(
+                    (void*)offset_buffs[i]->mutable_data(),
+                    offset_buff_sizes[i]
+                ));
+            }
+
+            // expose local memory and pull data from server
+            tl::bulk local = conn_ctx.engine.expose(segments, tl::bulk_mode::write_only);
+            b.on(req.get_endpoint()) >> local;
+
+            // materialize arrow arrays
+            for (int32_t batch_idx = 0; batch_idx < batch_sizes.size(); batch_idx++) {
+                int32_t num_rows = batch_sizes[batch_idx];
+                std::vector<std::shared_ptr<arrow::Array>> columns;
+                for (int32_t col_idx = 0; col_idx < num_cols; col_idx++) {
+                    std::shared_ptr<arrow::DataType> type = scan_ctx.schema->field(col_idx)->type();  
+                    int32_t buff_idx = batch_idx * num_cols + col_idx;
+                    if (is_binary_like(type->id())) {
+                        std::shared_ptr<arrow::Array> col_arr = std::make_shared<arrow::StringArray>(num_rows, std::move(offset_buffs[buff_idx]), std::move(data_buffs[buff_idx]));
+                        columns.push_back(col_arr);
+                    } else {
+                        std::shared_ptr<arrow::Array> col_arr = std::make_shared<arrow::PrimitiveArray>(type, num_rows, std::move(data_buffs[buff_idxi]));
+                        columns.push_back(col_arr);
+                    }
                 }
+                std::shared_ptr<arrow::RecordBatch> batch = arrow::RecordBatch::Make(scan_ctx.schema, num_rows, columns);
+                batches.push_back(batch);
             }
 
-            tl::bulk local;
-            {
-                MeasureExecutionTime m("client_expose");
-                local = conn_ctx.engine.expose(segments, tl::bulk_mode::write_only);
-            }
-
-            {
-                MeasureExecutionTime m("RDMA");
-                b.on(req.get_endpoint()) >> local;
-            }
-
-            for (int64_t i = 0; i < num_cols; i++) {
-                std::shared_ptr<arrow::DataType> type = scan_ctx.schema->field(i)->type();  
-                if (is_binary_like(type->id())) {
-                    std::shared_ptr<arrow::Array> col_arr = std::make_shared<arrow::StringArray>(num_rows, std::move(offset_buffs[i]), std::move(data_buffs[i]));
-                    columns.push_back(col_arr);
-                } else {
-                    std::shared_ptr<arrow::Array> col_arr = std::make_shared<arrow::PrimitiveArray>(type, num_rows, std::move(data_buffs[i]));
-                    columns.push_back(col_arr);
-                }
-            }
-
-            batch = arrow::RecordBatch::Make(scan_ctx.schema, num_rows, columns);
             return req.respond(0);
         };
     conn_ctx.engine.define("do_rdma", f);
@@ -147,7 +147,7 @@ arrow::Result<std::shared_ptr<arrow::RecordBatch>> GetNextBatch(ConnCtx &conn_ct
 
     int e = get_next_batch.on(conn_ctx.endpoint)(scan_ctx.uuid);
     if (e == 0) {
-        return batch;
+        return batches;
     } else {
         return nullptr;
     }
@@ -189,34 +189,19 @@ arrow::Status Main(int argc, char **argv) {
     ConnCtx conn_ctx = Init(protocol, uri);
     int64_t total_rows = 0;
 
-
-    if (backend == "dataset") {
-        std::string path = "/mnt/cephfs/dataset";
-        ARROW_ASSIGN_OR_RAISE(auto scan_req, GetScanRequest(path, filter, schema, schema));
-        ScanCtx scan_ctx = Scan(conn_ctx, scan_req);
-        std::shared_ptr<arrow::RecordBatch> batch;
-        {
-            MEASURE_FUNCTION_EXECUTION_TIME
-            while ((batch = GetNextBatch(conn_ctx, scan_ctx).ValueOrDie()) != nullptr) {
+    std::string path = "/mnt/cephfs/dataset";
+    ARROW_ASSIGN_OR_RAISE(auto scan_req, GetScanRequest(path, filter, schema, schema));
+    ScanCtx scan_ctx = Scan(conn_ctx, scan_req);
+    std::vector<std::shared_ptr<arrow::RecordBatch>> batches;
+    {
+        MEASURE_FUNCTION_EXECUTION_TIME
+        while ((batches = GetNextBatch(conn_ctx, scan_ctx).ValueOrDie()) != nullptr) {
+            for (auto batch : batches) {
                 total_rows += batch->num_rows();
             }
         }
-        std::cout << "Read " << total_rows << " rows" << std::endl;
-    } else {
-        {
-            MEASURE_FUNCTION_EXECUTION_TIME
-            std::shared_ptr<arrow::RecordBatch> batch;
-            for (int i = 1; i <= 200; i++) {
-                std::string filepath = "/mnt/cephfs/dataset/16MB.uncompressed.parquet." + std::to_string(i);
-                ARROW_ASSIGN_OR_RAISE(auto scan_req, GetScanRequest(filepath, filter, schema, schema));
-                ScanCtx scan_ctx = Scan(conn_ctx, scan_req);
-                while ((batch = GetNextBatch(conn_ctx, scan_ctx).ValueOrDie()) != nullptr) {
-                    total_rows += batch->num_rows();
-                }
-            }
-        }
-        std::cout << "Read " << total_rows << " rows" << std::endl;
     }
+    std::cout << "Read " << total_rows << " rows" << std::endl;
 
     conn_ctx.engine.finalize();
     return arrow::Status::OK();

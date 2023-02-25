@@ -72,6 +72,8 @@ static char* read_input_file(const char* filename) {
     return buf;
 }
 
+const int32_t kDefaultBatchSize = 1 << 17;
+
 int main(int argc, char** argv) {
     if (argc < 4) {
         std::cout << "./ts [selectivity] [backend] [protocol]" << std::endl;
@@ -112,61 +114,72 @@ int main(int argc, char** argv) {
             return req.respond(uuid);
         };
 
-    int64_t total_rows_written = 0;
     std::function<void(const tl::request&, const std::string&)> get_next_batch = 
-        [&mid, &svr_addr, &engine, &do_rdma, &reader_map, &total_rows_written](const tl::request &req, const std::string& uuid) {
-            
+        [&mid, &svr_addr, &engine, &do_rdma, &reader_map](const tl::request &req, const std::string& uuid) {
+            // find the iterator for the uuid        
             std::shared_ptr<arrow::RecordBatchReader> reader = reader_map[uuid];
-            std::shared_ptr<arrow::RecordBatch> batch;
 
-            {
-                MeasureExecutionTime m("I/O");
-                reader->ReadNext(&batch);
+            // data structures to hold the transfer batch
+            std::shared_ptr<arrow::RecordBatch> next_batch;
+            std::vector<std::shared_ptr<arrow::RecordBatch>> batches;
+            std::vector<int32_t> batch_sizes;
+
+            // collect about 1<<17 batches for each transfer
+            int32_t total_rows_in_transfer_batch = 0;
+            while (total_rows_in_transfer_batch <= 131072) {
+                
+                reader->ReadNext(&next_batch);
+                if (batch == nullptr) {
+                    break;
+                }
+                batches.push_back(next_batch);
+                batch_sizes.push_back(next_batch->num_rows());
+                total_rows_in_transfer_batch += next_batch->num_rows();
             }
 
-            if (batch != nullptr) {
-
-                std::vector<int64_t> data_buff_sizes;
-                std::vector<int64_t> offset_buff_sizes;
-                int64_t num_rows = batch->num_rows();
-                total_rows_written += num_rows;
-
+            if (batches.size() > 0) {
+                // declare vectors to hold data and offset buffer sizes
+                std::vector<int32_t> data_buff_sizes;
+                std::vector<int32_t> offset_buff_sizes;
+                
                 std::vector<std::pair<void*,std::size_t>> segments;
-                segments.reserve(batch->num_columns()*2);
+                segments.reserve(batches[0]->num_columns() * 2 * batches.size());
 
-                std::string null_buff = "xx";
+                std::string null_buff = "x";
 
-                for (int64_t i = 0; i < batch->num_columns(); i++) {
-                    std::shared_ptr<arrow::Array> col_arr = batch->column(i);
-                    arrow::Type::type type = col_arr->type_id();
-                    int64_t null_count = col_arr->null_count();
+                for (auto batch : batches) {
+                    for (int32_t i = 0; i < batch->num_columns(); i++) {
+                        std::shared_ptr<arrow::Array> col_arr = batch->column(i);
+                        arrow::Type::type type = col_arr->type_id();
+                        int32_t null_count = col_arr->null_count();
 
-                    int64_t data_size = 0;
-                    int64_t offset_size = 0;
+                        int32_t data_size = 0;
+                        int32_t offset_size = 0;
 
-                    if (is_binary_like(type)) {
-                        std::shared_ptr<arrow::Buffer> data_buff = 
-                            std::static_pointer_cast<arrow::BinaryArray>(col_arr)->value_data();
-                        std::shared_ptr<arrow::Buffer> offset_buff = 
-                            std::static_pointer_cast<arrow::BinaryArray>(col_arr)->value_offsets();
-                        
-                        data_size = data_buff->size();
-                        offset_size = offset_buff->size();
-                        segments.emplace_back(std::make_pair((void*)data_buff->data(), data_size));
-                        segments.emplace_back(std::make_pair((void*)offset_buff->data(), offset_size));
-                    } else {
+                        if (is_binary_like(type)) {
+                            std::shared_ptr<arrow::Buffer> data_buff = 
+                                std::static_pointer_cast<arrow::BinaryArray>(col_arr)->value_data();
+                            std::shared_ptr<arrow::Buffer> offset_buff = 
+                                std::static_pointer_cast<arrow::BinaryArray>(col_arr)->value_offsets();
+                            
+                            data_size = data_buff->size();
+                            offset_size = offset_buff->size();
+                            segments.emplace_back(std::make_pair((void*)data_buff->data(), data_size));
+                            segments.emplace_back(std::make_pair((void*)offset_buff->data(), offset_size));
+                        } else {
 
-                        std::shared_ptr<arrow::Buffer> data_buff = 
-                            std::static_pointer_cast<arrow::PrimitiveArray>(col_arr)->values();
+                            std::shared_ptr<arrow::Buffer> data_buff = 
+                                std::static_pointer_cast<arrow::PrimitiveArray>(col_arr)->values();
 
-                        data_size = data_buff->size();
-                        offset_size = null_buff.size() + 1; 
-                        segments.emplace_back(std::make_pair((void*)data_buff->data(), data_size));
-                        segments.emplace_back(std::make_pair((void*)(&null_buff[0]), offset_size));
+                            data_size = data_buff->size();
+                            offset_size = null_buff.size(); 
+                            segments.emplace_back(std::make_pair((void*)data_buff->data(), data_size));
+                            segments.emplace_back(std::make_pair((void*)(&null_buff[0]), offset_size));
+                        }
+
+                        data_buff_sizes.push_back(data_size);
+                        offset_buff_sizes.push_back(offset_size);
                     }
-
-                    data_buff_sizes.push_back(data_size);
-                    offset_buff_sizes.push_back(offset_size);
                 }
 
                 tl::bulk arrow_bulk;
@@ -175,7 +188,7 @@ int main(int argc, char** argv) {
                     arrow_bulk = engine.expose(segments, tl::bulk_mode::read_only);
                 }
                 
-                do_rdma.on(req.get_endpoint())(num_rows, data_buff_sizes, offset_buff_sizes, arrow_bulk);
+                do_rdma.on(req.get_endpoint())(batch_sizes, data_buff_sizes, offset_buff_sizes, arrow_bulk);
                 return req.respond(0);
             } else {
                 reader_map.erase(uuid);
