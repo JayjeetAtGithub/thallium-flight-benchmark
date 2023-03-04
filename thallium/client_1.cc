@@ -206,36 +206,22 @@ arrow::Status Main(int argc, char **argv) {
     int64_t total_rows = 0;
     int64_t num_batches = 0;
 
-    if (backend == "dataset") {
-        std::string path = "/mnt/cephfs/dataset";
-        ScanReq scan_req;
-        ARROW_ASSIGN_OR_RAISE(scan_req, GetScanRequest(path, filter, schema, schema));
-        ScanCtx scan_ctx = Scan(conn_ctx, scan_req);
-        std::shared_ptr<arrow::RecordBatch> batch;
-        {
-            MEASURE_FUNCTION_EXECUTION_TIME
-            while ((batch = GetNextBatch(conn_ctx, scan_ctx, (total_rows == 0)).ValueOrDie()) != nullptr) {
-                std::cout << "Read " << batch->num_rows() << " rows" << std::endl;
-                total_rows += batch->num_rows();
-                num_batches++;
-            }
+    std::string path = "/mnt/cephfs/dataset";
+    ScanReq scan_req;
+    ARROW_ASSIGN_OR_RAISE(scan_req, GetScanRequest(path, filter, schema, schema));
+    ScanCtx scan_ctx = Scan(conn_ctx, scan_req);
+    std::shared_ptr<arrow::RecordBatch> batch;
+    {
+        MEASURE_FUNCTION_EXECUTION_TIME
+        while ((batch = GetNextBatch(conn_ctx, scan_ctx, (total_rows == 0)).ValueOrDie()) != nullptr) {
+            std::cout << "Read " << batch->num_rows() << " rows" << std::endl;
+            std::cout << batch->ToString() << std::endl;
+            total_rows += batch->num_rows();
+            num_batches++;
         }
-        std::cout << "Read " << total_rows << " rows in " << num_batches << " batches" << std::endl;
-    } else {
-        {
-            MEASURE_FUNCTION_EXECUTION_TIME
-            std::shared_ptr<arrow::RecordBatch> batch;
-            for (int i = 1; i <= 200; i++) {
-                std::string filepath = "/mnt/cephfs/dataset/16MB.uncompressed.parquet." + std::to_string(i);
-                ARROW_ASSIGN_OR_RAISE(auto scan_req, GetScanRequest(filepath, filter, schema, schema));
-                ScanCtx scan_ctx = Scan(conn_ctx, scan_req);
-                while ((batch = GetNextBatch(conn_ctx, scan_ctx, (total_rows == 0)).ValueOrDie()) != nullptr) {
-                    total_rows += batch->num_rows();
-                }
-            }
-        }
-        std::cout << "Read " << total_rows << " rows" << std::endl;
     }
+    std::cout << "Read " << total_rows << " rows in " << num_batches << " batches" << std::endl;
+    
 
     conn_ctx.engine.finalize();
     return arrow::Status::OK();
