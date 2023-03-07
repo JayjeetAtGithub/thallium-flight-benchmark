@@ -126,6 +126,8 @@ arrow::Result<std::shared_ptr<arrow::RecordBatch>> GetNextBatch(ConnCtx &conn_ct
                 }
             }
 
+            std::cout << "Remote segment count: " << b.segment_count() << std::endl;
+
             {
                 MeasureExecutionTime m("RDMA");
                 b.on(req.get_endpoint()) >> local;
