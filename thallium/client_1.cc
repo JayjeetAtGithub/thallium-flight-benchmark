@@ -220,6 +220,9 @@ arrow::Status Main(int argc, char **argv) {
             std::cout << batch->ToString() << std::endl;
             total_rows += batch->num_rows();
             num_batches++;
+            if (num_batches == 2) {
+                break;
+            }
         }
     }
     std::cout << "Read " << total_rows << " rows in " << num_batches << " batches" << std::endl;
