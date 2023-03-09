@@ -121,6 +121,8 @@ int main(int argc, char** argv) {
         [&mid, &svr_addr, &engine, &do_rdma, &reader_map, &total_rows_written, &segment_buffer, &segments, &arrow_bulk](const tl::request &req, const std::string& uuid) {
             std::shared_ptr<arrow::RecordBatchReader> reader = reader_map[uuid];
             std::shared_ptr<arrow::RecordBatch> batch;
+            std::vector<std::shared_ptr<arrow::RecordBatch>> batches;
+            std::vector<int32_t> batch_sizes;
 
             if (total_rows_written == 0) {
                 std::cout << "Start exposing" << std::endl;
@@ -132,14 +134,24 @@ int main(int argc, char** argv) {
                 }
             }
 
-            {
-                MeasureExecutionTime m("I/O");
-                reader->ReadNext(&batch);
+            // collect about 1<<17 batches for each transfer
+            int32_t total_rows_in_transfer_batch = 0;
+            while (total_rows_in_transfer_batch <= 131072) {
+                {    
+                    MeasureExecutionTime m("I/O");
+                    reader->ReadNext(&batch);
+                }
+                if (batch == nullptr) {
+                    break;
+                }
+                batches.push_back(batch);
+                batch_sizes.push_back(batch->num_rows());
+                total_rows_in_transfer_batch += batch->num_rows();
             }
 
-            if (batch != nullptr) {
-                int32_t num_rows = batch->num_rows();
-                total_rows_written += num_rows;
+            if (batches.size() != 0) {
+                // int32_t num_rows = batch->num_rows();
+                // total_rows_written += num_rows;
 
                 int32_t curr_pos = 0;
                 int32_t total_size = 0;
@@ -152,67 +164,69 @@ int main(int argc, char** argv) {
 
                 std::string null_buff = "xx";
 
-                for (int32_t i = 0; i < batch->num_columns(); i++) {
-                    std::shared_ptr<arrow::Array> col_arr = batch->column(i);
-                    arrow::Type::type type = col_arr->type_id();
-                    int32_t null_count = col_arr->null_count();
+                for (auto b : batches) {
+                    for (int32_t i = 0; i < b->num_columns(); i++) {
+                        std::shared_ptr<arrow::Array> col_arr = b->column(i);
+                        arrow::Type::type type = col_arr->type_id();
+                        int32_t null_count = col_arr->null_count();
 
-                    if (is_binary_like(type)) {
-                        std::shared_ptr<arrow::Buffer> data_buff = 
-                            std::static_pointer_cast<arrow::BinaryArray>(col_arr)->value_data();
-                        std::shared_ptr<arrow::Buffer> offset_buff = 
-                            std::static_pointer_cast<arrow::BinaryArray>(col_arr)->value_offsets();
+                        if (is_binary_like(type)) {
+                            std::shared_ptr<arrow::Buffer> data_buff = 
+                                std::static_pointer_cast<arrow::BinaryArray>(col_arr)->value_data();
+                            std::shared_ptr<arrow::Buffer> offset_buff = 
+                                std::static_pointer_cast<arrow::BinaryArray>(col_arr)->value_offsets();
 
-                        int32_t data_size = data_buff->size();
-                        int32_t offset_size = offset_buff->size();
+                            int32_t data_size = data_buff->size();
+                            int32_t offset_size = offset_buff->size();
 
-                        data_offsets.emplace_back(curr_pos);
-                        data_sizes.emplace_back(data_size); 
-                        {   
-                            MeasureExecutionTime m("memcpy1");             
-                            memcpy(segment_buffer + curr_pos, data_buff->data(), data_size);
+                            data_offsets.emplace_back(curr_pos);
+                            data_sizes.emplace_back(data_size); 
+                            {   
+                                MeasureExecutionTime m("memcpy1");             
+                                memcpy(segment_buffer + curr_pos, data_buff->data(), data_size);
+                            }
+                            curr_pos += data_size;
+
+                            off_offsets.emplace_back(curr_pos);
+                            off_sizes.emplace_back(offset_size);
+                            {
+                                MeasureExecutionTime m("memcpy2");
+                                memcpy(segment_buffer + curr_pos, offset_buff->data(), offset_size);
+                            }
+                            curr_pos += offset_size;
+
+                            total_size += (data_size + offset_size);
+                        } else {
+                            std::shared_ptr<arrow::Buffer> data_buff = 
+                                std::static_pointer_cast<arrow::PrimitiveArray>(col_arr)->values();
+
+                            int32_t data_size = data_buff->size();
+                            int32_t offset_size = null_buff.size() + 1; 
+
+                            data_offsets.emplace_back(curr_pos);
+                            data_sizes.emplace_back(data_size);
+                            {
+                                MeasureExecutionTime m("memcpy3");
+                                memcpy(segment_buffer + curr_pos, data_buff->data(), data_size);
+                            }
+                            curr_pos += data_size;
+
+                            off_offsets.emplace_back(curr_pos);
+                            off_sizes.emplace_back(offset_size);
+                            {
+                                MeasureExecutionTime m("memcpy4");
+                                memcpy(segment_buffer + curr_pos, (uint8_t*)null_buff.c_str(), offset_size);
+                            }
+                            curr_pos += offset_size;
+
+                            total_size += (data_size + offset_size);
                         }
-                        curr_pos += data_size;
-
-                        off_offsets.emplace_back(curr_pos);
-                        off_sizes.emplace_back(offset_size);
-                        {
-                            MeasureExecutionTime m("memcpy2");
-                            memcpy(segment_buffer + curr_pos, offset_buff->data(), offset_size);
-                        }
-                        curr_pos += offset_size;
-
-                        total_size += (data_size + offset_size);
-                    } else {
-                        std::shared_ptr<arrow::Buffer> data_buff = 
-                            std::static_pointer_cast<arrow::PrimitiveArray>(col_arr)->values();
-
-                        int32_t data_size = data_buff->size();
-                        int32_t offset_size = null_buff.size() + 1; 
-
-                        data_offsets.emplace_back(curr_pos);
-                        data_sizes.emplace_back(data_size);
-                        {
-                            MeasureExecutionTime m("memcpy3");
-                            memcpy(segment_buffer + curr_pos, data_buff->data(), data_size);
-                        }
-                        curr_pos += data_size;
-
-                        off_offsets.emplace_back(curr_pos);
-                        off_sizes.emplace_back(offset_size);
-                        {
-                            MeasureExecutionTime m("memcpy4");
-                            memcpy(segment_buffer + curr_pos, (uint8_t*)null_buff.c_str(), offset_size);
-                        }
-                        curr_pos += offset_size;
-
-                        total_size += (data_size + offset_size);
                     }
                 }
 
                 segments[0].second = total_size;
 
-                do_rdma.on(req.get_endpoint())(num_rows, data_offsets, data_sizes, off_offsets, off_sizes, total_size, arrow_bulk);
+                do_rdma.on(req.get_endpoint())(batch_sizes, data_offsets, data_sizes, off_offsets, off_sizes, total_size, arrow_bulk);
                 return req.respond(0);
             } else {
                 reader_map.erase(uuid);
