@@ -95,7 +95,7 @@ int main(int argc, char** argv) {
     tl::remote_procedure do_rdma = engine.define("do_rdma");
     std::unordered_map<std::string, std::shared_ptr<arrow::RecordBatchReader>> reader_map;
     
-    uint8_t *segment_buffer = (uint8_t*)malloc(32*1024*1024);
+    uint8_t *segment_buffer = (uint8_t*)malloc(14*1024);
     std::vector<std::pair<void*,std::size_t>> segments(1);
     tl::bulk arrow_bulk;
 
@@ -125,7 +125,7 @@ int main(int argc, char** argv) {
             if (total_rows_written == 0) {
                 std::cout << "Start exposing" << std::endl;
                 segments[0].first = (void*)segment_buffer;
-                segments[0].second = 32*1024*1024;
+                segments[0].second = 14*1024;
                 {
                     MeasureExecutionTime m("server_expose");
                     arrow_bulk = engine.expose(segments, tl::bulk_mode::read_write);
