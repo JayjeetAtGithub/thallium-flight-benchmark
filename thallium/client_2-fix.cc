@@ -100,8 +100,8 @@ arrow::Result<std::shared_ptr<arrow::RecordBatch>> GetNextBatch(ConnCtx &conn_ct
                 std::cout << "Start exposing" << std::endl;
                 {
                     MeasureExecutionTime m("memory_allocate");
-                    segments[0].first = (uint8_t*)malloc(14*1024);
-                    segments[0].second = 14*1024;
+                    segments[0].first = (uint8_t*)malloc(500*1024);
+                    segments[0].second = 500*1024;
                 }
 
                 {
