@@ -29,18 +29,18 @@ class MeasureExecutionTime{
     private:
         const std::chrono::steady_clock::time_point begin;
         const std::string caller;
-        std::ofstream log;
+        // std::ofstream log;
     public:
         MeasureExecutionTime(const std::string& caller):caller(caller),begin(std::chrono::steady_clock::now()) {
-            log.open("result_client.txt", std::ios_base::app);
+            // log.open("result_client.txt", std::ios_base::app);
         }
         
         ~MeasureExecutionTime() {
             const auto duration=std::chrono::steady_clock::now()-begin;
             std::string s = caller + " : " + std::to_string((double)std::chrono::duration_cast<std::chrono::microseconds>(duration).count()/1000) + "\n";
             std::cout << s;
-            log << s;
-            log.close();
+            // log << s;
+            // log.close();
         }
 };
 
