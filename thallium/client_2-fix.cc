@@ -92,8 +92,9 @@ ScanCtx Scan(ConnCtx &conn_ctx, ScanReq &scan_req) {
 }
 
 std::vector<std::shared_ptr<arrow::RecordBatch>> GetNextBatch(ConnCtx &conn_ctx, ScanCtx &scan_ctx, int32_t flag) {
+    std::vector<std::shared_ptr<arrow::RecordBatch>> batches;
+
     std::function<void(const tl::request&, std::vector<int32_t>&, std::vector<int32_t>&, std::vector<int32_t>&, std::vector<int32_t>&, std::vector<int32_t>&, int32_t&, tl::bulk&)> f =
-        std::vector<std::shared_ptr<arrow::RecordBatch>> batches;
         [&conn_ctx, &scan_ctx, &batches, &segments, &local, &flag](const tl::request& req, std::vector<int32_t> batch_sizes, std::vector<int32_t>& data_offsets, std::vector<int32_t>& data_sizes, std::vector<int32_t>& off_offsets, std::vector<int32_t>& off_sizes, int32_t& total_size, tl::bulk& b) {
             if (flag == 1) {
                 std::cout << "Start exposing" << std::endl;
