@@ -97,7 +97,7 @@ int main(int argc, char** argv) {
     uint8_t *segment_buffer = NULL;
     {
         MeasureExecutionTime m("allocate_buffer");
-        segment_buffer = (uint8_t*)malloc(24*1024*1024);
+        segment_buffer = (uint8_t*)malloc(30*1024*1024);
     }   
     
     std::vector<std::pair<void*,std::size_t>> segments(1);
@@ -132,7 +132,7 @@ int main(int argc, char** argv) {
             if (total_rows_written == 0) {
                 std::cout << "Start exposing" << std::endl;
                 segments[0].first = (void*)segment_buffer;
-                segments[0].second = 24*1024*1024;
+                segments[0].second = 30*1024*1024;
                 {
                     MeasureExecutionTime m("server_expose");
                     arrow_bulk = engine.expose(segments, tl::bulk_mode::read_write);
