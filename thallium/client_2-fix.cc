@@ -148,6 +148,7 @@ arrow::Result<std::shared_ptr<arrow::RecordBatch>> GetNextBatch(ConnCtx &conn_ct
 
     int e;
     {
+        MeasureExecutionTime m("get_next_batch_rpc");
         e = get_next_batch.on(conn_ctx.endpoint)(scan_ctx.uuid);
     }
 
