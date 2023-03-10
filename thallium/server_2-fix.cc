@@ -94,8 +94,12 @@ int main(int argc, char** argv) {
 
     tl::remote_procedure do_rdma = engine.define("do_rdma");
     std::unordered_map<std::string, std::shared_ptr<arrow::RecordBatchReader>> reader_map;
+    uint8_t *segment_buffer = NULL;
+    {
+        MeasureExecutionTime m("allocate_buffer");
+        segment_buffer = (uint8_t*)malloc(24*1024*1024);
+    }   
     
-    uint8_t *segment_buffer = (uint8_t*)malloc(24*1024*1024);
     std::vector<std::pair<void*,std::size_t>> segments(1);
     tl::bulk arrow_bulk;
 
