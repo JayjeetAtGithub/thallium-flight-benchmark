@@ -141,7 +141,7 @@ int main(int argc, char** argv) {
 
             // collect about 1<<17 batches for each transfer
             int32_t total_rows_in_transfer_batch = 0;
-            while (total_rows_in_transfer_batch <= 131072) {
+            while (total_rows_in_transfer_batch < 131072) {
                 {    
                     MeasureExecutionTime m("I/O");
                     reader->ReadNext(&batch);
