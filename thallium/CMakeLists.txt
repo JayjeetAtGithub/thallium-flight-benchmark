@@ -35,4 +35,4 @@ target_link_libraries(ts2 thallium yokan-admin yokan-client yokan-server arrow a
 add_executable(ts2_fix server_2-fix.cc)
 target_link_libraries(ts2_fix thallium arrow arrow_dataset)
 add_executable(ts3 server_3.cc)
-target_link_libraries(ts3 thallium yokan-admin yokan-client yokan-server arrow arrow_dataset PkgConfig::BAKECLIENT PkgConfig::BAKESERVER)
+target_link_libraries(ts3 thallium arrow arrow_dataset)
