@@ -188,7 +188,7 @@ int main(int argc, char** argv) {
                             data_offsets.emplace_back(curr_pos);
                             data_sizes.emplace_back(data_size); 
                             {   
-                                MeasureExecutionTime m("memcpy1");             
+                                // MeasureExecutionTime m("memcpy1");             
                                 memcpy(segment_buffer + curr_pos, data_buff->data(), data_size);
                             }
                             curr_pos += data_size;
@@ -196,7 +196,7 @@ int main(int argc, char** argv) {
                             off_offsets.emplace_back(curr_pos);
                             off_sizes.emplace_back(offset_size);
                             {
-                                MeasureExecutionTime m("memcpy2");
+                                // MeasureExecutionTime m("memcpy2");
                                 memcpy(segment_buffer + curr_pos, offset_buff->data(), offset_size);
                             }
                             curr_pos += offset_size;
@@ -212,7 +212,7 @@ int main(int argc, char** argv) {
                             data_offsets.emplace_back(curr_pos);
                             data_sizes.emplace_back(data_size);
                             {
-                                MeasureExecutionTime m("memcpy3");
+                                // MeasureExecutionTime m("memcpy3");
                                 memcpy(segment_buffer + curr_pos, data_buff->data(), data_size);
                             }
                             curr_pos += data_size;
@@ -220,7 +220,7 @@ int main(int argc, char** argv) {
                             off_offsets.emplace_back(curr_pos);
                             off_sizes.emplace_back(offset_size);
                             {
-                                MeasureExecutionTime m("memcpy4");
+                                // MeasureExecutionTime m("memcpy4");
                                 memcpy(segment_buffer + curr_pos, (uint8_t*)null_buff.c_str(), offset_size);
                             }
                             curr_pos += offset_size;
