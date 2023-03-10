@@ -109,6 +109,13 @@ std::vector<std::shared_ptr<arrow::RecordBatch>> GetNextBatch(ConnCtx &conn_ctx,
                     local = conn_ctx.engine.expose(segments, tl::bulk_mode::write_only);
                 }
             }
+
+            {
+                for (int i = 0; i < data_sizes.size(); i++) {
+                    std::cout << "data_buff_sizes[" << i << "] = " << data_sizes[i] << std::endl;
+                    std::cout << "offset_buff_sizes[" << i << "] = " << off_sizes[i] << std::endl;
+                }
+            }
             
             int num_cols = scan_ctx.schema->num_fields();
                         
