@@ -136,7 +136,7 @@ std::vector<std::shared_ptr<arrow::RecordBatch>> GetNextBatch(ConnCtx &conn_ctx,
                 std::vector<std::shared_ptr<arrow::Array>> columns;
                 
                 for (int64_t i = 0; i < num_cols; i++) {
-                    int32_t magic_off = batch_idx * num_cols + i;
+                    int32_t magic_off = (batch_idx * num_cols) + i;
                     std::shared_ptr<arrow::DataType> type = scan_ctx.schema->field(i)->type();  
                     if (is_binary_like(type->id())) {
                         std::shared_ptr<arrow::Buffer> data_buff = arrow::Buffer::Wrap(
