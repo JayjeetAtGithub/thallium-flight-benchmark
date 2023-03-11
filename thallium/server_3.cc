@@ -127,7 +127,6 @@ int main(int argc, char** argv) {
             std::shared_ptr<arrow::RecordBatch> batch;
             std::vector<std::shared_ptr<arrow::RecordBatch>> batches;
             std::vector<int32_t> batch_sizes;
-            std::vector<int32_t> batch_offsets;
 
             if (total_rows_written == 0) {
                 std::cout << "Start exposing" << std::endl;
@@ -168,7 +167,6 @@ int main(int argc, char** argv) {
                 std::string null_buff = "xx";
 
                 for (auto b : batches) {
-                    batch_offsets.push_back(curr_pos);
                     for (int32_t i = 0; i < b->num_columns(); i++) {
                         std::shared_ptr<arrow::Array> col_arr = b->column(i);
                         arrow::Type::type type = col_arr->type_id();
@@ -232,7 +230,7 @@ int main(int argc, char** argv) {
 
                 {
                     MeasureExecutionTime m("client_side_callback");
-                    do_rdma.on(req.get_endpoint())(batch_sizes, batch_offsets, data_offsets, data_sizes, off_offsets, off_sizes, total_size, arrow_bulk);
+                    do_rdma.on(req.get_endpoint())(batch_sizes, data_offsets, data_sizes, off_offsets, off_sizes, total_size, arrow_bulk);
                 }
 
                 return req.respond(0);

@@ -106,8 +106,8 @@ ScanCtx Scan(ConnCtx &conn_ctx, ScanReq &scan_req) {
 std::vector<std::shared_ptr<arrow::RecordBatch>> GetNextBatch(ConnCtx &conn_ctx, ScanCtx &scan_ctx, int32_t flag) {
     std::vector<std::shared_ptr<arrow::RecordBatch>> batches;
 
-    std::function<void(const tl::request&, std::vector<int32_t>&, std::vector<int32_t>&, std::vector<int32_t>&, std::vector<int32_t>&, std::vector<int32_t>&, std::vector<int32_t>&, int32_t&, tl::bulk&)> f =
-        [&conn_ctx, &scan_ctx, &batches, &segments, &local, &flag](const tl::request& req, std::vector<int32_t> &batch_sizes, std::vector<int32_t>& batch_offsets, std::vector<int32_t>& data_offsets, std::vector<int32_t>& data_sizes, std::vector<int32_t>& off_offsets, std::vector<int32_t>& off_sizes, int32_t& total_size, tl::bulk& b) {
+    std::function<void(const tl::request&, std::vector<int32_t>&, std::vector<int32_t>&, std::vector<int32_t>&, std::vector<int32_t>&, std::vector<int32_t>&, int32_t&, tl::bulk&)> f =
+        [&conn_ctx, &scan_ctx, &batches, &segments, &local, &flag](const tl::request& req, std::vector<int32_t> &batch_sizes, std::vector<int32_t>& data_offsets, std::vector<int32_t>& data_sizes, std::vector<int32_t>& off_offsets, std::vector<int32_t>& off_sizes, int32_t& total_size, tl::bulk& b) {
             if (flag == 1) {
                 std::cout << "Start exposing" << std::endl;
                 {
@@ -122,12 +122,11 @@ std::vector<std::shared_ptr<arrow::RecordBatch>> GetNextBatch(ConnCtx &conn_ctx,
                 }
             }
 
-            see_vector(batch_sizes, "batch_sizes");
-            see_vector(batch_offsets,  "batch_offsets");
-            see_vector(data_offsets, "data_offsets");
-            see_vector(data_sizes, "data_sizes");
-            see_vector(off_offsets, "off_offsets");
-            see_vector(off_sizes,   "off_sizes");
+            // see_vector(batch_sizes, "batch_sizes");
+            // see_vector(data_offsets, "data_offsets");
+            // see_vector(data_sizes, "data_sizes");
+            // see_vector(off_offsets, "off_offsets");
+            // see_vector(off_sizes,   "off_sizes");
             
             int num_cols = scan_ctx.schema->num_fields();
                         
@@ -138,7 +137,6 @@ std::vector<std::shared_ptr<arrow::RecordBatch>> GetNextBatch(ConnCtx &conn_ctx,
             
             for (int32_t batch_idx = 0; batch_idx < batch_sizes.size(); batch_idx++) {
                 int32_t num_rows = batch_sizes[batch_idx];
-                int32_t batch_offset = batch_offsets[batch_idx];
                 
                 std::shared_ptr<arrow::RecordBatch> batch;
                 std::vector<std::shared_ptr<arrow::Array>> columns;
