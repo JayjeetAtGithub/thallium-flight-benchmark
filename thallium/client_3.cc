@@ -121,7 +121,12 @@ std::vector<std::shared_ptr<arrow::RecordBatch>> GetNextBatch(ConnCtx &conn_ctx,
                 }
             }
 
-
+            see_vector(batch_sizes);
+            see_vector(batch_offsets);
+            see_vector(data_offsets);
+            see_vector(data_sizes);
+            see_vector(off_offsets);
+            see_vector(off_sizes);
             
             int num_cols = scan_ctx.schema->num_fields();
                         
