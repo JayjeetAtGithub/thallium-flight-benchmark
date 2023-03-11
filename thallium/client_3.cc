@@ -136,17 +136,17 @@ std::vector<std::shared_ptr<arrow::RecordBatch>> GetNextBatch(ConnCtx &conn_ctx,
                     std::shared_ptr<arrow::DataType> type = scan_ctx.schema->field(i)->type();  
                     if (is_binary_like(type->id())) {
                         std::shared_ptr<arrow::Buffer> data_buff = arrow::Buffer::Wrap(
-                            (uint8_t*)segments[0].first + batch_offsets[i] + data_offsets[i], data_sizes[i]
+                            (uint8_t*)segments[0].first + batch_offset + data_offsets[i], data_sizes[i]
                         );
                         std::shared_ptr<arrow::Buffer> offset_buff = arrow::Buffer::Wrap(
-                            (uint8_t*)segments[0].first + batch_offsets[i] + off_offsets[i], off_sizes[i]
+                            (uint8_t*)segments[0].first + batch_offset + off_offsets[i], off_sizes[i]
                         );
 
                         std::shared_ptr<arrow::Array> col_arr = std::make_shared<arrow::StringArray>(num_rows, std::move(offset_buff), std::move(data_buff));
                         columns.push_back(col_arr);
                     } else {
                         std::shared_ptr<arrow::Buffer> data_buff = arrow::Buffer::Wrap(
-                            (uint8_t*)segments[0].first + batch_offsets[i] + data_offsets[i], data_sizes[i]
+                            (uint8_t*)segments[0].first + batch_offset + data_offsets[i], data_sizes[i]
                         );
                         std::shared_ptr<arrow::Array> col_arr = std::make_shared<arrow::PrimitiveArray>(type, num_rows, std::move(data_buff));
                         columns.push_back(col_arr);
