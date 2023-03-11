@@ -153,6 +153,8 @@ std::vector<std::shared_ptr<arrow::RecordBatch>> GetNextBatch(ConnCtx &conn_ctx,
                     }
                 }
                 batch = arrow::RecordBatch::Make(scan_ctx.schema, num_rows, columns);
+                std::cout << batch->ToString() << std::endl;
+
                 batches.push_back(batch);
             }
 
@@ -222,7 +224,6 @@ arrow::Status Main(int argc, char **argv) {
             while ((batches = GetNextBatch(conn_ctx, scan_ctx, (total_rows == 0))).size() != 0) {
                 for (auto batch : batches) {
                     total_rows += batch->num_rows();
-                    std::cout << batch->ToString() << std::endl;
                 }
                 total_batches += batches.size();
             }
