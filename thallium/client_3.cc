@@ -124,8 +124,7 @@ std::vector<std::shared_ptr<arrow::RecordBatch>> GetNextBatch(ConnCtx &conn_ctx,
                         
             {
                 MeasureExecutionTime m("RDMA");
-                b.on(req.get_endpoint()) >> local;
-                segments[0].second = total_size;
+                b(0, total_size).on(req.get_endpoint()) >> local(0, total_size);
             }
             
             for (int32_t batch_idx = 0; batch_idx < batch_sizes.size(); batch_idx++) {
