@@ -229,7 +229,7 @@ int main(int argc, char** argv) {
                     }
                 }
 
-                // segments[0].second = total_size;
+                segments[0].second = total_size;
 
                 {
                     MeasureExecutionTime m("client_side_callback");
