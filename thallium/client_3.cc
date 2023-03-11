@@ -222,6 +222,7 @@ arrow::Status Main(int argc, char **argv) {
             while ((batches = GetNextBatch(conn_ctx, scan_ctx, (total_rows == 0))).size() != 0) {
                 for (auto batch : batches) {
                     total_rows += batch->num_rows();
+                    std::cout << batch->ToString() << std::endl;
                 }
                 total_batches += batches.size();
             }
