@@ -236,6 +236,7 @@ arrow::Status Main(int argc, char **argv) {
                 for (auto batch : batches) {
                     total_rows += batch->num_rows();
                     // std::cout << batch->ToString() << std::endl;
+                    break;
                 }
                 total_batches += batches.size();
             }
