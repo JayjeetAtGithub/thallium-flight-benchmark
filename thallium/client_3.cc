@@ -29,6 +29,7 @@
 // 0       1  
 
 void see_vector(std::vector<int32_t> v) {
+    std::cout << "Size: " << v.size() << std::endl;
     for (auto i : v) {
         std::cout << i << " ";
     }
@@ -120,12 +121,7 @@ std::vector<std::shared_ptr<arrow::RecordBatch>> GetNextBatch(ConnCtx &conn_ctx,
                 }
             }
 
-            // {
-            //     for (int i = 0; i < data_sizes.size(); i++) {
-            //         std::cout << "data_buff_sizes[" << i << "] = " << data_sizes[i] << std::endl;
-            //         std::cout << "offset_buff_sizes[" << i << "] = " << off_sizes[i] << std::endl;
-            //     }
-            // }
+
             
             int num_cols = scan_ctx.schema->num_fields();
                         
