@@ -165,63 +165,66 @@ int main(int argc, char** argv) {
                 std::vector<int32_t> off_sizes;
 
                 std::string null_buff = "xx";
+                
+                {
+                    MeasureExecutionTime m("serialize");
+                    for (auto b : batches) {
+                        for (int32_t i = 0; i < b->num_columns(); i++) {
+                            std::shared_ptr<arrow::Array> col_arr = b->column(i);
+                            arrow::Type::type type = col_arr->type_id();
+                            int32_t null_count = col_arr->null_count();
 
-                for (auto b : batches) {
-                    for (int32_t i = 0; i < b->num_columns(); i++) {
-                        std::shared_ptr<arrow::Array> col_arr = b->column(i);
-                        arrow::Type::type type = col_arr->type_id();
-                        int32_t null_count = col_arr->null_count();
+                            if (is_binary_like(type)) {
+                                std::shared_ptr<arrow::Buffer> data_buff = 
+                                    std::static_pointer_cast<arrow::BinaryArray>(col_arr)->value_data();
+                                std::shared_ptr<arrow::Buffer> offset_buff = 
+                                    std::static_pointer_cast<arrow::BinaryArray>(col_arr)->value_offsets();
 
-                        if (is_binary_like(type)) {
-                            std::shared_ptr<arrow::Buffer> data_buff = 
-                                std::static_pointer_cast<arrow::BinaryArray>(col_arr)->value_data();
-                            std::shared_ptr<arrow::Buffer> offset_buff = 
-                                std::static_pointer_cast<arrow::BinaryArray>(col_arr)->value_offsets();
+                                int32_t data_size = data_buff->size();
+                                int32_t offset_size = offset_buff->size();
 
-                            int32_t data_size = data_buff->size();
-                            int32_t offset_size = offset_buff->size();
+                                data_offsets.emplace_back(curr_pos);
+                                data_sizes.emplace_back(data_size); 
+                                {   
+                                    // MeasureExecutionTime m("memcpy1");             
+                                    memcpy(segment_buffer + curr_pos, data_buff->data(), data_size);
+                                }
+                                curr_pos += data_size;
 
-                            data_offsets.emplace_back(curr_pos);
-                            data_sizes.emplace_back(data_size); 
-                            {   
-                                // MeasureExecutionTime m("memcpy1");             
-                                memcpy(segment_buffer + curr_pos, data_buff->data(), data_size);
+                                off_offsets.emplace_back(curr_pos);
+                                off_sizes.emplace_back(offset_size);
+                                {
+                                    // MeasureExecutionTime m("memcpy2");
+                                    memcpy(segment_buffer + curr_pos, offset_buff->data(), offset_size);
+                                }
+                                curr_pos += offset_size;
+
+                                total_size += (data_size + offset_size);
+                            } else {
+                                std::shared_ptr<arrow::Buffer> data_buff = 
+                                    std::static_pointer_cast<arrow::PrimitiveArray>(col_arr)->values();
+
+                                int32_t data_size = data_buff->size();
+                                int32_t offset_size = null_buff.size() + 1; 
+
+                                data_offsets.emplace_back(curr_pos);
+                                data_sizes.emplace_back(data_size);
+                                {
+                                    // MeasureExecutionTime m("memcpy3");
+                                    memcpy(segment_buffer + curr_pos, data_buff->data(), data_size);
+                                }
+                                curr_pos += data_size;
+
+                                off_offsets.emplace_back(curr_pos);
+                                off_sizes.emplace_back(offset_size);
+                                {
+                                    // MeasureExecutionTime m("memcpy4");
+                                    memcpy(segment_buffer + curr_pos, (uint8_t*)null_buff.c_str(), offset_size);
+                                }
+                                curr_pos += offset_size;
+
+                                total_size += (data_size + offset_size);
                             }
-                            curr_pos += data_size;
-
-                            off_offsets.emplace_back(curr_pos);
-                            off_sizes.emplace_back(offset_size);
-                            {
-                                // MeasureExecutionTime m("memcpy2");
-                                memcpy(segment_buffer + curr_pos, offset_buff->data(), offset_size);
-                            }
-                            curr_pos += offset_size;
-
-                            total_size += (data_size + offset_size);
-                        } else {
-                            std::shared_ptr<arrow::Buffer> data_buff = 
-                                std::static_pointer_cast<arrow::PrimitiveArray>(col_arr)->values();
-
-                            int32_t data_size = data_buff->size();
-                            int32_t offset_size = null_buff.size() + 1; 
-
-                            data_offsets.emplace_back(curr_pos);
-                            data_sizes.emplace_back(data_size);
-                            {
-                                // MeasureExecutionTime m("memcpy3");
-                                memcpy(segment_buffer + curr_pos, data_buff->data(), data_size);
-                            }
-                            curr_pos += data_size;
-
-                            off_offsets.emplace_back(curr_pos);
-                            off_sizes.emplace_back(offset_size);
-                            {
-                                // MeasureExecutionTime m("memcpy4");
-                                memcpy(segment_buffer + curr_pos, (uint8_t*)null_buff.c_str(), offset_size);
-                            }
-                            curr_pos += offset_size;
-
-                            total_size += (data_size + offset_size);
                         }
                     }
                 }
