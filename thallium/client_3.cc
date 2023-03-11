@@ -153,7 +153,6 @@ std::vector<std::shared_ptr<arrow::RecordBatch>> GetNextBatch(ConnCtx &conn_ctx,
                     }
                 }
                 batch = arrow::RecordBatch::Make(scan_ctx.schema, num_rows, columns);
-                std::cout << batch->ToString() << std::endl;
 
                 batches.push_back(batch);
             }
