@@ -155,9 +155,7 @@ int main(int argc, char** argv) {
             }
 
             if (batches.size() != 0) {
-                // int32_t num_rows = batch->num_rows();
-                // total_rows_written += num_rows;
-
+                total_rows_written += total_rows_in_transfer_batch;
                 int32_t curr_pos = 0;
                 int32_t total_size = 0;
 
