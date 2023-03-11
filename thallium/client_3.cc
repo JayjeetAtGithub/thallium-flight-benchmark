@@ -28,12 +28,13 @@
 // 0 1 2   3 4 5
 // 0       1  
 
-void see_vector(std::vector<int32_t> v) {
+void see_vector(std::vector<int32_t> v, std::string s) {
+    std::cout << s << std::endl;
     std::cout << "Size: " << v.size() << std::endl;
     for (auto i : v) {
         std::cout << i << " ";
     }
-    std::cout << std::endl;
+    std::cout << "\n\n\n";
 }
 
 class MeasureExecutionTime{
@@ -121,12 +122,12 @@ std::vector<std::shared_ptr<arrow::RecordBatch>> GetNextBatch(ConnCtx &conn_ctx,
                 }
             }
 
-            see_vector(batch_sizes);
-            see_vector(batch_offsets);
-            see_vector(data_offsets);
-            see_vector(data_sizes);
-            see_vector(off_offsets);
-            see_vector(off_sizes);
+            see_vector(batch_sizes, "batch_sizes");
+            see_vector(batch_offsets,  "batch_offsets");
+            see_vector(data_offsets, "data_offsets");
+            see_vector(data_sizes, "data_sizes");
+            see_vector(off_offsets, "off_offsets");
+            see_vector(off_sizes,   "off_sizes");
             
             int num_cols = scan_ctx.schema->num_fields();
                         
