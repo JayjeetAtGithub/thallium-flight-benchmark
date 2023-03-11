@@ -28,6 +28,13 @@
 // 0 1 2   3 4 5
 // 0       1  
 
+void see_vector(std::vector<int32_t> v) {
+    for (auto i : v) {
+        std::cout << i << " ";
+    }
+    std::cout << std::endl;
+}
+
 class MeasureExecutionTime{
     private:
         const std::chrono::steady_clock::time_point begin;
