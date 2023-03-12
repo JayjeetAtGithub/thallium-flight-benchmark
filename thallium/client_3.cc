@@ -102,7 +102,7 @@ std::vector<std::shared_ptr<arrow::RecordBatch>> GetNextBatch(ConnCtx &conn_ctx,
             if (flag == 1) {
                 std::cout << "Start exposing" << std::endl;
                 {
-                    MeasureExecutionTime m("memory_allocate");
+                    MeasureExecutionTime m("mem_alloc");
                     segments[0].first = (uint8_t*)malloc(TRANSFER_UNIT);
                     segments[0].second = TRANSFER_UNIT;
                 }
@@ -116,12 +116,12 @@ std::vector<std::shared_ptr<arrow::RecordBatch>> GetNextBatch(ConnCtx &conn_ctx,
             int num_cols = scan_ctx.schema->num_fields();
                         
             {
-                MeasureExecutionTime m("RDMA");
+                MeasureExecutionTime m("rdma");
                 b(0, total_size).on(req.get_endpoint()) >> local(0, total_size);
             }
             
             {
-                MeasureExecutionTime m("deserialize");
+                MeasureExecutionTime m("deserialze");
                 for (int32_t batch_idx = 0; batch_idx < batch_sizes.size(); batch_idx++) {
                     int32_t num_rows = batch_sizes[batch_idx];
                     
@@ -188,31 +188,24 @@ arrow::Status Main(int argc, char **argv) {
         cp::greater(cp::field_ref("total_amount"), cp::literal(-200));
 
     auto schema = arrow::schema({
-        arrow::field("VendorID", arrow::int64()),
-        arrow::field("tpep_pickup_datetime", arrow::timestamp(arrow::TimeUnit::MICRO)),
-        arrow::field("tpep_dropoff_datetime", arrow::timestamp(arrow::TimeUnit::MICRO)),
-        arrow::field("passenger_count", arrow::int64()),
-        arrow::field("trip_distance", arrow::float64()),
-        arrow::field("RatecodeID", arrow::int64()),
-        arrow::field("store_and_fwd_flag", arrow::utf8()),
-        arrow::field("PULocationID", arrow::int64()),
-        arrow::field("DOLocationID", arrow::int64()),
-        arrow::field("payment_type", arrow::int64()),
-        arrow::field("fare_amount", arrow::float64()),
-        arrow::field("extra", arrow::float64()),
-        arrow::field("mta_tax", arrow::float64()),
-        arrow::field("tip_amount", arrow::float64()),
-        arrow::field("tolls_amount", arrow::float64()),
-        arrow::field("improvement_surcharge", arrow::float64()),
-        arrow::field("total_amount", arrow::float64())
+      arrow::field("o_orderkey", arrow::int64()),
+      arrow::field("o_custkey", arrow::int64()),
+      arrow::field("o_orderstatus", arrow::utf8()),
+      arrow::field("o_totalprice", arrow::date32()),
+      arrow::field("o_orderdate", arrow::float64()),
+      arrow::field("o_orderpriority", arrow::utf8()),
+      arrow::field("o_clerk", arrow::utf8()),
+      arrow::field("o_shippriority", arrow::int64()),
+      arrow::field("o_comment", arrow::utf8())
     });
+    
 
     ConnCtx conn_ctx = Init(protocol, uri);
     int64_t total_rows = 0;
     int64_t total_batches = 0;
 
     if (backend == "dataset") {
-        std::string path = "/mnt/cephfs/dataset";
+        std::string path = "/mnt/data/tpch_sf100_parquet/orders";
         ARROW_ASSIGN_OR_RAISE(auto scan_req, GetScanRequest(path, filter, schema, schema));
         ScanCtx scan_ctx = Scan(conn_ctx, scan_req);
         std::vector<std::shared_ptr<arrow::RecordBatch>> batches;
@@ -221,7 +214,6 @@ arrow::Status Main(int argc, char **argv) {
             while ((batches = GetNextBatch(conn_ctx, scan_ctx, (total_rows == 0))).size() != 0) {
                 for (auto batch : batches) {
                     total_rows += batch->num_rows();
-                    // std::cout << batch->ToString() << std::endl;
                 }
                 total_batches += batches.size();
             }

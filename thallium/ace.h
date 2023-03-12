@@ -130,26 +130,18 @@ arrow::compute::Expression GetFilter(std::string selectivity) {
 }
 
 arrow::Result<std::shared_ptr<arrow::RecordBatchReader>> ScanDataset(cp::ExecContext& exec_context, const ScanReqRPCStub& stub, std::string backend, std::string selectivity) {
-    std::string uri = "file:///mnt/cephfs/dataset";
+    std::string uri = "file:///mnt/data/tpch_sf100_parquet/orders";
 
     auto schema = arrow::schema({
-      arrow::field("VendorID", arrow::int64()),
-      arrow::field("tpep_pickup_datetime", arrow::timestamp(arrow::TimeUnit::MICRO)),
-      arrow::field("tpep_dropoff_datetime", arrow::timestamp(arrow::TimeUnit::MICRO)),
-      arrow::field("passenger_count", arrow::int64()),
-      arrow::field("trip_distance", arrow::float64()),
-      arrow::field("RatecodeID", arrow::int64()),
-      arrow::field("store_and_fwd_flag", arrow::utf8()),
-      arrow::field("PULocationID", arrow::int64()),
-      arrow::field("DOLocationID", arrow::int64()),
-      arrow::field("payment_type", arrow::int64()),
-      arrow::field("fare_amount", arrow::float64()),
-      arrow::field("extra", arrow::float64()),
-      arrow::field("mta_tax", arrow::float64()),
-      arrow::field("tip_amount", arrow::float64()),
-      arrow::field("tolls_amount", arrow::float64()),
-      arrow::field("improvement_surcharge", arrow::float64()),
-      arrow::field("total_amount", arrow::float64())
+      arrow::field("o_orderkey", arrow::int64()),
+      arrow::field("o_custkey", arrow::int64()),
+      arrow::field("o_orderstatus", arrow::utf8()),
+      arrow::field("o_totalprice", arrow::date32()),
+      arrow::field("o_orderdate", arrow::float64()),
+      arrow::field("o_orderpriority", arrow::utf8()),
+      arrow::field("o_clerk", arrow::utf8()),
+      arrow::field("o_shippriority", arrow::int64()),
+      arrow::field("o_comment", arrow::utf8())
     });
     
     std::string path;
@@ -170,7 +162,7 @@ arrow::Result<std::shared_ptr<arrow::RecordBatchReader>> ScanDataset(cp::ExecCon
                           cp::ExecPlan::Make(&exec_context));
 
     ARROW_ASSIGN_OR_RAISE(auto scanner_builder, dataset->NewScan());
-    ARROW_RETURN_NOT_OK(scanner_builder->Filter(GetFilter(selectivity)));
+    ARROW_RETURN_NOT_OK(scanner_builder->Filter(GetFilter(2)));
     ARROW_RETURN_NOT_OK(scanner_builder->Project(schema->field_names()));
     ARROW_ASSIGN_OR_RAISE(auto scanner, scanner_builder->Finish());
 
@@ -187,54 +179,5 @@ arrow::Result<std::shared_ptr<arrow::RecordBatchReader>> ScanDataset(cp::ExecCon
       ARROW_ASSIGN_OR_RAISE(reader, im_ds_scanner->ToRecordBatchReader());
     }
 
-    return reader;
-}
-
-arrow::Result<std::shared_ptr<arrow::RecordBatchReader>> ScanFile(const ScanReqRPCStub& stub, std::string backend, std::string selectivity) {
-    auto schema = arrow::schema({
-      arrow::field("VendorID", arrow::int64()),
-      arrow::field("tpep_pickup_datetime", arrow::timestamp(arrow::TimeUnit::MICRO)),
-      arrow::field("tpep_dropoff_datetime", arrow::timestamp(arrow::TimeUnit::MICRO)),
-      arrow::field("passenger_count", arrow::int64()),
-      arrow::field("trip_distance", arrow::float64()),
-      arrow::field("RatecodeID", arrow::int64()),
-      arrow::field("store_and_fwd_flag", arrow::utf8()),
-      arrow::field("PULocationID", arrow::int64()),
-      arrow::field("DOLocationID", arrow::int64()),
-      arrow::field("payment_type", arrow::int64()),
-      arrow::field("fare_amount", arrow::float64()),
-      arrow::field("extra", arrow::float64()),
-      arrow::field("mta_tax", arrow::float64()),
-      arrow::field("tip_amount", arrow::float64()),
-      arrow::field("tolls_amount", arrow::float64()),
-      arrow::field("improvement_surcharge", arrow::float64()),
-      arrow::field("total_amount", arrow::float64())
-    });
-    
-    auto format = std::make_shared<arrow::dataset::ParquetFileFormat>();
-
-    arrow::dataset::FileSource source;
-    if (backend == "file") {
-      std::cout << "Using file backend: " << stub.path << std::endl;
-      ARROW_ASSIGN_OR_RAISE(auto file, arrow::io::ReadableFile::Open(stub.path));
-      source = arrow::dataset::FileSource(file);
-    } else if (backend == "file+mmap") {
-      std::cout << "Using file+mmap backend: " << stub.path << std::endl;
-      ARROW_ASSIGN_OR_RAISE(auto file, arrow::io::MemoryMappedFile::Open(stub.path, arrow::io::FileMode::READ));
-      source = arrow::dataset::FileSource(file);
-    }
-
-    ARROW_ASSIGN_OR_RAISE(
-        auto fragment, format->MakeFragment(std::move(source), arrow::compute::literal(true)));
-    
-    auto options = std::make_shared<arrow::dataset::ScanOptions>();
-    auto scanner_builder = std::make_shared<arrow::dataset::ScannerBuilder>(
-        schema, std::move(fragment), std::move(options));
-
-    ARROW_RETURN_NOT_OK(scanner_builder->Filter(GetFilter(selectivity)));
-    ARROW_RETURN_NOT_OK(scanner_builder->Project(schema->field_names()));
-
-    ARROW_ASSIGN_OR_RAISE(auto scanner, scanner_builder->Finish());
-    ARROW_ASSIGN_OR_RAISE(auto reader, scanner->ToRecordBatchReader());
     return reader;
 }

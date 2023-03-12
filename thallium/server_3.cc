@@ -109,14 +109,8 @@ int main(int argc, char** argv) {
     std::function<void(const tl::request&, const ScanReqRPCStub&)> scan = 
         [&reader_map, &mid, &svr_addr, &backend, &selectivity](const tl::request &req, const ScanReqRPCStub& stub) {
             arrow::dataset::internal::Initialize();
-            std::shared_ptr<arrow::RecordBatchReader> reader;
-
-            if (backend == "dataset" || backend == "dataset+mem") {
-                cp::ExecContext exec_ctx;
-                reader = ScanDataset(exec_ctx, stub, backend, selectivity).ValueOrDie();
-            } else if (backend == "file" || backend == "file+mmap") {
-                reader = ScanFile(stub, backend, selectivity).ValueOrDie();
-            }
+            cp::ExecContext exec_ctx;
+            std::shared_ptr<arrow::RecordBatchReader> reader = ScanDataset(exec_ctx, stub, backend, selectivity).ValueOrDie();
 
             std::string uuid = boost::uuids::to_string(boost::uuids::random_generator()());
             reader_map[uuid] = reader;
@@ -132,7 +126,6 @@ int main(int argc, char** argv) {
             std::vector<int32_t> batch_sizes;
 
             if (total_rows_written == 0) {
-                std::cout << "Start exposing" << std::endl;
                 segments[0].first = (void*)segment_buffer;
                 segments[0].second = TRANSFER_UNIT;
                 {
@@ -145,7 +138,7 @@ int main(int argc, char** argv) {
             int32_t total_rows_in_transfer_batch = 0;
             while (total_rows_in_transfer_batch < MAX_BATCH_SIZE) {
                 {    
-                    MeasureExecutionTime m("I/O");
+                    MeasureExecutionTime m("i/o");
                     reader->ReadNext(&batch);
                 }
                 if (batch == nullptr) {
@@ -167,7 +160,7 @@ int main(int argc, char** argv) {
                 std::vector<int32_t> off_offsets;
                 std::vector<int32_t> off_sizes;
 
-                std::string null_buff = "xx";
+                std::string null_buff = "x";
                 
                 {
                     MeasureExecutionTime m("serialize");
@@ -208,7 +201,7 @@ int main(int argc, char** argv) {
                                     std::static_pointer_cast<arrow::PrimitiveArray>(col_arr)->values();
 
                                 int32_t data_size = data_buff->size();
-                                int32_t offset_size = null_buff.size() + 1; 
+                                int32_t offset_size = null_buff.size(); 
 
                                 data_offsets.emplace_back(curr_pos);
                                 data_sizes.emplace_back(data_size);
