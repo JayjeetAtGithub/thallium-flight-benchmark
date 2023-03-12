@@ -72,6 +72,9 @@ static char* read_input_file(const char* filename) {
     return buf;
 }
 
+const int32_t TRANSFER_UNIT = 20 * (1<<20);
+const int32_t MAX_BATCH_SIZE = 131072;
+
 int main(int argc, char** argv) {
     if (argc < 4) {
         std::cout << "./ts [selectivity] [backend] [protocol]" << std::endl;
@@ -80,7 +83,7 @@ int main(int argc, char** argv) {
 
     std::string selectivity = argv[1];
     std::string backend = argv[2];
-    std::string protocol = argv[3];
+    std::string protocol = "ofi+verbs";
 
     tl::engine engine(protocol, THALLIUM_SERVER_MODE, true);
     margo_instance_id mid = engine.get_margo_instance();
@@ -97,7 +100,7 @@ int main(int argc, char** argv) {
     uint8_t *segment_buffer = NULL;
     {
         MeasureExecutionTime m("allocate_buffer");
-        segment_buffer = (uint8_t*)malloc(20*1024*1024);
+        segment_buffer = (uint8_t*)malloc(TRANSFER_UNIT);
     }   
     
     std::vector<std::pair<void*,std::size_t>> segments(1);
@@ -131,7 +134,7 @@ int main(int argc, char** argv) {
             if (total_rows_written == 0) {
                 std::cout << "Start exposing" << std::endl;
                 segments[0].first = (void*)segment_buffer;
-                segments[0].second = 20*1024*1024;
+                segments[0].second = TRANSFER_UNIT;
                 {
                     MeasureExecutionTime m("server_expose");
                     arrow_bulk = engine.expose(segments, tl::bulk_mode::read_write);
@@ -140,7 +143,7 @@ int main(int argc, char** argv) {
 
             // collect about 1<<17 batches for each transfer
             int32_t total_rows_in_transfer_batch = 0;
-            while (total_rows_in_transfer_batch < 131072) {
+            while (total_rows_in_transfer_batch < MAX_BATCH_SIZE) {
                 {    
                     MeasureExecutionTime m("I/O");
                     reader->ReadNext(&batch);
