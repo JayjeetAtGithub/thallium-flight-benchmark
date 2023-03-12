@@ -162,7 +162,7 @@ arrow::Result<std::shared_ptr<arrow::RecordBatchReader>> ScanDataset(cp::ExecCon
                           cp::ExecPlan::Make(&exec_context));
 
     ARROW_ASSIGN_OR_RAISE(auto scanner_builder, dataset->NewScan());
-    ARROW_RETURN_NOT_OK(scanner_builder->Filter(GetFilter(2)));
+    ARROW_RETURN_NOT_OK(scanner_builder->Filter(GetFilter("2")));
     ARROW_RETURN_NOT_OK(scanner_builder->Project(schema->field_names()));
     ARROW_ASSIGN_OR_RAISE(auto scanner, scanner_builder->Finish());
 
