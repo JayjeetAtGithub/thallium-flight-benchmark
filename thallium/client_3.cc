@@ -170,14 +170,12 @@ arrow::Status Main(int argc, char **argv) {
     ARROW_ASSIGN_OR_RAISE(auto scan_req, GetScanRequest(path, filter, schema, schema));
     ScanCtx scan_ctx = Scan(conn_ctx, scan_req);
     std::vector<std::shared_ptr<arrow::RecordBatch>> batches;
-    {
-        auto start = std::chrono::high_resolution_clock::now();
-        while ((batches = GetNextBatch(conn_ctx, scan_ctx, (total_rows == 0))).size() != 0) {
-            total_batches += batches.size();
-            total_rows = 1;
-        }
-        auto end = std::chrono::high_resolution_clock::now();
+    auto start = std::chrono::high_resolution_clock::now();
+    while ((batches = GetNextBatch(conn_ctx, scan_ctx, (total_rows == 0))).size() != 0) {
+        total_batches += batches.size();
+        total_rows = 1;
     }
+    auto end = std::chrono::high_resolution_clock::now();
     std::cout << "Read " << total_batches << " batches in " << std::to_string((double)std::chrono::duration_cast<std::chrono::microseconds>(end-start).count()/1000) << " ms" << std::endl;
     conn_ctx.engine.finalize();
     return arrow::Status::OK();
