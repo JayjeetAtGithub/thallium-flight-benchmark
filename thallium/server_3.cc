@@ -34,7 +34,7 @@ namespace tl = thallium;
 namespace cp = arrow::compute;
 
 
-const int32_t kTransferSize = 19 * 1024 * 1024;
+const int32_t kTransferSize = 38 * 1024 * 1024;
 
 
 int main(int argc, char** argv) {
@@ -90,7 +90,7 @@ int main(int argc, char** argv) {
 
             // collect about 1<<17 batches for each transfer
             int32_t total_rows_in_transfer_batch = 0;
-            while (total_rows_in_transfer_batch < 131072) {
+            while (total_rows_in_transfer_batch < 262144) {
                 reader->ReadNext(&batch);
                 if (batch == nullptr) {
                     break;
