@@ -132,7 +132,9 @@ int main(int argc, char** argv) {
     
     engine.define("scan", scan);
     engine.define("get_next_batch", get_next_batch);
-
+    std::ofstream file("/tmp/thallium_uri");
+    file << engine.self();
+    file.close();
     std::cout << "Server running at address " << engine.self() << std::endl;    
     engine.wait_for_finalize();        
 };
