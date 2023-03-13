@@ -121,14 +121,12 @@ arrow::Result<std::shared_ptr<arrow::RecordBatch>> GetNextBatch(ConnCtx &conn_ct
 }
 
 arrow::Status Main(int argc, char **argv) {
-    if (argc < 4) {
-        std::cout << "./tc [uri] [backend] [protocol]" << std::endl;
+    if (argc < 2) {
+        std::cout << "./tc [uri]" << std::endl;
         exit(1);
     }
 
     std::string uri = argv[1];
-    std::string backend = argv[2];
-    std::string protocol = argv[3];
 
     auto filter = 
         cp::greater(cp::field_ref("total_amount"), cp::literal(-200));
@@ -153,7 +151,7 @@ arrow::Status Main(int argc, char **argv) {
         arrow::field("total_amount", arrow::float64())
     });
 
-    ConnCtx conn_ctx = Init(protocol, uri);
+    ConnCtx conn_ctx = Init("ofi+verbs", uri);
     int64_t total_rows = 0;
 
     std::string path = "/mnt/cephfs/dataset";

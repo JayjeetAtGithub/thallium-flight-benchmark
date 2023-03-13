@@ -34,16 +34,15 @@ namespace cp = arrow::compute;
 
 
 int main(int argc, char** argv) {
-    if (argc < 4) {
-        std::cout << "./ts [selectivity] [backend] [protocol]" << std::endl;
+    if (argc < 3) {
+        std::cout << "./ts [selectivity] [backend]" << std::endl;
         exit(1);
     }
 
     std::string selectivity = argv[1];
     std::string backend = argv[2];
-    std::string protocol = argv[3];
 
-    tl::engine engine(protocol, THALLIUM_SERVER_MODE, true);
+    tl::engine engine("ofi+verbs", THALLIUM_SERVER_MODE, true);
     margo_instance_id mid = engine.get_margo_instance();
     hg_addr_t svr_addr;
     hg_return_t hret = margo_addr_self(mid, &svr_addr);
