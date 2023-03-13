@@ -30,7 +30,7 @@ namespace tl = thallium;
 namespace cp = arrow::compute;
 
 
-const int32_t kTransferSize = 18 * 1024 * 1024;
+const int32_t kTransferSize = 19 * 1024 * 1024;
 
 
 arrow::Result<ScanReq> GetScanRequest(std::string path,
