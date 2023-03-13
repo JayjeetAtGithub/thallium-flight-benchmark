@@ -179,7 +179,7 @@ arrow::Status Main(int argc, char **argv) {
             total_batches += batches.size();
         }
         auto end = std::chrono::high_resolution_clock::now();
-        std::cout << "Read " << total_rows << " rows in " << total_batches << " batches in " << std::to_string((double)std::chrono::duration_cast<std::chrono::microseconds>(duration).count()/1000) << " ms" << std::endl;
+        std::cout << "Read " << total_rows << " rows in " << total_batches << " batches in " << std::to_string((double)std::chrono::duration_cast<std::chrono::microseconds>(end-start).count()/1000) << " ms" << std::endl;
     }
 
     conn_ctx.engine.finalize();
