@@ -145,7 +145,6 @@ int main(int argc, char** argv) {
             } else {
                 reader_map.erase(uuid);
                 ScanRespStub stub;
-                stub.batch_sizes = std::vector<int32_t>();
                 return req.respond(stub);
             }
         };
