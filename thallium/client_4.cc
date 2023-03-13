@@ -70,12 +70,12 @@ std::vector<std::shared_ptr<arrow::RecordBatch>> GetNextBatch(ConnCtx &conn_ctx,
         local = conn_ctx.engine.expose(segments, tl::bulk_mode::write_only);
     }
 
-    b(0, total_size).on(req.get_endpoint()) >> local(0, total_size);
-    
+    b(0, resp.total_size).on(req.get_endpoint()) >> local(0, resp.total_size);
+
     std::vector<std::shared_ptr<arrow::RecordBatch>> batches;    
     int num_cols = scan_ctx.schema->num_fields();            
-    for (int32_t batch_idx = 0; batch_idx < batch_sizes.size(); batch_idx++) {
-        int32_t num_rows = batch_sizes[batch_idx];
+    for (int32_t batch_idx = 0; batch_idx < resp.batch_sizes.size(); batch_idx++) {
+        int32_t num_rows = resp.batch_sizes[batch_idx];
         std::shared_ptr<arrow::RecordBatch> batch;
         std::vector<std::shared_ptr<arrow::Array>> columns;
         
@@ -84,17 +84,17 @@ std::vector<std::shared_ptr<arrow::RecordBatch>> GetNextBatch(ConnCtx &conn_ctx,
             std::shared_ptr<arrow::DataType> type = scan_ctx.schema->field(i)->type();  
             if (is_binary_like(type->id())) {
                 std::shared_ptr<arrow::Buffer> data_buff = arrow::Buffer::Wrap(
-                    (uint8_t*)segments[0].first + data_offsets[magic_off], data_sizes[magic_off]
+                    (uint8_t*)segments[0].first + resp.data_offsets[magic_off], resp.data_sizes[magic_off]
                 );
                 std::shared_ptr<arrow::Buffer> offset_buff = arrow::Buffer::Wrap(
-                    (uint8_t*)segments[0].first + off_offsets[magic_off], off_sizes[magic_off]
+                    (uint8_t*)segments[0].first + resp.off_offsets[magic_off], resp.off_sizes[magic_off]
                 );
 
                 std::shared_ptr<arrow::Array> col_arr = std::make_shared<arrow::StringArray>(num_rows, std::move(offset_buff), std::move(data_buff));
                 columns.push_back(col_arr);
             } else {
                 std::shared_ptr<arrow::Buffer> data_buff = arrow::Buffer::Wrap(
-                    (uint8_t*)segments[0].first  + data_offsets[magic_off], data_sizes[magic_off]
+                    (uint8_t*)segments[0].first  + resp.data_offsets[magic_off], resp.data_sizes[magic_off]
                 );
                 std::shared_ptr<arrow::Array> col_arr = std::make_shared<arrow::PrimitiveArray>(type, num_rows, std::move(data_buff));
                 columns.push_back(col_arr);
