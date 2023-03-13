@@ -173,15 +173,12 @@ arrow::Status Main(int argc, char **argv) {
     {
         auto start = std::chrono::high_resolution_clock::now();
         while ((batches = GetNextBatch(conn_ctx, scan_ctx, (total_rows == 0))).size() != 0) {
-            for (auto batch : batches) {
-                total_rows += batch->num_rows();
-            }
             total_batches += batches.size();
+            total_rows = 1;
         }
         auto end = std::chrono::high_resolution_clock::now();
-        std::cout << "Read " << total_rows << " rows in " << total_batches << " batches in " << std::to_string((double)std::chrono::duration_cast<std::chrono::microseconds>(end-start).count()/1000) << " ms" << std::endl;
     }
-
+    std::cout << "Read " << total_batches << " batches in " << std::to_string((double)std::chrono::duration_cast<std::chrono::microseconds>(end-start).count()/1000) << " ms" << std::endl;
     conn_ctx.engine.finalize();
     return arrow::Status::OK();
 }
