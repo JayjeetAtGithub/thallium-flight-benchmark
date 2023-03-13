@@ -12,11 +12,9 @@ if __name__ == "__main__":
 
     filelist = [
         'flight',
-        'thallium'
+        'thallium-1',
+        'thallium-2',
     ]
-
-    file2 = "thallium1"
-
     for filename in filelist:
         with open(filename, "r") as fd:
             lines = fd.readlines()
@@ -35,10 +33,11 @@ if __name__ == "__main__":
                 data['latency(s)'].append(l)
                 data['mode'].append(filename)
                 data['selectivity'].append("1")
-                
+
     df = pd.DataFrame(data)
     print(df)
     sns_plot = sns.barplot(x="mode", y="latency(s)", hue="selectivity", data=df)
     plt.title("Selectivity")
-
-    plt.savefig('plot.pdf')
+    plt.savefig(f'plot.pdf')
+    plt.cla()
+    plt.clf()
