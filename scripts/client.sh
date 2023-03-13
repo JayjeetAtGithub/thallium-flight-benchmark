@@ -1,8 +1,7 @@
 #!/bin/bash
 set -e
 
-uri=$1
-binary=$2
+binary=$1
 
 export PROJECT_ROOT=$HOME/thallium-flight-benchmark
 
@@ -13,6 +12,7 @@ ssh node1 "sync"
 ssh node1 "echo 3 > /proc/sys/vm/drop_caches"
 ssh node1 "sync"
 
-$PROJECT_ROOT/bin/$binary $uri dataset ofi+verbs
+uri=$(ssh node1 "cat /tmp/thallium_uri")
+$PROJECT_ROOT/bin/$binary $uri
 
 done
