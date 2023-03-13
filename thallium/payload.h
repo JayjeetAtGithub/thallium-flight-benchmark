@@ -8,6 +8,9 @@
 
 #include <arrow/compute/exec/expression.h>
 
+namespace tl = thallium;
+
+
 struct ConnCtx {
     thallium::engine engine;
     thallium::endpoint endpoint;
