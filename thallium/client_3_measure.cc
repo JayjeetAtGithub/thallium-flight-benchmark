@@ -26,9 +26,31 @@
 #include "payload.h"
 
 
+class MeasureExecutionTime{
+    private:
+        const std::chrono::steady_clock::time_point begin;
+        const std::string caller;
+        // std::ofstream log;
+    public:
+        MeasureExecutionTime(const std::string& caller):caller(caller),begin(std::chrono::steady_clock::now()) {
+            // log.open("result_client.txt", std::ios_base::app);
+        }
+        
+        ~MeasureExecutionTime() {
+            const auto duration=std::chrono::steady_clock::now()-begin;
+            std::string s = caller + " : " + std::to_string((double)std::chrono::duration_cast<std::chrono::microseconds>(duration).count()/1000) + "\n";
+            std::cout << s;
+            // log << s;
+            // log.close();
+        }
+};
+
+#ifndef MEASURE_FUNCTION_EXECUTION_TIME
+#define MEASURE_FUNCTION_EXECUTION_TIME const MeasureExecutionTime measureExecutionTime(__FUNCTION__);
+#endif
+
 namespace tl = thallium;
 namespace cp = arrow::compute;
-
 
 arrow::Result<ScanReq> GetScanRequest(std::string path,
                                       cp::Expression filter, 
@@ -76,50 +98,72 @@ std::vector<std::shared_ptr<arrow::RecordBatch>> GetNextBatch(ConnCtx &conn_ctx,
     std::function<void(const tl::request&, std::vector<int32_t>&, std::vector<int32_t>&, std::vector<int32_t>&, std::vector<int32_t>&, std::vector<int32_t>&, int32_t&, tl::bulk&)> f =
         [&conn_ctx, &scan_ctx, &batches, &segments, &local, &flag](const tl::request& req, std::vector<int32_t> &batch_sizes, std::vector<int32_t>& data_offsets, std::vector<int32_t>& data_sizes, std::vector<int32_t>& off_offsets, std::vector<int32_t>& off_sizes, int32_t& total_size, tl::bulk& b) {
             if (flag == 1) {
-                segments[0].first = (uint8_t*)malloc(20*1024*1024);
-                segments[0].second = 20*1024*1024;
-                local = conn_ctx.engine.expose(segments, tl::bulk_mode::write_only);
-            }
-            
-            b(0, total_size).on(req.get_endpoint()) >> local(0, total_size);
-            
-            int num_cols = scan_ctx.schema->num_fields();            
-            for (int32_t batch_idx = 0; batch_idx < batch_sizes.size(); batch_idx++) {
-                int32_t num_rows = batch_sizes[batch_idx];
-                
-                std::shared_ptr<arrow::RecordBatch> batch;
-                std::vector<std::shared_ptr<arrow::Array>> columns;
-                
-                for (int64_t i = 0; i < num_cols; i++) {
-                    int32_t magic_off = (batch_idx * num_cols) + i;
-                    std::shared_ptr<arrow::DataType> type = scan_ctx.schema->field(i)->type();  
-                    if (is_binary_like(type->id())) {
-                        std::shared_ptr<arrow::Buffer> data_buff = arrow::Buffer::Wrap(
-                            (uint8_t*)segments[0].first + data_offsets[magic_off], data_sizes[magic_off]
-                        );
-                        std::shared_ptr<arrow::Buffer> offset_buff = arrow::Buffer::Wrap(
-                            (uint8_t*)segments[0].first + off_offsets[magic_off], off_sizes[magic_off]
-                        );
-
-                        std::shared_ptr<arrow::Array> col_arr = std::make_shared<arrow::StringArray>(num_rows, std::move(offset_buff), std::move(data_buff));
-                        columns.push_back(col_arr);
-                    } else {
-                        std::shared_ptr<arrow::Buffer> data_buff = arrow::Buffer::Wrap(
-                            (uint8_t*)segments[0].first  + data_offsets[magic_off], data_sizes[magic_off]
-                        );
-                        std::shared_ptr<arrow::Array> col_arr = std::make_shared<arrow::PrimitiveArray>(type, num_rows, std::move(data_buff));
-                        columns.push_back(col_arr);
-                    }
+                std::cout << "Start exposing" << std::endl;
+                {
+                    MeasureExecutionTime m("memory_allocate");
+                    segments[0].first = (uint8_t*)malloc(20*1024*1024);
+                    segments[0].second = 20*1024*1024;
                 }
-                batch = arrow::RecordBatch::Make(scan_ctx.schema, num_rows, columns);
-                batches.push_back(batch);
+
+                {
+                    MeasureExecutionTime m("client_expose");
+                    local = conn_ctx.engine.expose(segments, tl::bulk_mode::write_only);
+                }
             }
+            
+            int num_cols = scan_ctx.schema->num_fields();
+                        
+            {
+                MeasureExecutionTime m("RDMA");
+                b(0, total_size).on(req.get_endpoint()) >> local(0, total_size);
+            }
+            
+            {
+                MeasureExecutionTime m("deserialize");
+                for (int32_t batch_idx = 0; batch_idx < batch_sizes.size(); batch_idx++) {
+                    int32_t num_rows = batch_sizes[batch_idx];
+                    
+                    std::shared_ptr<arrow::RecordBatch> batch;
+                    std::vector<std::shared_ptr<arrow::Array>> columns;
+                    
+                    for (int64_t i = 0; i < num_cols; i++) {
+                        int32_t magic_off = (batch_idx * num_cols) + i;
+                        std::shared_ptr<arrow::DataType> type = scan_ctx.schema->field(i)->type();  
+                        if (is_binary_like(type->id())) {
+                            std::shared_ptr<arrow::Buffer> data_buff = arrow::Buffer::Wrap(
+                                (uint8_t*)segments[0].first + data_offsets[magic_off], data_sizes[magic_off]
+                            );
+                            std::shared_ptr<arrow::Buffer> offset_buff = arrow::Buffer::Wrap(
+                                (uint8_t*)segments[0].first + off_offsets[magic_off], off_sizes[magic_off]
+                            );
+
+                            std::shared_ptr<arrow::Array> col_arr = std::make_shared<arrow::StringArray>(num_rows, std::move(offset_buff), std::move(data_buff));
+                            columns.push_back(col_arr);
+                        } else {
+                            std::shared_ptr<arrow::Buffer> data_buff = arrow::Buffer::Wrap(
+                                (uint8_t*)segments[0].first  + data_offsets[magic_off], data_sizes[magic_off]
+                            );
+                            std::shared_ptr<arrow::Array> col_arr = std::make_shared<arrow::PrimitiveArray>(type, num_rows, std::move(data_buff));
+                            columns.push_back(col_arr);
+                        }
+                    }
+                    batch = arrow::RecordBatch::Make(scan_ctx.schema, num_rows, columns);
+
+                    batches.push_back(batch);
+                }
+            }
+
             return req.respond(0);
         };
-    
     conn_ctx.engine.define("do_rdma", f);
     tl::remote_procedure get_next_batch = conn_ctx.engine.define("get_next_batch");
-    int e = get_next_batch.on(conn_ctx.endpoint)(scan_ctx.uuid);
+
+    int e;
+    
+    {
+        MeasureExecutionTime m("get_next_batch_rpc");
+        e = get_next_batch.on(conn_ctx.endpoint)(scan_ctx.uuid);
+    }
 
     if (e == 0) {
         return batches;
@@ -129,12 +173,14 @@ std::vector<std::shared_ptr<arrow::RecordBatch>> GetNextBatch(ConnCtx &conn_ctx,
 }
 
 arrow::Status Main(int argc, char **argv) {
-    if (argc < 2) {
-        std::cout << "./tc [uri]" << std::endl;
+    if (argc < 4) {
+        std::cout << "./tc [uri] [backend] [protocol]" << std::endl;
         exit(1);
     }
 
     std::string uri = argv[1];
+    std::string backend = argv[2];
+    std::string protocol = argv[3];
 
     auto filter = 
         cp::greater(cp::field_ref("total_amount"), cp::literal(-200));
@@ -159,24 +205,26 @@ arrow::Status Main(int argc, char **argv) {
         arrow::field("total_amount", arrow::float64())
     });
 
-    ConnCtx conn_ctx = Init("ofi+verbs", uri);
+    ConnCtx conn_ctx = Init(protocol, uri);
     int64_t total_rows = 0;
     int64_t total_batches = 0;
 
-    std::string path = "/mnt/cephfs/dataset";
-    ARROW_ASSIGN_OR_RAISE(auto scan_req, GetScanRequest(path, filter, schema, schema));
-    ScanCtx scan_ctx = Scan(conn_ctx, scan_req);
-    std::vector<std::shared_ptr<arrow::RecordBatch>> batches;
-    {
-        auto start = std::chrono::high_resolution_clock::now();
-        while ((batches = GetNextBatch(conn_ctx, scan_ctx, (total_rows == 0))).size() != 0) {
-            for (auto batch : batches) {
-                total_rows += batch->num_rows();
+    if (backend == "dataset") {
+        std::string path = "/mnt/cephfs/dataset";
+        ARROW_ASSIGN_OR_RAISE(auto scan_req, GetScanRequest(path, filter, schema, schema));
+        ScanCtx scan_ctx = Scan(conn_ctx, scan_req);
+        std::vector<std::shared_ptr<arrow::RecordBatch>> batches;
+        {
+            MEASURE_FUNCTION_EXECUTION_TIME
+            while ((batches = GetNextBatch(conn_ctx, scan_ctx, (total_rows == 0))).size() != 0) {
+                for (auto batch : batches) {
+                    total_rows += batch->num_rows();
+                    // std::cout << batch->ToString() << std::endl;
+                }
+                total_batches += batches.size();
             }
-            total_batches += batches.size();
         }
-        auto end = std::chrono::high_resolution_clock::now();
-        std::cout << "Read " << total_rows << " rows in " << total_batches << " batches in " << std::to_string((double)std::chrono::duration_cast<std::chrono::microseconds>(duration).count()/1000) << " ms" << std::endl;
+        std::cout << "Read " << total_rows << " rows in " << total_batches << std::endl;
     }
 
     conn_ctx.engine.finalize();

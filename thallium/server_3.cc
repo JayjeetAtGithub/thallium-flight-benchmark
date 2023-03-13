@@ -29,27 +29,10 @@
 
 #include "ace.h"
 
+
 namespace tl = thallium;
 namespace cp = arrow::compute;
 
-class MeasureExecutionTime{
-    private:
-        const std::chrono::steady_clock::time_point begin;
-        const std::string caller;
-        // std::ofstream log;
-    public:
-        MeasureExecutionTime(const std::string& caller):caller(caller),begin(std::chrono::steady_clock::now()) {
-            // log.open("result_server.txt", std::ios_base::app);
-        }
-
-        ~MeasureExecutionTime() {
-            const auto duration=std::chrono::steady_clock::now()-begin;
-            std::string s = caller + " : " + std::to_string((double)std::chrono::duration_cast<std::chrono::microseconds>(duration).count()/1000) + "\n";
-            std::cout << s;
-            // log << s;
-            // log.close();
-        }
-};
 
 static char* read_input_file(const char* filename) {
     size_t ret;
@@ -73,16 +56,15 @@ static char* read_input_file(const char* filename) {
 }
 
 int main(int argc, char** argv) {
-    if (argc < 4) {
-        std::cout << "./ts [selectivity] [backend] [protocol]" << std::endl;
+    if (argc < 3) {
+        std::cout << "./ts [selectivity] [backend]" << std::endl;
         exit(1);
     }
 
     std::string selectivity = argv[1];
     std::string backend = argv[2];
-    std::string protocol = argv[3];
 
-    tl::engine engine(protocol, THALLIUM_SERVER_MODE, true);
+    tl::engine engine("ofi+verbs", THALLIUM_SERVER_MODE, true);
     margo_instance_id mid = engine.get_margo_instance();
     hg_addr_t svr_addr;
     hg_return_t hret = margo_addr_self(mid, &svr_addr);
@@ -94,11 +76,7 @@ int main(int argc, char** argv) {
 
     tl::remote_procedure do_rdma = engine.define("do_rdma");
     std::unordered_map<std::string, std::shared_ptr<arrow::RecordBatchReader>> reader_map;
-    uint8_t *segment_buffer = NULL;
-    {
-        MeasureExecutionTime m("allocate_buffer");
-        segment_buffer = (uint8_t*)malloc(20*1024*1024);
-    }   
+    uint8_t *segment_buffer = (uint8_t*)malloc(20*1024*1024);
     
     std::vector<std::pair<void*,std::size_t>> segments(1);
     tl::bulk arrow_bulk;
@@ -106,14 +84,8 @@ int main(int argc, char** argv) {
     std::function<void(const tl::request&, const ScanReqRPCStub&)> scan = 
         [&reader_map, &mid, &svr_addr, &backend, &selectivity](const tl::request &req, const ScanReqRPCStub& stub) {
             arrow::dataset::internal::Initialize();
-            std::shared_ptr<arrow::RecordBatchReader> reader;
-
-            if (backend == "dataset" || backend == "dataset+mem") {
-                cp::ExecContext exec_ctx;
-                reader = ScanDataset(exec_ctx, stub, backend, selectivity).ValueOrDie();
-            } else if (backend == "file" || backend == "file+mmap") {
-                reader = ScanFile(stub, backend, selectivity).ValueOrDie();
-            }
+            cp::ExecContext exec_ctx;
+            std::shared_ptr<arrow::RecordBatchReader> reader = ScanDataset(exec_ctx, stub, backend, selectivity).ValueOrDie();
 
             std::string uuid = boost::uuids::to_string(boost::uuids::random_generator()());
             reader_map[uuid] = reader;
@@ -129,22 +101,15 @@ int main(int argc, char** argv) {
             std::vector<int32_t> batch_sizes;
 
             if (total_rows_written == 0) {
-                std::cout << "Start exposing" << std::endl;
                 segments[0].first = (void*)segment_buffer;
                 segments[0].second = 20*1024*1024;
-                {
-                    MeasureExecutionTime m("server_expose");
-                    arrow_bulk = engine.expose(segments, tl::bulk_mode::read_write);
-                }
+                arrow_bulk = engine.expose(segments, tl::bulk_mode::read_write);
             }
 
             // collect about 1<<17 batches for each transfer
             int32_t total_rows_in_transfer_batch = 0;
             while (total_rows_in_transfer_batch < 131072) {
-                {    
-                    MeasureExecutionTime m("I/O");
-                    reader->ReadNext(&batch);
-                }
+                reader->ReadNext(&batch);
                 if (batch == nullptr) {
                     break;
                 }
@@ -164,77 +129,58 @@ int main(int argc, char** argv) {
                 std::vector<int32_t> off_offsets;
                 std::vector<int32_t> off_sizes;
 
-                std::string null_buff = "xx";
+                std::string null_buff = "x";
                 
-                {
-                    MeasureExecutionTime m("serialize");
-                    for (auto b : batches) {
-                        for (int32_t i = 0; i < b->num_columns(); i++) {
-                            std::shared_ptr<arrow::Array> col_arr = b->column(i);
-                            arrow::Type::type type = col_arr->type_id();
-                            int32_t null_count = col_arr->null_count();
+                for (auto b : batches) {
+                    for (int32_t i = 0; i < b->num_columns(); i++) {
+                        std::shared_ptr<arrow::Array> col_arr = b->column(i);
+                        arrow::Type::type type = col_arr->type_id();
+                        int32_t null_count = col_arr->null_count();
 
-                            if (is_binary_like(type)) {
-                                std::shared_ptr<arrow::Buffer> data_buff = 
-                                    std::static_pointer_cast<arrow::BinaryArray>(col_arr)->value_data();
-                                std::shared_ptr<arrow::Buffer> offset_buff = 
-                                    std::static_pointer_cast<arrow::BinaryArray>(col_arr)->value_offsets();
+                        if (is_binary_like(type)) {
+                            std::shared_ptr<arrow::Buffer> data_buff = 
+                                std::static_pointer_cast<arrow::BinaryArray>(col_arr)->value_data();
+                            std::shared_ptr<arrow::Buffer> offset_buff = 
+                                std::static_pointer_cast<arrow::BinaryArray>(col_arr)->value_offsets();
 
-                                int32_t data_size = data_buff->size();
-                                int32_t offset_size = offset_buff->size();
+                            int32_t data_size = data_buff->size();
+                            int32_t offset_size = offset_buff->size();
 
-                                data_offsets.emplace_back(curr_pos);
-                                data_sizes.emplace_back(data_size); 
-                                {   
-                                    // MeasureExecutionTime m("memcpy1");             
-                                    memcpy(segment_buffer + curr_pos, data_buff->data(), data_size);
-                                }
-                                curr_pos += data_size;
+                            data_offsets.emplace_back(curr_pos);
+                            data_sizes.emplace_back(data_size); 
+                            memcpy(segment_buffer + curr_pos, data_buff->data(), data_size);
+                            curr_pos += data_size;
 
-                                off_offsets.emplace_back(curr_pos);
-                                off_sizes.emplace_back(offset_size);
-                                {
-                                    // MeasureExecutionTime m("memcpy2");
-                                    memcpy(segment_buffer + curr_pos, offset_buff->data(), offset_size);
-                                }
-                                curr_pos += offset_size;
+                            off_offsets.emplace_back(curr_pos);
+                            off_sizes.emplace_back(offset_size);
+                            memcpy(segment_buffer + curr_pos, offset_buff->data(), offset_size);
+                            curr_pos += offset_size;
 
-                                total_size += (data_size + offset_size);
-                            } else {
-                                std::shared_ptr<arrow::Buffer> data_buff = 
-                                    std::static_pointer_cast<arrow::PrimitiveArray>(col_arr)->values();
+                            total_size += (data_size + offset_size);
+                        } else {
+                            std::shared_ptr<arrow::Buffer> data_buff = 
+                                std::static_pointer_cast<arrow::PrimitiveArray>(col_arr)->values();
 
-                                int32_t data_size = data_buff->size();
-                                int32_t offset_size = null_buff.size() + 1; 
+                            int32_t data_size = data_buff->size();
+                            int32_t offset_size = null_buff.size(); 
 
-                                data_offsets.emplace_back(curr_pos);
-                                data_sizes.emplace_back(data_size);
-                                {
-                                    // MeasureExecutionTime m("memcpy3");
-                                    memcpy(segment_buffer + curr_pos, data_buff->data(), data_size);
-                                }
-                                curr_pos += data_size;
+                            data_offsets.emplace_back(curr_pos);
+                            data_sizes.emplace_back(data_size);
+                            memcpy(segment_buffer + curr_pos, data_buff->data(), data_size);
+                            curr_pos += data_size;
 
-                                off_offsets.emplace_back(curr_pos);
-                                off_sizes.emplace_back(offset_size);
-                                {
-                                    // MeasureExecutionTime m("memcpy4");
-                                    memcpy(segment_buffer + curr_pos, (uint8_t*)null_buff.c_str(), offset_size);
-                                }
-                                curr_pos += offset_size;
+                            off_offsets.emplace_back(curr_pos);
+                            off_sizes.emplace_back(offset_size);
+                            memcpy(segment_buffer + curr_pos, (uint8_t*)null_buff.c_str(), offset_size);
+                            curr_pos += offset_size;
 
-                                total_size += (data_size + offset_size);
-                            }
+                            total_size += (data_size + offset_size);
                         }
                     }
                 }
 
                 segments[0].second = total_size;
-
-                {
-                    MeasureExecutionTime m("client_side_callback");
-                    do_rdma.on(req.get_endpoint())(batch_sizes, data_offsets, data_sizes, off_offsets, off_sizes, total_size, arrow_bulk);
-                }
+                do_rdma.on(req.get_endpoint())(batch_sizes, data_offsets, data_sizes, off_offsets, off_sizes, total_size, arrow_bulk);
 
                 return req.respond(0);
             } else {
