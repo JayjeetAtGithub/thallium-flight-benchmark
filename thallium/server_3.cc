@@ -161,7 +161,6 @@ int main(int argc, char** argv) {
                     }
                 }
 
-                segments[0].second = total_size;
                 do_rdma.on(req.get_endpoint())(batch_sizes, data_offsets, data_sizes, off_offsets, off_sizes, total_size, arrow_bulk);
 
                 return req.respond(0);
