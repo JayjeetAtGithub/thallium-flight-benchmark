@@ -175,5 +175,8 @@ int main(int argc, char** argv) {
     engine.define("get_next_batch", get_next_batch);
 
     std::cout << "Server running at address " << engine.self() << std::endl;    
+    std::ofstream file("/tmp/thallium_uri");
+    file << engine.self();
+    file.close();
     engine.wait_for_finalize();        
 };
