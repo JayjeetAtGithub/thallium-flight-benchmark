@@ -25,28 +25,6 @@
 
 #include "payload.h"
 
-class MeasureExecutionTime{
-    private:
-        const std::chrono::steady_clock::time_point begin;
-        const std::string caller;
-        std::ofstream log;
-    public:
-        MeasureExecutionTime(const std::string& caller):caller(caller),begin(std::chrono::steady_clock::now()) {
-            log.open("result_client.txt", std::ios_base::app);
-        }
-        
-        ~MeasureExecutionTime() {
-            const auto duration=std::chrono::steady_clock::now()-begin;
-            std::string s = caller + " : " + std::to_string((double)std::chrono::duration_cast<std::chrono::microseconds>(duration).count()/1000) + "\n";
-            std::cout << s;
-            log << s;
-            log.close();
-        }
-};
-
-#ifndef MEASURE_FUNCTION_EXECUTION_TIME
-#define MEASURE_FUNCTION_EXECUTION_TIME const MeasureExecutionTime measureExecutionTime(__FUNCTION__);
-#endif
 
 namespace tl = thallium;
 namespace cp = arrow::compute;
@@ -100,33 +78,22 @@ arrow::Result<std::shared_ptr<arrow::RecordBatch>> GetNextBatch(ConnCtx &conn_ct
             std::vector<std::pair<void*,std::size_t>> segments;
             segments.reserve(num_cols*2);
             
-            {
-                MeasureExecutionTime m("memory_allocate");
-                for (int64_t i = 0; i < num_cols; i++) {
-                    data_buffs[i] = arrow::AllocateBuffer(data_buff_sizes[i]).ValueOrDie();
-                    offset_buffs[i] = arrow::AllocateBuffer(offset_buff_sizes[i]).ValueOrDie();
+            for (int64_t i = 0; i < num_cols; i++) {
+                data_buffs[i] = arrow::AllocateBuffer(data_buff_sizes[i]).ValueOrDie();
+                offset_buffs[i] = arrow::AllocateBuffer(offset_buff_sizes[i]).ValueOrDie();
 
-                    segments.emplace_back(std::make_pair(
-                        (void*)data_buffs[i]->mutable_data(),
-                        data_buff_sizes[i]
-                    ));
-                    segments.emplace_back(std::make_pair(
-                        (void*)offset_buffs[i]->mutable_data(),
-                        offset_buff_sizes[i]
-                    ));
-                }
+                segments.emplace_back(std::make_pair(
+                    (void*)data_buffs[i]->mutable_data(),
+                    data_buff_sizes[i]
+                ));
+                segments.emplace_back(std::make_pair(
+                    (void*)offset_buffs[i]->mutable_data(),
+                    offset_buff_sizes[i]
+                ));
             }
 
-            tl::bulk local;
-            {
-                MeasureExecutionTime m("client_expose");
-                local = conn_ctx.engine.expose(segments, tl::bulk_mode::write_only);
-            }
-
-            {
-                MeasureExecutionTime m("RDMA");
-                b.on(req.get_endpoint()) >> local;
-            }
+            tl::bulk local = conn_ctx.engine.expose(segments, tl::bulk_mode::write_only);
+            b.on(req.get_endpoint()) >> local;
 
             for (int64_t i = 0; i < num_cols; i++) {
                 std::shared_ptr<arrow::DataType> type = scan_ctx.schema->field(i)->type();  
@@ -189,34 +156,16 @@ arrow::Status Main(int argc, char **argv) {
     ConnCtx conn_ctx = Init(protocol, uri);
     int64_t total_rows = 0;
 
-
-    if (backend == "dataset") {
-        std::string path = "/mnt/cephfs/dataset";
-        ARROW_ASSIGN_OR_RAISE(auto scan_req, GetScanRequest(path, filter, schema, schema));
-        ScanCtx scan_ctx = Scan(conn_ctx, scan_req);
-        std::shared_ptr<arrow::RecordBatch> batch;
-        {
-            MEASURE_FUNCTION_EXECUTION_TIME
-            while ((batch = GetNextBatch(conn_ctx, scan_ctx).ValueOrDie()) != nullptr) {
-                total_rows += batch->num_rows();
-            }
-        }
-        std::cout << "Read " << total_rows << " rows" << std::endl;
-    } else {
-        {
-            MEASURE_FUNCTION_EXECUTION_TIME
-            std::shared_ptr<arrow::RecordBatch> batch;
-            for (int i = 1; i <= 200; i++) {
-                std::string filepath = "/mnt/cephfs/dataset/16MB.uncompressed.parquet." + std::to_string(i);
-                ARROW_ASSIGN_OR_RAISE(auto scan_req, GetScanRequest(filepath, filter, schema, schema));
-                ScanCtx scan_ctx = Scan(conn_ctx, scan_req);
-                while ((batch = GetNextBatch(conn_ctx, scan_ctx).ValueOrDie()) != nullptr) {
-                    total_rows += batch->num_rows();
-                }
-            }
-        }
-        std::cout << "Read " << total_rows << " rows" << std::endl;
+    std::string path = "/mnt/cephfs/dataset";
+    ARROW_ASSIGN_OR_RAISE(auto scan_req, GetScanRequest(path, filter, schema, schema));
+    ScanCtx scan_ctx = Scan(conn_ctx, scan_req);
+    std::shared_ptr<arrow::RecordBatch> batch;
+    auto start = std::chrono::high_resolution_clock::now();
+    while ((batch = GetNextBatch(conn_ctx, scan_ctx).ValueOrDie()) != nullptr) {
+        total_rows += batch->num_rows();
     }
+    auto end = std::chrono::high_resolution_clock::now();
+    std::cout << "Read " << total_rows << " rows in " << std::to_string((double)std::chrono::duration_cast<std::chrono::microseconds>(end-start).count()/1000) << " ms" << std::endl;
 
     conn_ctx.engine.finalize();
     return arrow::Status::OK();

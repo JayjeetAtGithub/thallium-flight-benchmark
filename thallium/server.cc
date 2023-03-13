@@ -32,45 +32,6 @@
 namespace tl = thallium;
 namespace cp = arrow::compute;
 
-class MeasureExecutionTime{
-    private:
-        const std::chrono::steady_clock::time_point begin;
-        const std::string caller;
-        std::ofstream log;
-    public:
-        MeasureExecutionTime(const std::string& caller):caller(caller),begin(std::chrono::steady_clock::now()) {
-            log.open("result_server.txt", std::ios_base::app);
-        }
-
-        ~MeasureExecutionTime() {
-            const auto duration=std::chrono::steady_clock::now()-begin;
-            std::string s = caller + " : " + std::to_string((double)std::chrono::duration_cast<std::chrono::microseconds>(duration).count()/1000) + "\n";
-            std::cout << s;
-            log << s;
-            log.close();
-        }
-};
-
-static char* read_input_file(const char* filename) {
-    size_t ret;
-    FILE*  fp = fopen(filename, "r");
-    if (fp == NULL) {
-        fprintf(stderr, "Could not open %s\n", filename);
-        exit(-1);
-    }
-    fseek(fp, 0, SEEK_END);
-    size_t sz = ftell(fp);
-    fseek(fp, 0, SEEK_SET);
-    char* buf = (char*)calloc(1, sz + 1);
-    ret       = fread(buf, 1, sz, fp);
-    if (ret != sz && ferror(fp)) {
-        free(buf);
-        perror("read_input_file");
-        buf = NULL;
-    }
-    fclose(fp);
-    return buf;
-}
 
 int main(int argc, char** argv) {
     if (argc < 4) {
@@ -118,11 +79,7 @@ int main(int argc, char** argv) {
             
             std::shared_ptr<arrow::RecordBatchReader> reader = reader_map[uuid];
             std::shared_ptr<arrow::RecordBatch> batch;
-
-            {
-                MeasureExecutionTime m("I/O");
-                reader->ReadNext(&batch);
-            }
+            reader->ReadNext(&batch);
 
             if (batch != nullptr) {
 
@@ -170,10 +127,7 @@ int main(int argc, char** argv) {
                 }
 
                 tl::bulk arrow_bulk;
-                {
-                    MeasureExecutionTime m("server_expose");
-                    arrow_bulk = engine.expose(segments, tl::bulk_mode::read_only);
-                }
+                arrow_bulk = engine.expose(segments, tl::bulk_mode::read_only);
                 
                 do_rdma.on(req.get_endpoint())(num_rows, data_buff_sizes, offset_buff_sizes, arrow_bulk);
                 return req.respond(0);
