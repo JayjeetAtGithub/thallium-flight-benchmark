@@ -15,6 +15,8 @@ if __name__ == "__main__":
         'thallium'
     ]
 
+    file2 = "thallium1"
+
     for filename in filelist:
         with open(filename, "r") as fd:
             lines = fd.readlines()
