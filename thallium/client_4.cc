@@ -70,7 +70,7 @@ std::vector<std::shared_ptr<arrow::RecordBatch>> GetNextBatch(ConnCtx &conn_ctx,
         local = conn_ctx.engine.expose(segments, tl::bulk_mode::write_only);
     }
 
-    b(0, resp.total_size).on(req.get_endpoint()) >> local(0, resp.total_size);
+    resp.bulk(0, resp.total_size).on(conn_ctx.endpoint) >> local(0, resp.total_size);
 
     std::vector<std::shared_ptr<arrow::RecordBatch>> batches;    
     int num_cols = scan_ctx.schema->num_fields();            
