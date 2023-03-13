@@ -157,4 +157,4 @@ int main(int argc, char** argv) {
     std::cout << "Server running at address " << engine.self() << std::endl;    
 
     engine.wait_for_finalize();        
-};
+}
