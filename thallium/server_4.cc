@@ -4,7 +4,7 @@
 
 #include <thallium.hpp>
 
-#include "arrow_header.h"
+#include "arrow_headers.h"
 #include "ace.h"
 
 
