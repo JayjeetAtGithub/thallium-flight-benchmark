@@ -26,10 +26,11 @@ class ScanRespStub {
         std::vector<int32_t> off_sizes;
         std::vector<int32_t> batch_sizes;
         int32_t total_size;
+        tl::bulk bulk;
 
         ScanRespStub() {}
-        ScanRespStub(std::vector<int32_t> data_offsets, std::vector<int32_t> data_sizes, std::vector<int32_t> off_offsets, std::vector<int32_t> off_sizes, std::vector<int32_t> batch_sizes, int32_t total_size):
-            data_offsets(data_offsets), data_sizes(data_sizes), off_offsets(off_offsets), off_sizes(off_sizes), batch_sizes(batch_sizes), total_size(total_size) {}
+        ScanRespStub(std::vector<int32_t> data_offsets, std::vector<int32_t> data_sizes, std::vector<int32_t> off_offsets, std::vector<int32_t> off_sizes, std::vector<int32_t> batch_sizes, int32_t total_size, tl::bulk bulk):
+            data_offsets(data_offsets), data_sizes(data_sizes), off_offsets(off_offsets), off_sizes(off_sizes), batch_sizes(batch_sizes), total_size(total_size), bulk(bulk) {}
 
         template<class A>
         void serialize(A& ar) {
@@ -39,6 +40,7 @@ class ScanRespStub {
             ar & off_sizes;
             ar & batch_sizes;
             ar & total_size;
+            ar & bulk;
         }
 };
 
