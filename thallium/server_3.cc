@@ -34,26 +34,8 @@ namespace tl = thallium;
 namespace cp = arrow::compute;
 
 
-static char* read_input_file(const char* filename) {
-    size_t ret;
-    FILE*  fp = fopen(filename, "r");
-    if (fp == NULL) {
-        fprintf(stderr, "Could not open %s\n", filename);
-        exit(-1);
-    }
-    fseek(fp, 0, SEEK_END);
-    size_t sz = ftell(fp);
-    fseek(fp, 0, SEEK_SET);
-    char* buf = (char*)calloc(1, sz + 1);
-    ret       = fread(buf, 1, sz, fp);
-    if (ret != sz && ferror(fp)) {
-        free(buf);
-        perror("read_input_file");
-        buf = NULL;
-    }
-    fclose(fp);
-    return buf;
-}
+const kTransferSize = 18 * 1024 * 1024;
+
 
 int main(int argc, char** argv) {
     if (argc < 3) {
@@ -76,7 +58,7 @@ int main(int argc, char** argv) {
 
     tl::remote_procedure do_rdma = engine.define("do_rdma");
     std::unordered_map<std::string, std::shared_ptr<arrow::RecordBatchReader>> reader_map;
-    uint8_t *segment_buffer = (uint8_t*)malloc(20*1024*1024);
+    uint8_t *segment_buffer = (uint8_t*)malloc(kTransferSize);
     
     std::vector<std::pair<void*,std::size_t>> segments(1);
     tl::bulk arrow_bulk;
@@ -102,7 +84,7 @@ int main(int argc, char** argv) {
 
             if (total_rows_written == 0) {
                 segments[0].first = (void*)segment_buffer;
-                segments[0].second = 20*1024*1024;
+                segments[0].second = kTransferSize;
                 arrow_bulk = engine.expose(segments, tl::bulk_mode::read_write);
             }
 

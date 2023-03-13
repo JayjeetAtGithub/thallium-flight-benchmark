@@ -30,6 +30,9 @@ namespace tl = thallium;
 namespace cp = arrow::compute;
 
 
+const kTransferSize = 18 * 1024 * 1024;
+
+
 arrow::Result<ScanReq> GetScanRequest(std::string path,
                                       cp::Expression filter, 
                                       std::shared_ptr<arrow::Schema> projection_schema,
@@ -76,8 +79,8 @@ std::vector<std::shared_ptr<arrow::RecordBatch>> GetNextBatch(ConnCtx &conn_ctx,
     std::function<void(const tl::request&, std::vector<int32_t>&, std::vector<int32_t>&, std::vector<int32_t>&, std::vector<int32_t>&, std::vector<int32_t>&, int32_t&, tl::bulk&)> f =
         [&conn_ctx, &scan_ctx, &batches, &segments, &local, &flag](const tl::request& req, std::vector<int32_t> &batch_sizes, std::vector<int32_t>& data_offsets, std::vector<int32_t>& data_sizes, std::vector<int32_t>& off_offsets, std::vector<int32_t>& off_sizes, int32_t& total_size, tl::bulk& b) {
             if (flag == 1) {
-                segments[0].first = (uint8_t*)malloc(20*1024*1024);
-                segments[0].second = 20*1024*1024;
+                segments[0].first = (uint8_t*)malloc(kTransferSize);
+                segments[0].second = kTransferSize;
                 local = conn_ctx.engine.expose(segments, tl::bulk_mode::write_only);
             }
             
