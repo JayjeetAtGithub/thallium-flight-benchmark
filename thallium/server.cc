@@ -59,14 +59,8 @@ int main(int argc, char** argv) {
     std::function<void(const tl::request&, const ScanReqRPCStub&)> scan = 
         [&reader_map, &mid, &svr_addr, &backend, &selectivity](const tl::request &req, const ScanReqRPCStub& stub) {
             arrow::dataset::internal::Initialize();
-            std::shared_ptr<arrow::RecordBatchReader> reader;
-
-            if (backend == "dataset" || backend == "dataset+mem") {
-                cp::ExecContext exec_ctx;
-                reader = ScanDataset(exec_ctx, stub, backend, selectivity).ValueOrDie();
-            } else if (backend == "file" || backend == "file+mmap") {
-                reader = ScanFile(stub, backend, selectivity).ValueOrDie();
-            }
+            cp::ExecContext exec_ctx;
+            std::shared_ptr<arrow::RecordBatchReader> reader = ScanDataset(exec_ctx, stub, backend, selectivity).ValueOrDie();
 
             std::string uuid = boost::uuids::to_string(boost::uuids::random_generator()());
             reader_map[uuid] = reader;
@@ -91,7 +85,7 @@ int main(int argc, char** argv) {
                 std::vector<std::pair<void*,std::size_t>> segments;
                 segments.reserve(batch->num_columns()*2);
 
-                std::string null_buff = "xx";
+                std::string null_buff = "x";
 
                 for (int64_t i = 0; i < batch->num_columns(); i++) {
                     std::shared_ptr<arrow::Array> col_arr = batch->column(i);
@@ -117,7 +111,7 @@ int main(int argc, char** argv) {
                             std::static_pointer_cast<arrow::PrimitiveArray>(col_arr)->values();
 
                         data_size = data_buff->size();
-                        offset_size = null_buff.size() + 1; 
+                        offset_size = null_buff.size(); 
                         segments.emplace_back(std::make_pair((void*)data_buff->data(), data_size));
                         segments.emplace_back(std::make_pair((void*)(&null_buff[0]), offset_size));
                     }
