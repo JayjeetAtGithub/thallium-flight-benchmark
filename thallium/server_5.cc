@@ -34,7 +34,6 @@ int main(int argc, char** argv) {
         return -1;
     }
 
-    tl::remote_procedure do_rdma = engine.define("do_rdma");
     std::unordered_map<std::string, std::shared_ptr<arrow::RecordBatchReader>> reader_map;
     uint8_t *segment_buffer = (uint8_t*)malloc(kTransferSize);
     
@@ -54,7 +53,7 @@ int main(int argc, char** argv) {
 
     int32_t total_rows_written = 0;
     std::function<void(const tl::request&, const std::string&, const tl::bulk&)> get_next_batch = 
-        [&mid, &svr_addr, &engine, &do_rdma, &reader_map, &total_rows_written, &segment_buffer, &segments, &arrow_bulk](const tl::request &req, const std::string& uuid, const tl::bulk& arrow_bulk) {
+        [&mid, &svr_addr, &engine, &reader_map, &total_rows_written, &segment_buffer, &segments, &arrow_bulk](const tl::request &req, const std::string& uuid, const tl::bulk& arrow_bulk) {
             std::shared_ptr<arrow::RecordBatchReader> reader = reader_map[uuid];
             std::shared_ptr<arrow::RecordBatch> batch;
             std::vector<std::shared_ptr<arrow::RecordBatch>> batches;
