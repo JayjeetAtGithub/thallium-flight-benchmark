@@ -2,31 +2,9 @@
 #include <unordered_map>
 #include <fstream>
 
-#include <arrow/api.h>
-#include <arrow/compute/exec/expression.h>
-#include <arrow/dataset/api.h>
-#include <arrow/dataset/plan.h>
-#include <arrow/filesystem/api.h>
-#include <arrow/io/api.h>
-#include <arrow/util/checked_cast.h>
-#include <arrow/util/iterator.h>
-
-#include <arrow/array/array_base.h>
-#include <arrow/array/array_nested.h>
-#include <arrow/array/data.h>
-#include <arrow/array/util.h>
-#include <arrow/testing/random.h>
-#include <arrow/util/key_value_metadata.h>
-
-#include <boost/uuid/uuid.hpp>
-#include <boost/uuid/uuid_generators.hpp>
-#include <boost/uuid/uuid_io.hpp>
-
-#include <parquet/arrow/reader.h>
-#include <parquet/arrow/writer.h>
-
 #include <thallium.hpp>
 
+#include "arrow_headers.h"
 #include "ace.h"
 
 
@@ -162,12 +140,12 @@ int main(int argc, char** argv) {
                 }
 
                 segments[0].second = total_size;
-                do_rdma.on(req.get_endpoint())(batch_sizes, data_offsets, data_sizes, off_offsets, off_sizes, total_size, arrow_bulk);
-
-                return req.respond(0);
+                ScanRespStub stub(data_offsets, data_sizes, off_offsets, off_sizes, batch_sizes, total_size, arrow_bulk);
+                return req.respond(stub);
             } else {
                 reader_map.erase(uuid);
-                return req.respond(1);
+                ScanRespStub stub;
+                return req.respond(stub);
             }
         };
     
@@ -179,4 +157,4 @@ int main(int argc, char** argv) {
     std::cout << "Server running at address " << engine.self() << std::endl;    
 
     engine.wait_for_finalize();        
-};
+}
