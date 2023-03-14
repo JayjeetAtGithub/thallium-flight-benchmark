@@ -38,7 +38,7 @@ int main(int argc, char** argv) {
     uint8_t *segment_buffer = (uint8_t*)malloc(kTransferSize);
     
     std::vector<std::pair<void*,std::size_t>> segments(1);
-    tl::bulk arrow_bulk;
+    tl::bulk server_bulk;
 
     std::function<void(const tl::request&, const ScanReqRPCStub&)> scan = 
         [&reader_map, &mid, &svr_addr, &backend, &selectivity](const tl::request &req, const ScanReqRPCStub& stub) {
@@ -53,7 +53,7 @@ int main(int argc, char** argv) {
 
     int32_t total_rows_written = 0;
     std::function<void(const tl::request&, const std::string&, const tl::bulk&)> get_next_batch = 
-        [&mid, &svr_addr, &engine, &reader_map, &total_rows_written, &segment_buffer, &segments, &arrow_bulk](const tl::request &req, const std::string& uuid, const tl::bulk& arrow_bulk) {
+        [&mid, &svr_addr, &engine, &reader_map, &total_rows_written, &segment_buffer, &segments, &server_bulk](const tl::request &req, const std::string& uuid, const tl::bulk& client_bulk) {
             std::shared_ptr<arrow::RecordBatchReader> reader = reader_map[uuid];
             std::shared_ptr<arrow::RecordBatch> batch;
             std::vector<std::shared_ptr<arrow::RecordBatch>> batches;
@@ -62,7 +62,7 @@ int main(int argc, char** argv) {
             if (total_rows_written == 0) {
                 segments[0].first = (void*)segment_buffer;
                 segments[0].second = kTransferSize;
-                arrow_bulk = engine.expose(segments, tl::bulk_mode::read_write);
+                server_bulk = engine.expose(segments, tl::bulk_mode::read_write);
             }
 
             // collect about 1<<17 batches for each transfer
@@ -139,7 +139,7 @@ int main(int argc, char** argv) {
                 }
 
                 segments[0].second = total_size;
-                arrow_bulk.bulk(0, total_size).on(req.get_endpoint()) >> local(0, total_size);
+                server_bulk.bulk(0, total_size) >> client_bulk(0, total_size).on(req.get_endpoint());
 
                 ScanRespStubPush stub(data_offsets, data_sizes, off_offsets, off_sizes, batch_sizes, total_size);
                 return req.respond(stub);
