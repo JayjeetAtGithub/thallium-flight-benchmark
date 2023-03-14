@@ -139,7 +139,7 @@ int main(int argc, char** argv) {
                 }
 
                 segments[0].second = total_size;
-                server_bulk.bulk(0, total_size) >> client_bulk(0, total_size).on(req.get_endpoint());
+                server_bulk(0, total_size) >> client_bulk(0, total_size).on(req.get_endpoint());
 
                 ScanRespStubPush stub(data_offsets, data_sizes, off_offsets, off_sizes, batch_sizes, total_size);
                 return req.respond(stub);
