@@ -64,7 +64,7 @@ std::vector<std::shared_ptr<arrow::RecordBatch>> GetNextBatch(ConnCtx &conn_ctx,
     }
 
     tl::remote_procedure get_next_batch = conn_ctx.engine.define("get_next_batch");
-    ScanRespStub resp = get_next_batch.on(conn_ctx.endpoint)(scan_ctx.uuid, local_bulk);
+    ScanRespStubPush resp = get_next_batch.on(conn_ctx.endpoint)(scan_ctx.uuid, local_bulk);
     if (resp.batch_sizes.size() == 0) {
         return std::vector<std::shared_ptr<arrow::RecordBatch>>();
     }
