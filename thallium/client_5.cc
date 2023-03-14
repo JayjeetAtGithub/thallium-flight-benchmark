@@ -55,21 +55,19 @@ ScanCtx Scan(ConnCtx &conn_ctx, ScanReq &scan_req) {
     scan_ctx.schema = scan_req.schema;
     return scan_ctx;
 }
+    
 
-std::vector<std::shared_ptr<arrow::RecordBatch>> GetNextBatch(ConnCtx &conn_ctx, ScanCtx &scan_ctx, int32_t flag) {    
+std::vector<std::shared_ptr<arrow::RecordBatch>> GetNextBatch(tl::remote_procedure &fn, ConnCtx &conn_ctx, ScanCtx &scan_ctx, int32_t flag) {    
     if (flag == 1) {
         segments[0].first = (uint8_t*)malloc(kTransferSize);
         segments[0].second = kTransferSize;
         local_bulk = conn_ctx.engine.expose(segments, tl::bulk_mode::write_only);
     }
 
-    tl::remote_procedure get_next_batch = conn_ctx.engine.define("get_next_batch");
-    ScanRespStubPush resp = get_next_batch.on(conn_ctx.endpoint)(scan_ctx.uuid, local_bulk);
+    ScanRespStubPush resp = fn.on(conn_ctx.endpoint)(scan_ctx.uuid, local_bulk);
     if (resp.batch_sizes.size() == 0) {
         return std::vector<std::shared_ptr<arrow::RecordBatch>>();
     }
-
-    // resp.bulk(0, resp.total_size).on(conn_ctx.endpoint) >> local(0, resp.total_size);
 
     std::vector<std::shared_ptr<arrow::RecordBatch>> batches;    
     int num_cols = scan_ctx.schema->num_fields();            
@@ -144,8 +142,9 @@ arrow::Status Main(int argc, char **argv) {
     ARROW_ASSIGN_OR_RAISE(auto scan_req, GetScanRequest(path, filter, schema, schema));
     ScanCtx scan_ctx = Scan(conn_ctx, scan_req);
     std::vector<std::shared_ptr<arrow::RecordBatch>> batches;
+    tl::remote_procedure fn = conn_ctx.engine.define("get_next_batch");
     auto start = std::chrono::high_resolution_clock::now();
-    while ((batches = GetNextBatch(conn_ctx, scan_ctx, (total_rows == 0))).size() != 0) {
+    while ((batches = GetNextBatch(fn, conn_ctx, scan_ctx, (total_rows == 0))).size() != 0) {
         total_batches += batches.size();
         for (auto batch : batches) {
             total_rows += batch->num_rows();

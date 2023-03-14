@@ -41,7 +41,7 @@ int main(int argc, char** argv) {
     tl::bulk server_bulk;
 
     std::function<void(const tl::request&, const ScanReqRPCStub&)> scan = 
-        [&reader_map, &mid, &svr_addr, &backend, &selectivity](const tl::request &req, const ScanReqRPCStub& stub) {
+        [&reader_map, &backend, &selectivity](const tl::request &req, const ScanReqRPCStub& stub) {
             arrow::dataset::internal::Initialize();
             cp::ExecContext exec_ctx;
             std::shared_ptr<arrow::RecordBatchReader> reader = ScanDataset(exec_ctx, stub, backend, selectivity).ValueOrDie();
@@ -53,7 +53,7 @@ int main(int argc, char** argv) {
 
     int32_t total_rows_written = 0;
     std::function<void(const tl::request&, const std::string&, const tl::bulk&)> get_next_batch = 
-        [&mid, &svr_addr, &engine, &reader_map, &total_rows_written, &segment_buffer, &segments, &server_bulk](const tl::request &req, const std::string& uuid, const tl::bulk& client_bulk) {
+        [&mid, &engine, &reader_map, &total_rows_written, &segment_buffer, &segments, &server_bulk](const tl::request &req, const std::string& uuid, const tl::bulk& client_bulk) {
             std::shared_ptr<arrow::RecordBatchReader> reader = reader_map[uuid];
             std::shared_ptr<arrow::RecordBatch> batch;
             std::vector<std::shared_ptr<arrow::RecordBatch>> batches;
