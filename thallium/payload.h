@@ -56,8 +56,8 @@ class ScanRespStubPush {
         std::vector<int32_t> batch_sizes;
         int32_t total_size;
 
-        ScanRespStub() {}
-        ScanRespStub(std::vector<int32_t> data_offsets, std::vector<int32_t> data_sizes, std::vector<int32_t> off_offsets, std::vector<int32_t> off_sizes, std::vector<int32_t> batch_sizes, int32_t total_size):
+        ScanRespStubPush() {}
+        ScanRespStubPush(std::vector<int32_t> data_offsets, std::vector<int32_t> data_sizes, std::vector<int32_t> off_offsets, std::vector<int32_t> off_sizes, std::vector<int32_t> batch_sizes, int32_t total_size):
             data_offsets(data_offsets), data_sizes(data_sizes), off_offsets(off_offsets), off_sizes(off_sizes), batch_sizes(batch_sizes), total_size(total_size) {}
 
         template<class A>
