@@ -44,7 +44,7 @@ ConnCtx Init(std::string protocol, std::string host) {
     return ctx;
 }
 
-tl::bulk local;
+tl::bulk local_bulk;
 std::vector<std::pair<void*,std::size_t>> segments(1);
 
 ScanCtx Scan(ConnCtx &conn_ctx, ScanReq &scan_req) {
@@ -57,20 +57,19 @@ ScanCtx Scan(ConnCtx &conn_ctx, ScanReq &scan_req) {
 }
 
 std::vector<std::shared_ptr<arrow::RecordBatch>> GetNextBatch(ConnCtx &conn_ctx, ScanCtx &scan_ctx, int32_t flag) {    
-    tl::remote_procedure get_next_batch = conn_ctx.engine.define("get_next_batch");
-    ScanRespStub resp = get_next_batch.on(conn_ctx.endpoint)(scan_ctx.uuid);
+    if (flag == 1) {
+        segments[0].first = (uint8_t*)malloc(kTransferSize);
+        segments[0].second = kTransferSize;
+        local_bulk = conn_ctx.engine.expose(segments, tl::bulk_mode::write_only);
+    }
 
+    tl::remote_procedure get_next_batch = conn_ctx.engine.define("get_next_batch");
+    ScanRespStub resp = get_next_batch.on(conn_ctx.endpoint)(scan_ctx.uuid, local_bulk);
     if (resp.batch_sizes.size() == 0) {
         return std::vector<std::shared_ptr<arrow::RecordBatch>>();
     }
 
-    if (flag == 1) {
-        segments[0].first = (uint8_t*)malloc(kTransferSize);
-        segments[0].second = kTransferSize;
-        local = conn_ctx.engine.expose(segments, tl::bulk_mode::write_only);
-    }
-
-    resp.bulk(0, resp.total_size).on(conn_ctx.endpoint) >> local(0, resp.total_size);
+    // resp.bulk(0, resp.total_size).on(conn_ctx.endpoint) >> local(0, resp.total_size);
 
     std::vector<std::shared_ptr<arrow::RecordBatch>> batches;    
     int num_cols = scan_ctx.schema->num_fields();            

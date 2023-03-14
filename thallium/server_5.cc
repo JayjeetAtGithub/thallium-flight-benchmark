@@ -53,8 +53,8 @@ int main(int argc, char** argv) {
         };
 
     int32_t total_rows_written = 0;
-    std::function<void(const tl::request&, const std::string&)> get_next_batch = 
-        [&mid, &svr_addr, &engine, &do_rdma, &reader_map, &total_rows_written, &segment_buffer, &segments, &arrow_bulk](const tl::request &req, const std::string& uuid) {
+    std::function<void(const tl::request&, const std::string&, const tl::bulk&)> get_next_batch = 
+        [&mid, &svr_addr, &engine, &do_rdma, &reader_map, &total_rows_written, &segment_buffer, &segments, &arrow_bulk](const tl::request &req, const std::string& uuid, const tl::bulk& arrow_bulk) {
             std::shared_ptr<arrow::RecordBatchReader> reader = reader_map[uuid];
             std::shared_ptr<arrow::RecordBatch> batch;
             std::vector<std::shared_ptr<arrow::RecordBatch>> batches;
@@ -140,11 +140,13 @@ int main(int argc, char** argv) {
                 }
 
                 segments[0].second = total_size;
-                ScanRespStub stub(data_offsets, data_sizes, off_offsets, off_sizes, batch_sizes, total_size, arrow_bulk);
+                arrow_bulk.bulk(0, total_size).on(req.get_endpoint()) >> local(0, total_size);
+
+                ScanRespStubPush stub(data_offsets, data_sizes, off_offsets, off_sizes, batch_sizes, total_size);
                 return req.respond(stub);
             } else {
                 reader_map.erase(uuid);
-                ScanRespStub stub;
+                ScanRespStubPush stub;
                 return req.respond(stub);
             }
         };
