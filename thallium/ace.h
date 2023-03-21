@@ -12,7 +12,7 @@
 #include <arrow/compute/api_vector.h>
 #include <arrow/compute/cast.h>
 #include <arrow/compute/exec/exec_plan.h>
-#include <arrow/compute/exec/expression.h>
+#include <arrow/compute/expression.h>
 #include <arrow/filesystem/filesystem.h>
 #include <arrow/filesystem/path_util.h>
 #include <arrow/util/future.h>

@@ -6,7 +6,7 @@
 #include <thallium/serialization/stl/string.hpp>
 #include <thallium/serialization/stl/vector.hpp>
 
-#include <arrow/compute/exec/expression.h>
+#include <arrow/compute/expression.h>
 
 namespace tl = thallium;
 

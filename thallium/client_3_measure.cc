@@ -4,7 +4,7 @@
 #include <fstream>
 
 #include <arrow/api.h>
-#include <arrow/compute/exec/expression.h>
+#include <arrow/compute/expression.h>
 #include <arrow/dataset/api.h>
 #include <arrow/filesystem/api.h>
 #include <arrow/io/api.h>
