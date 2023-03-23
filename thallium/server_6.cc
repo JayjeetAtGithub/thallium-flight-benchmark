@@ -38,14 +38,15 @@ namespace cp = arrow::compute;
 const int32_t kTransferSize = 19 * 1024 * 1024;
 const int32_t kBatchSize = 1 << 17;
 
+std::deque<std::shared_ptr<arrow::RecordBatch>> batch_queue;
 void scan_handler(void *arg) {
     arrow::RecordBatchReader *reader = (arrow::RecordBatchReader*)arg;
     std::shared_ptr<arrow::RecordBatch> batch;
     reader->ReadNext(&batch);
-    total_rows_read += batch->num_rows();
+    batch_queue.push_back(batch);
     while (batch != nullptr) {
         reader->ReadNext(&batch);
-        total_rows_read += batch->num_rows();
+        batch_queue.push_back(batch);
     }
 }
 
@@ -80,7 +81,6 @@ int main(int argc, char** argv) {
         tl::xstream::create(tl::scheduler::predef::deflt, engine.get_progress_pool());
     
     int64_t total_rows_read = 0;
-
     std::function<void(const tl::request&, const ScanReqRPCStub&)> scan = 
         [&reader_map, &xstream, &backend, &selectivity, &total_rows_read](const tl::request &req, const ScanReqRPCStub& stub) {
             arrow::dataset::internal::Initialize();
@@ -96,16 +96,15 @@ int main(int argc, char** argv) {
             });
 
             int64_t batches_processed = 0;
-
-
             while (1) {
                 std::vector<std::shared_ptr<arrow::RecordBatch>> batches;
                 std::vector<int32_t> batch_sizes;
                 int64_t rows_processed = 0;
 
                 while (rows_processed < kBatchSize) {
-                    if (!queue.empty()) {
-                        auto batch = pop_batch();
+                    if (!batch_queue.empty()) {
+                        auto batch = batch_queue.front();
+                        batch_queue.pop_front();
                         batches.push_back(batch);
                         batch_sizes.push_back(batch->num_rows());
 
@@ -178,6 +177,7 @@ int main(int argc, char** argv) {
             //     segments[0].second = total_size;
             //     do_rdma.on(req.get_endpoint())(batch_sizes, data_offsets, data_sizes, off_offsets, off_sizes, total_size, arrow_bulk);
             // }
+            }
             return req.respond(uuid);
         };
 
