@@ -106,7 +106,7 @@ int main(int argc, char** argv) {
                         auto batch = batch_queue.front();
 
                         std::cout << batch->num_rows() << std::endl;
-
+                        total_rows_read += batch->num_rows();
                         batch_queue.pop_front();
                         batches.push_back(batch);
                         batch_sizes.push_back(batch->num_rows());
@@ -181,6 +181,7 @@ int main(int argc, char** argv) {
             //     segments[0].second = total_size;
             //     do_rdma.on(req.get_endpoint())(batch_sizes, data_offsets, data_sizes, off_offsets, off_sizes, total_size, arrow_bulk);
             // }
+            std::cout << "Read " << total_rows_read << " rows" << std::endl;
             return req.respond(uuid);
         };
 
