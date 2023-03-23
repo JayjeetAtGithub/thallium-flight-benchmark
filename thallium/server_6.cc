@@ -104,6 +104,9 @@ int main(int argc, char** argv) {
                 while (rows_processed < kBatchSize) {
                     if (!batch_queue.empty()) {
                         auto batch = batch_queue.front();
+
+                        std::cout << batch->num_rows() << std::endl;
+
                         batch_queue.pop_front();
                         batches.push_back(batch);
                         batch_sizes.push_back(batch->num_rows());
