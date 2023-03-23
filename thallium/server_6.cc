@@ -36,6 +36,18 @@ namespace cp = arrow::compute;
 
 
 const int32_t kTransferSize = 19 * 1024 * 1024;
+const int32_t kBatchSize = 1 << 17;
+
+void scan_handler(void *arg) {
+    arrow::RecordBatchReader *reader = (arrow::RecordBatchReader*)arg;
+    std::shared_ptr<arrow::RecordBatch> batch;
+    reader->ReadNext(&batch);
+    total_rows_read += batch->num_rows();
+    while (batch != nullptr) {
+        reader->ReadNext(&batch);
+        total_rows_read += batch->num_rows();
+    }
+}
 
 
 int main(int argc, char** argv) {
@@ -63,117 +75,147 @@ int main(int argc, char** argv) {
     
     std::vector<std::pair<void*,std::size_t>> segments(1);
     tl::bulk arrow_bulk;
+    
+    tl::managed<tl::xstream> xstream = 
+        tl::xstream::create(tl::scheduler::predef::deflt, engine.get_progress_pool());
+    
+    int64_t total_rows_read = 0;
 
     std::function<void(const tl::request&, const ScanReqRPCStub&)> scan = 
-        [&reader_map, &mid, &svr_addr, &backend, &selectivity](const tl::request &req, const ScanReqRPCStub& stub) {
+        [&reader_map, &xstream, &backend, &selectivity, &total_rows_read](const tl::request &req, const ScanReqRPCStub& stub) {
             arrow::dataset::internal::Initialize();
             cp::ExecContext exec_ctx;
             std::shared_ptr<arrow::RecordBatchReader> reader = ScanDataset(exec_ctx, stub, backend, selectivity).ValueOrDie();
 
             std::string uuid = boost::uuids::to_string(boost::uuids::random_generator()());
             reader_map[uuid] = reader;
-            return req.respond(uuid);
-        };
+            
+            // scanning is started in one thread
+            xstream->make_thread([&]() {
+                scan_handler((void*)reader.get());
+            });
 
-    int32_t total_rows_written = 0;
-    std::function<void(const tl::request&, const std::string&)> get_next_batch = 
-        [&mid, &svr_addr, &engine, &do_rdma, &reader_map, &total_rows_written, &segment_buffer, &segments, &arrow_bulk](const tl::request &req, const std::string& uuid) {
-            std::shared_ptr<arrow::RecordBatchReader> reader = reader_map[uuid];
-            std::shared_ptr<arrow::RecordBatch> batch;
-            std::vector<std::shared_ptr<arrow::RecordBatch>> batches;
-            std::vector<int32_t> batch_sizes;
+            int64_t batches_processed = 0;
 
-            if (total_rows_written == 0) {
-                segments[0].first = (void*)segment_buffer;
-                segments[0].second = kTransferSize;
-                arrow_bulk = engine.expose(segments, tl::bulk_mode::read_write);
-            }
 
-            // collect about 1<<17 batches for each transfer
-            int32_t total_rows_in_transfer_batch = 0;
-            while (total_rows_in_transfer_batch < 131072) {
-                reader->ReadNext(&batch);
-                if (batch == nullptr) {
-                    break;
-                }
-                batches.push_back(batch);
-                batch_sizes.push_back(batch->num_rows());
-                total_rows_in_transfer_batch += batch->num_rows();
-            }
+            while (1) {
+                std::vector<std::shared_ptr<arrow::RecordBatch>> batches;
+                std::vector<int32_t> batch_sizes;
+                int64_t rows_processed = 0;
 
-            if (batches.size() != 0) {
-                total_rows_written += total_rows_in_transfer_batch;
-                int32_t curr_pos = 0;
-                int32_t total_size = 0;
+                while (rows_processed < kBatchSize) {
+                    if (!queue.empty()) {
+                        auto batch = pop_batch();
+                        batches.push_back(batch);
+                        batch_sizes.push_back(batch->num_rows());
 
-                std::vector<int32_t> data_offsets;
-                std::vector<int32_t> data_sizes;
-
-                std::vector<int32_t> off_offsets;
-                std::vector<int32_t> off_sizes;
-
-                std::string null_buff = "x";
-                
-                for (auto b : batches) {
-                    for (int32_t i = 0; i < b->num_columns(); i++) {
-                        std::shared_ptr<arrow::Array> col_arr = b->column(i);
-                        arrow::Type::type type = col_arr->type_id();
-                        int32_t null_count = col_arr->null_count();
-
-                        if (is_binary_like(type)) {
-                            std::shared_ptr<arrow::Buffer> data_buff = 
-                                std::static_pointer_cast<arrow::BinaryArray>(col_arr)->value_data();
-                            std::shared_ptr<arrow::Buffer> offset_buff = 
-                                std::static_pointer_cast<arrow::BinaryArray>(col_arr)->value_offsets();
-
-                            int32_t data_size = data_buff->size();
-                            int32_t offset_size = offset_buff->size();
-
-                            data_offsets.emplace_back(curr_pos);
-                            data_sizes.emplace_back(data_size); 
-                            memcpy(segment_buffer + curr_pos, data_buff->data(), data_size);
-                            curr_pos += data_size;
-
-                            off_offsets.emplace_back(curr_pos);
-                            off_sizes.emplace_back(offset_size);
-                            memcpy(segment_buffer + curr_pos, offset_buff->data(), offset_size);
-                            curr_pos += offset_size;
-
-                            total_size += (data_size + offset_size);
-                        } else {
-                            std::shared_ptr<arrow::Buffer> data_buff = 
-                                std::static_pointer_cast<arrow::PrimitiveArray>(col_arr)->values();
-
-                            int32_t data_size = data_buff->size();
-                            int32_t offset_size = null_buff.size(); 
-
-                            data_offsets.emplace_back(curr_pos);
-                            data_sizes.emplace_back(data_size);
-                            memcpy(segment_buffer + curr_pos, data_buff->data(), data_size);
-                            curr_pos += data_size;
-
-                            off_offsets.emplace_back(curr_pos);
-                            off_sizes.emplace_back(offset_size);
-                            memcpy(segment_buffer + curr_pos, (uint8_t*)null_buff.c_str(), offset_size);
-                            curr_pos += offset_size;
-
-                            total_size += (data_size + offset_size);
-                        }
+                        rows_processed += batch->num_rows();
+                        batches_processed += 1;
                     }
                 }
 
-                segments[0].second = total_size;
-                do_rdma.on(req.get_endpoint())(batch_sizes, data_offsets, data_sizes, off_offsets, off_sizes, total_size, arrow_bulk);
+            //     if (batches.size() != 0) {
+            //     total_rows_written += total_rows_in_transfer_batch;
+            //     int32_t curr_pos = 0;
+            //     int32_t total_size = 0;
 
-                return req.respond(0);
-            } else {
-                reader_map.erase(uuid);
-                return req.respond(1);
-            }
+            //     std::vector<int32_t> data_offsets;
+            //     std::vector<int32_t> data_sizes;
+
+            //     std::vector<int32_t> off_offsets;
+            //     std::vector<int32_t> off_sizes;
+
+            //     std::string null_buff = "x";
+                
+            //     for (auto b : batches) {
+            //         for (int32_t i = 0; i < b->num_columns(); i++) {
+            //             std::shared_ptr<arrow::Array> col_arr = b->column(i);
+            //             arrow::Type::type type = col_arr->type_id();
+            //             int32_t null_count = col_arr->null_count();
+
+            //             if (is_binary_like(type)) {
+            //                 std::shared_ptr<arrow::Buffer> data_buff = 
+            //                     std::static_pointer_cast<arrow::BinaryArray>(col_arr)->value_data();
+            //                 std::shared_ptr<arrow::Buffer> offset_buff = 
+            //                     std::static_pointer_cast<arrow::BinaryArray>(col_arr)->value_offsets();
+
+            //                 int32_t data_size = data_buff->size();
+            //                 int32_t offset_size = offset_buff->size();
+
+            //                 data_offsets.emplace_back(curr_pos);
+            //                 data_sizes.emplace_back(data_size); 
+            //                 memcpy(segment_buffer + curr_pos, data_buff->data(), data_size);
+            //                 curr_pos += data_size;
+
+            //                 off_offsets.emplace_back(curr_pos);
+            //                 off_sizes.emplace_back(offset_size);
+            //                 memcpy(segment_buffer + curr_pos, offset_buff->data(), offset_size);
+            //                 curr_pos += offset_size;
+
+            //                 total_size += (data_size + offset_size);
+            //             } else {
+            //                 std::shared_ptr<arrow::Buffer> data_buff = 
+            //                     std::static_pointer_cast<arrow::PrimitiveArray>(col_arr)->values();
+
+            //                 int32_t data_size = data_buff->size();
+            //                 int32_t offset_size = null_buff.size(); 
+
+            //                 data_offsets.emplace_back(curr_pos);
+            //                 data_sizes.emplace_back(data_size);
+            //                 memcpy(segment_buffer + curr_pos, data_buff->data(), data_size);
+            //                 curr_pos += data_size;
+
+            //                 off_offsets.emplace_back(curr_pos);
+            //                 off_sizes.emplace_back(offset_size);
+            //                 memcpy(segment_buffer + curr_pos, (uint8_t*)null_buff.c_str(), offset_size);
+            //                 curr_pos += offset_size;
+
+            //                 total_size += (data_size + offset_size);
+            //             }
+            //         }
+            //     }
+
+            //     segments[0].second = total_size;
+            //     do_rdma.on(req.get_endpoint())(batch_sizes, data_offsets, data_sizes, off_offsets, off_sizes, total_size, arrow_bulk);
+            // }
+            return req.respond(uuid);
         };
+
+    // int32_t total_rows_written = 0;
+    // std::function<void(const tl::request&, const std::string&)> get_next_batch = 
+    //     [&mid, &svr_addr, &engine, &do_rdma, &reader_map, &total_rows_written, &segment_buffer, &segments, &arrow_bulk](const tl::request &req, const std::string& uuid) {
+    //         std::shared_ptr<arrow::RecordBatchReader> reader = reader_map[uuid];
+    //         std::shared_ptr<arrow::RecordBatch> batch;
+    //         std::vector<std::shared_ptr<arrow::RecordBatch>> batches;
+    //         std::vector<int32_t> batch_sizes;
+
+    //         if (total_rows_written == 0) {
+    //             segments[0].first = (void*)segment_buffer;
+    //             segments[0].second = kTransferSize;
+    //             arrow_bulk = engine.expose(segments, tl::bulk_mode::read_write);
+    //         }
+
+    //         // collect about 1<<17 batches for each transfer
+    //         int32_t total_rows_in_transfer_batch = 0;
+    //         while (total_rows_in_transfer_batch < 131072) {
+    //             reader->ReadNext(&batch);
+    //             if (batch == nullptr) {
+    //                 break;
+    //             }
+    //             batches.push_back(batch);
+    //             batch_sizes.push_back(batch->num_rows());
+    //             total_rows_in_transfer_batch += batch->num_rows();
+    //         }
+
+            
+    //             return req.respond(0);
+    //         } else {
+    //             reader_map.erase(uuid);
+    //             return req.respond(1);
+    //         }
+    //     };
     
     engine.define("scan", scan);
-    engine.define("get_next_batch", get_next_batch);
     std::ofstream file("/tmp/thallium_uri");
     file << engine.self();
     file.close();
