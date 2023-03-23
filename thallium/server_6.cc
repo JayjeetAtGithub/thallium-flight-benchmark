@@ -112,6 +112,7 @@ int main(int argc, char** argv) {
                         batches_processed += 1;
                     }
                 }
+            }
 
             //     if (batches.size() != 0) {
             //     total_rows_written += total_rows_in_transfer_batch;
@@ -177,7 +178,6 @@ int main(int argc, char** argv) {
             //     segments[0].second = total_size;
             //     do_rdma.on(req.get_endpoint())(batch_sizes, data_offsets, data_sizes, off_offsets, off_sizes, total_size, arrow_bulk);
             // }
-            }
             return req.respond(uuid);
         };
 
