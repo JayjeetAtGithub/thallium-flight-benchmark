@@ -107,6 +107,7 @@ int main(int argc, char** argv) {
                     if (!batch_queue.empty()) {
                         auto batch = batch_queue.front();
                         if (batch == nullptr) {
+                            std::cout << "Finished reading" << std::endl;
                             finished = true;
                             break;
                         }
