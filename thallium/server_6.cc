@@ -97,7 +97,8 @@ int main(int argc, char** argv) {
             });
 
             int64_t batches_processed = 0;
-            while (1) {
+            bool finished = false;
+            while (1 && !finished) {
                 std::vector<std::shared_ptr<arrow::RecordBatch>> batches;
                 std::vector<int32_t> batch_sizes;
                 int64_t rows_processed = 0;
@@ -106,6 +107,7 @@ int main(int argc, char** argv) {
                     if (!batch_queue.empty()) {
                         auto batch = batch_queue.front();
                         if (batch == nullptr) {
+                            finished = true;
                             break;
                         }
 
