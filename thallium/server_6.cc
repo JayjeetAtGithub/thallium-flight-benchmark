@@ -39,6 +39,7 @@ const int32_t kTransferSize = 19 * 1024 * 1024;
 const int32_t kBatchSize = 1 << 17;
 
 std::deque<std::shared_ptr<arrow::RecordBatch>> batch_queue;
+bool finished_scanning = false;
 void scan_handler(void *arg) {
     arrow::RecordBatchReader *reader = (arrow::RecordBatchReader*)arg;
     std::shared_ptr<arrow::RecordBatch> batch;
@@ -48,6 +49,7 @@ void scan_handler(void *arg) {
         reader->ReadNext(&batch);
         batch_queue.push_back(batch);
     }
+    finished_scanning = true;
 }
 
 
@@ -96,7 +98,7 @@ int main(int argc, char** argv) {
             });
 
             int64_t batches_processed = 0;
-            while (1) {
+            while (1 && !finished_scanning) {
                 std::vector<std::shared_ptr<arrow::RecordBatch>> batches;
                 std::vector<int32_t> batch_sizes;
                 int64_t rows_processed = 0;
