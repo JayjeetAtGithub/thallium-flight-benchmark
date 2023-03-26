@@ -102,6 +102,8 @@ int main(int argc, char** argv) {
                 scan_handler((void*)reader.get());
             });
 
+            std::cout << "Scan started" << std::endl;
+
             int64_t batches_processed = 0;
             bool finished = false;
             while (1 && !finished) {
