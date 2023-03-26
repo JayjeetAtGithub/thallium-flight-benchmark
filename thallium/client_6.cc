@@ -99,6 +99,8 @@ auto schema = arrow::schema({
         arrow::field("total_amount", arrow::float64())
     });
 
+int64_t total_rows_read = 0;
+
 std::function<void(const tl::request&, std::vector<int32_t>&, std::vector<int32_t>&, std::vector<int32_t>&, std::vector<int32_t>&, std::vector<int32_t>&, int32_t&, tl::bulk&)> f =
     [&batches, &segments, &local, &schema](const tl::request& req, std::vector<int32_t> &batch_sizes, std::vector<int32_t>& data_offsets, std::vector<int32_t>& data_sizes, std::vector<int32_t>& off_offsets, std::vector<int32_t>& off_sizes, int32_t& total_size, tl::bulk& b) {
         b(0, total_size).on(req.get_endpoint()) >> local(0, total_size);
@@ -131,6 +133,8 @@ std::function<void(const tl::request&, std::vector<int32_t>&, std::vector<int32_
                 }
             }
             auto batch = arrow::RecordBatch::Make(schema, num_rows, columns);
+            total_rows_read += batch->num_rows();
+            std::cout << "Read " << total_rows_read << " rows" << std::endl;
             batches.push_back(batch);
         }
         return req.respond(0);
