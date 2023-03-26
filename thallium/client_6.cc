@@ -62,20 +62,15 @@ ConnCtx Init(std::string protocol, std::string host) {
     return ctx;
 }
 
-////
 tl::bulk local;
 std::vector<std::pair<void*,std::size_t>> segments(1);
-
-if (flag == 1) {
-            segments[0].first = (uint8_t*)malloc(kTransferSize);
-            segments[0].second = kTransferSize;
-            local = conn_ctx.engine.expose(segments, tl::bulk_mode::write_only);
-        }
-        ////
 
 ScanCtx Scan(ConnCtx &conn_ctx, ScanReq &scan_req) {
     tl::remote_procedure scan = conn_ctx.engine.define("scan");
     ScanCtx scan_ctx;
+    segments[0].first = (uint8_t*)malloc(kTransferSize);
+    segments[0].second = kTransferSize;
+    local = conn_ctx.engine.expose(segments, tl::bulk_mode::write_only);
     std::string uuid = scan.on(conn_ctx.endpoint)(scan_req.stub);
     scan_ctx.uuid = uuid;
     scan_ctx.schema = scan_req.schema;
@@ -112,7 +107,6 @@ std::function<void(const tl::request&, std::vector<int32_t>&, std::vector<int32_
         for (int32_t batch_idx = 0; batch_idx < batch_sizes.size(); batch_idx++) {
             int32_t num_rows = batch_sizes[batch_idx];
             
-            std::shared_ptr<arrow::RecordBatch> batch;
             std::vector<std::shared_ptr<arrow::Array>> columns;
             
             for (int64_t i = 0; i < num_cols; i++) {
