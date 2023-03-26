@@ -131,20 +131,12 @@ std::function<void(const tl::request&, std::vector<int32_t>&, std::vector<int32_
                 }
             }
             auto batch = arrow::RecordBatch::Make(schema, num_rows, columns);
+            std::cout << batch->ToString() << std::endl;
             batches.push_back(batch);
         }
         return req.respond(0);
     };
 
-//     // tl::remote_procedure get_next_batch = conn_ctx.engine.define("get_next_batch");
-//     // int e = get_next_batch.on(conn_ctx.endpoint)(scan_ctx.uuid);
-
-//     if (e == 0) {
-//         return batches;
-//     } else {
-//         return std::vector<std::shared_ptr<arrow::RecordBatch>>();
-//     }
-// }
 
 arrow::Status Main(int argc, char **argv) {
     if (argc < 2) {
