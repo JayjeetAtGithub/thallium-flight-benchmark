@@ -77,6 +77,7 @@ int main(int argc, char** argv) {
     std::vector<std::pair<void*,std::size_t>> segments(1);
     tl::bulk arrow_bulk;
     
+    // create a new pool
     tl::managed<tl::xstream> xstream = 
         tl::xstream::create(tl::scheduler::predef::deflt, engine.get_progress_pool());
     
@@ -96,9 +97,11 @@ int main(int argc, char** argv) {
             }
             
             // scanning is started in one thread
+
+            // dnt create managed thread
             xstream->make_thread([&]() {
                 scan_handler((void*)reader.get());
-            });
+            }, tl::anonymous());
 
             int64_t batches_processed = 0;
             bool finished = false;
