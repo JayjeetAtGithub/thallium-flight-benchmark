@@ -104,6 +104,8 @@ int main(int argc, char** argv) {
 
             std::cout << "Scan started" << std::endl;
 
+            auto start = std::chrono::high_resolution_clock::now();
+
             int64_t batches_processed = 0;
             bool finished = false;
             while (1 && !finished) {
@@ -199,6 +201,9 @@ int main(int argc, char** argv) {
                     do_rdma.on(req.get_endpoint())(batch_sizes, data_offsets, data_sizes, off_offsets, off_sizes, total_size, arrow_bulk);
                 }
             }
+
+            auto end = std::chrono::high_resolution_clock::now();
+            std::cout << "Server side logic took: " << std::to_string((double)std::chrono::duration_cast<std::chrono::microseconds>(end-start).count()/1000) << " ms" << std::endl;
 
             return req.respond(uuid);
         };
