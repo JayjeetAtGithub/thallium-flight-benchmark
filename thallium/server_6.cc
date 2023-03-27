@@ -116,10 +116,9 @@ int main(int argc, char** argv) {
                             break;
                         }
 
-                        std::cout << batch->num_rows() << std::endl;
+                        // std::cout << batch->num_rows() << std::endl;
                         total_rows_read += batch->num_rows();
-                        
-                        std::cout << "Read " << total_rows_read << " rows" << std::endl;
+                        // std::cout << "Read " << total_rows_read << " rows" << std::endl;
 
                         batch_queue.pop_front();
                         batches.push_back(batch);
