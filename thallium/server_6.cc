@@ -129,7 +129,6 @@ int main(int argc, char** argv) {
                         batches_processed += 1;
                     }
                 }
-                // send_to_client(batches, batch_sizes);
 
                 if (batches.size() != 0) {
                     int32_t curr_pos = 0;
