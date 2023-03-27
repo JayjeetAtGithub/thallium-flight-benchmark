@@ -65,16 +65,12 @@ ConnCtx Init(std::string protocol, std::string host) {
 tl::bulk local;
 std::vector<std::pair<void*,std::size_t>> segments(1);
 
-ScanCtx Scan(ConnCtx &conn_ctx, ScanReq &scan_req) {
+void Scan(ConnCtx &conn_ctx, ScanReq &scan_req) {
     tl::remote_procedure scan = conn_ctx.engine.define("scan");
-    ScanCtx scan_ctx;
     segments[0].first = (uint8_t*)malloc(kTransferSize);
     segments[0].second = kTransferSize;
     local = conn_ctx.engine.expose(segments, tl::bulk_mode::write_only);
-    std::string uuid = scan.on(conn_ctx.endpoint)(scan_req.stub);
-    scan_ctx.uuid = uuid;
-    scan_ctx.schema = scan_req.schema;
-    return scan_ctx;
+    scan.on(conn_ctx.endpoint)(scan_req.stub);
 }
 
 std::vector<std::shared_ptr<arrow::RecordBatch>> batches;
@@ -162,7 +158,7 @@ arrow::Status Main(int argc, char **argv) {
     ARROW_ASSIGN_OR_RAISE(auto scan_req, GetScanRequest(path, filter, schema, schema));
 
     auto start = std::chrono::high_resolution_clock::now();
-    ScanCtx scan_ctx = Scan(conn_ctx, scan_req);
+    Scan(conn_ctx, scan_req);
     auto end = std::chrono::high_resolution_clock::now();
     std::cout << "Scan took " << std::to_string((double)std::chrono::duration_cast<std::chrono::microseconds>(end-start).count()/1000) << " ms" << std::endl;
 

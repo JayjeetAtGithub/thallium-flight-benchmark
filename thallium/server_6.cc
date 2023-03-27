@@ -72,7 +72,6 @@ int main(int argc, char** argv) {
     }
 
     tl::remote_procedure do_rdma = engine.define("do_rdma");
-    std::unordered_map<std::string, std::shared_ptr<arrow::RecordBatchReader>> reader_map;
     uint8_t *segment_buffer = (uint8_t*)malloc(kTransferSize);
     
     std::vector<std::pair<void*,std::size_t>> segments(1);
@@ -83,13 +82,12 @@ int main(int argc, char** argv) {
     
     int64_t total_rows_read = 0;
     std::function<void(const tl::request&, const ScanReqRPCStub&)> scan = 
-        [&reader_map, &xstream, &backend, &engine, &do_rdma, &selectivity, &total_rows_read, &segment_buffer, &segments, &arrow_bulk](const tl::request &req, const ScanReqRPCStub& stub) {
+        [&xstream, &backend, &engine, &do_rdma, &selectivity, &total_rows_read, &segment_buffer, &segments, &arrow_bulk](const tl::request &req, const ScanReqRPCStub& stub) {
             arrow::dataset::internal::Initialize();
             cp::ExecContext exec_ctx;
             std::shared_ptr<arrow::RecordBatchReader> reader = ScanDataset(exec_ctx, stub, backend, selectivity).ValueOrDie();
-
-            std::string uuid = boost::uuids::to_string(boost::uuids::random_generator()());
-            reader_map[uuid] = reader;
+            
+            auto start = std::chrono::high_resolution_clock::now();
 
             if (total_rows_read == 0) {
                 segments[0].first = (void*)segment_buffer;
@@ -101,10 +99,6 @@ int main(int argc, char** argv) {
             xstream->make_thread([&]() {
                 scan_handler((void*)reader.get());
             });
-
-            std::cout << "Scan started" << std::endl;
-
-            auto start = std::chrono::high_resolution_clock::now();
 
             int64_t batches_processed = 0;
             bool finished = false;
@@ -205,7 +199,7 @@ int main(int argc, char** argv) {
             auto end = std::chrono::high_resolution_clock::now();
             std::cout << "Server side logic took: " << std::to_string((double)std::chrono::duration_cast<std::chrono::microseconds>(end-start).count()/1000) << " ms" << std::endl;
 
-            return req.respond(uuid);
+            return req.respond(0);
         };
 
     // int32_t total_rows_written = 0;
