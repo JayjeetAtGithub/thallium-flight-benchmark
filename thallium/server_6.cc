@@ -38,17 +38,47 @@ namespace cp = arrow::compute;
 const int32_t kTransferSize = 19 * 1024 * 1024;
 const int32_t kBatchSize = 1 << 17;
 
-std::deque<std::shared_ptr<arrow::RecordBatch>> batch_queue;
+class ConcurrentRecordBatchQueue {
+    public:
+        std::deque<std::shared_ptr<arrow::RecordBatch>> queue;
+        std::mutex mutex;
+        std::condition_variable cv;
+        bool done = false;
+    
+        void push(std::shared_ptr<arrow::RecordBatch> batch) {
+            std::unique_lock<std::mutex> lock(mutex);
+            queue.push_back(batch);
+            cv.notify_one();
+        }
+
+        std::shared_ptr<arrow::RecordBatch> pop() {
+            std::unique_lock<std::mutex> lock(mutex);
+            while (queue.empty() && !done) {
+                cv.wait(lock);
+            }
+            if (queue.empty()) {
+                return nullptr;
+            }
+            std::shared_ptr<arrow::RecordBatch> batch = queue.front();
+            queue.pop_front();
+            return batch;
+        }
+};
+
+ConcurrentRecordBatchQueue cq;
 void scan_handler(void *arg) {
     arrow::RecordBatchReader *reader = (arrow::RecordBatchReader*)arg;
     std::shared_ptr<arrow::RecordBatch> batch;
+
     reader->ReadNext(&batch);
-    batch_queue.push_back(batch);
+    cq.push_back(batch);
+    
     while (batch != nullptr) {
         reader->ReadNext(&batch);
-        batch_queue.push_back(batch);
+        cq.push_back(batch);
     }
-    batch_queue.push_back(nullptr);
+    
+    cq.push_back(nullptr);
 }
 
 
@@ -83,7 +113,7 @@ int main(int argc, char** argv) {
     
     int64_t total_rows_read = 0;
     std::function<void(const tl::request&, const ScanReqRPCStub&)> scan = 
-        [&xstream, &backend, &engine, &do_rdma, &selectivity, &total_rows_read, &segment_buffer, &segments, &arrow_bulk](const tl::request &req, const ScanReqRPCStub& stub) {
+        [&xstream, &cq, &backend, &engine, &do_rdma, &selectivity, &total_rows_read, &segment_buffer, &segments, &arrow_bulk](const tl::request &req, const ScanReqRPCStub& stub) {
             arrow::dataset::internal::Initialize();
             cp::ExecContext exec_ctx;
             std::shared_ptr<arrow::RecordBatchReader> reader = ScanDataset(exec_ctx, stub, backend, selectivity).ValueOrDie();
@@ -96,41 +126,28 @@ int main(int argc, char** argv) {
                 arrow_bulk = engine.expose(segments, tl::bulk_mode::read_write);
             }
             
-            // scanning is started in one thread
-
-            // dnt create managed thread
             xstream->make_thread([&]() {
                 scan_handler((void*)reader.get());
             }, tl::anonymous());
 
-            int64_t batches_processed = 0;
-            bool finished = false;
-            while (1 && !finished) {
+            while (1) {
                 std::vector<std::shared_ptr<arrow::RecordBatch>> batches;
                 std::vector<int32_t> batch_sizes;
                 int64_t rows_processed = 0;
 
                 while (rows_processed < kBatchSize) {
-                    if (!batch_queue.empty()) {
-                        auto batch = batch_queue.front();
-                        if (batch == nullptr) {
-                            std::cout << "Finished reading" << std::endl;
-                            finished = true;
-                            break;
-                        }
-
-                        // std::cout << batch->num_rows() << std::endl;
-                        total_rows_read += batch->num_rows();
-                        // std::cout << "Read " << total_rows_read << " rows" << std::endl;
-
-                        batch_queue.pop_front();
-                        batches.push_back(batch);
-                        batch_sizes.push_back(batch->num_rows());
-
-                        rows_processed += batch->num_rows();
-                        batches_processed += 1;
+                    auto new_batch = cq.pop();
+                    if (new_batch == nullptr) {
+                        std::cout << "Finished reading" << std::endl;
+                        break;
                     }
-                }
+
+                    rows_processed += new_batch->num_rows();
+                    batches_processed += 1;
+
+                    batches.push_back(new_batch);
+                    batch_sizes.push_back(new_batch->num_rows());
+                } 
 
                 if (batches.size() != 0) {
                     int32_t curr_pos = 0;
