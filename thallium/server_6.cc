@@ -74,6 +74,7 @@ void scan_handler(void *arg) {
     while (batch != nullptr) {
         reader->ReadNext(&batch);
         cq.push_back(batch);
+        std::cout << "Producing batch of size " << batch->num_rows() << std::endl;
     }
     
     cq.push_back(nullptr);
@@ -136,6 +137,7 @@ int main(int argc, char** argv) {
 
                 while (rows_processed < kBatchSize) {
                     auto new_batch = cq.pop();
+                    std::cout << "Consuming batch of size " << new_batch->num_rows() << std::endl;
                     if (new_batch == nullptr) {
                         std::cout << "Finished reading" << std::endl;
                         finished = true;
