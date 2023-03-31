@@ -83,6 +83,7 @@ void scan_handler(void *arg) {
     }
     
     cq.push_back(nullptr);
+    std::cout << "Finished producing" << std::endl;
 }
 
 
