@@ -1,6 +1,8 @@
 #include <iostream>
 #include <unordered_map>
 #include <fstream>
+#include <mutex>
+#include <condition_variable>
 
 #include <arrow/api.h>
 #include <arrow/compute/expression.h>
@@ -144,7 +146,6 @@ int main(int argc, char** argv) {
                     }
 
                     rows_processed += new_batch->num_rows();
-                    batches_processed += 1;
 
                     batches.push_back(new_batch);
                     batch_sizes.push_back(new_batch->num_rows());
