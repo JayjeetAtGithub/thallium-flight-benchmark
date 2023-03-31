@@ -117,7 +117,7 @@ int main(int argc, char** argv) {
     
     int64_t total_rows_read = 0;
     std::function<void(const tl::request&, const ScanReqRPCStub&)> scan = 
-        [&xstream, &cq, &backend, &engine, &do_rdma, &selectivity, &total_rows_read, &segment_buffer, &segments, &arrow_bulk](const tl::request &req, const ScanReqRPCStub& stub) {
+        [&xstream, &cq, &backend, &engine, &do_rdma, &selectivity, &total_consumed_rows, &total_rows_read, &segment_buffer, &segments, &arrow_bulk](const tl::request &req, const ScanReqRPCStub& stub) {
             arrow::dataset::internal::Initialize();
             cp::ExecContext exec_ctx;
             std::shared_ptr<arrow::RecordBatchReader> reader = ScanDataset(exec_ctx, stub, backend, selectivity).ValueOrDie();
