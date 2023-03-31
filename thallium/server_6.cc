@@ -120,7 +120,7 @@ int main(int argc, char** argv) {
             arrow::dataset::internal::Initialize();
             cp::ExecContext exec_ctx;
             std::shared_ptr<arrow::RecordBatchReader> reader = ScanDataset(exec_ctx, stub, backend, selectivity).ValueOrDie();
-            
+            bool finished = false;
             auto start = std::chrono::high_resolution_clock::now();
 
             if (total_rows_read == 0) {
@@ -133,7 +133,7 @@ int main(int argc, char** argv) {
                 scan_handler((void*)reader.get());
             }, tl::anonymous());
 
-            while (1) {
+            while (1 && !finished) {
                 std::vector<std::shared_ptr<arrow::RecordBatch>> batches;
                 std::vector<int32_t> batch_sizes;
                 int64_t rows_processed = 0;
@@ -142,6 +142,7 @@ int main(int argc, char** argv) {
                     auto new_batch = cq.pop();
                     if (new_batch == nullptr) {
                         std::cout << "Finished reading" << std::endl;
+                        finished = true;
                         break;
                     }
 
