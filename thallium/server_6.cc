@@ -40,6 +40,9 @@ namespace cp = arrow::compute;
 const int32_t kTransferSize = 19 * 1024 * 1024;
 const int32_t kBatchSize = 1 << 17;
 
+const int64_t total_produced_rows = 0;
+const int64_t total_consumed_rows = 0;
+
 class ConcurrentRecordBatchQueue {
     public:
         std::deque<std::shared_ptr<arrow::RecordBatch>> queue;
@@ -63,6 +66,7 @@ class ConcurrentRecordBatchQueue {
         }
 };
 
+
 ConcurrentRecordBatchQueue cq;
 void scan_handler(void *arg) {
     arrow::RecordBatchReader *reader = (arrow::RecordBatchReader*)arg;
@@ -74,7 +78,7 @@ void scan_handler(void *arg) {
     while (batch != nullptr) {
         reader->ReadNext(&batch);
         cq.push_back(batch);
-        std::cout << "Producing batch of size " << batch->num_rows() << std::endl;
+        total_produced_rows += batch->num_rows();
     }
     
     cq.push_back(nullptr);
@@ -137,7 +141,7 @@ int main(int argc, char** argv) {
 
                 while (rows_processed < kBatchSize) {
                     auto new_batch = cq.pop();
-                    std::cout << "Consuming batch of size " << new_batch->num_rows() << std::endl;
+                    total_consumed_rows += new_batch->num_rows();
                     if (new_batch == nullptr) {
                         std::cout << "Finished reading" << std::endl;
                         finished = true;
@@ -212,6 +216,8 @@ int main(int argc, char** argv) {
 
                     segments[0].second = total_size;
                     do_rdma.on(req.get_endpoint())(batch_sizes, data_offsets, data_sizes, off_offsets, off_sizes, total_size, arrow_bulk);
+                    std::cout << "Total produced rows: " << total_produced_rows << std::endl;
+                    std::cout << "Total consumed rows: " << total_consumed_rows << std::endl;
                 }
             }
 
