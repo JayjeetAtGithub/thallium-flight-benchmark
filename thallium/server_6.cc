@@ -127,10 +127,9 @@ int main(int argc, char** argv) {
     std::vector<std::pair<void*,std::size_t>> segments(1);
     tl::bulk arrow_bulk;
     
-    // create a new pool
-    // tl::managed<tl::pool> new_pool = tl::pool::create(tl::pool::access::spmc);
+    tl::managed<tl::pool> new_pool = tl::pool::create(tl::pool::access::spmc);
     tl::managed<tl::xstream> xstream = 
-        tl::xstream::create(tl::scheduler::predef::deflt, engine.get_progress_pool());
+        tl::xstream::create(tl::scheduler::predef::deflt, *new_pool);
     
     std::function<void(const tl::request&, const ScanReqRPCStub&)> scan = 
         [&xstream, &cq, &backend, &engine, &do_rdma, &selectivity, &total_consumed_rows, &segment_buffer, &segments, &arrow_bulk](const tl::request &req, const ScanReqRPCStub& stub) {
