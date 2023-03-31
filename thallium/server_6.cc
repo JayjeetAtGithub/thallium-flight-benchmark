@@ -126,7 +126,7 @@ int main(int argc, char** argv) {
                 arrow_bulk = engine.expose(segments, tl::bulk_mode::read_write);
             }
             
-            xstream->make_thread([&]() {
+            auto t = xstream->make_thread([&]() {
                 scan_handler((void*)reader.get());
             }, tl::anonymous());
 
