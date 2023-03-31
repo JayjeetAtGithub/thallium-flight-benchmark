@@ -40,8 +40,8 @@ namespace cp = arrow::compute;
 const int32_t kTransferSize = 19 * 1024 * 1024;
 const int32_t kBatchSize = 1 << 17;
 
-const int64_t total_produced_rows = 0;
-const int64_t total_consumed_rows = 0;
+int64_t total_produced_rows = 0;
+int64_t total_consumed_rows = 0;
 
 class ConcurrentRecordBatchQueue {
     public:
