@@ -52,7 +52,6 @@ class ConcurrentRecordBatchQueue {
         void push_back(std::shared_ptr<arrow::RecordBatch> batch) {
             std::unique_lock<std::mutex> lock(mutex);
             queue.push_back(batch);
-            lock.unlock();
             cv.notify_one();
         }
 
@@ -75,6 +74,7 @@ void scan_handler(void *arg) {
 
     reader->ReadNext(&batch);
     cq.push_back(batch);
+    total_produced_rows += batch->num_rows();
     
     while (batch != nullptr) {
         reader->ReadNext(&batch);
@@ -131,9 +131,9 @@ int main(int argc, char** argv) {
                 arrow_bulk = engine.expose(segments, tl::bulk_mode::read_write);
             }
             
-            auto t = xstream->make_thread([&]() {
+            xstream->make_thread([&]() {
                 scan_handler((void*)reader.get());
-            });
+            }, tl::anonymous());
 
             while (1 && !finished) {
                 std::vector<std::shared_ptr<arrow::RecordBatch>> batches;
