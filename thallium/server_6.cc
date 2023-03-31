@@ -47,7 +47,7 @@ class ConcurrentRecordBatchQueue {
         std::condition_variable cv;
         bool done = false;
     
-        void push(std::shared_ptr<arrow::RecordBatch> batch) {
+        void push_back(std::shared_ptr<arrow::RecordBatch> batch) {
             std::unique_lock<std::mutex> lock(mutex);
             queue.push_back(batch);
             cv.notify_one();
