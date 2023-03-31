@@ -45,7 +45,6 @@ class ConcurrentRecordBatchQueue {
         std::deque<std::shared_ptr<arrow::RecordBatch>> queue;
         std::mutex mutex;
         std::condition_variable cv;
-        bool done = false;
     
         void push_back(std::shared_ptr<arrow::RecordBatch> batch) {
             std::unique_lock<std::mutex> lock(mutex);
@@ -55,11 +54,8 @@ class ConcurrentRecordBatchQueue {
 
         std::shared_ptr<arrow::RecordBatch> pop() {
             std::unique_lock<std::mutex> lock(mutex);
-            while (queue.empty() && !done) {
+            while (queue.empty()) {
                 cv.wait(lock);
-            }
-            if (queue.empty()) {
-                return nullptr;
             }
             std::shared_ptr<arrow::RecordBatch> batch = queue.front();
             queue.pop_front();
