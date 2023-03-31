@@ -142,7 +142,6 @@ int main(int argc, char** argv) {
 
                 while (rows_processed < kBatchSize) {
                     cq.wait_n_pop(new_batch);
-                    total_consumed_rows += new_batch->num_rows();
                     if (new_batch == nullptr) {
                         std::cout << "Finished reading" << std::endl;
                         finished = true;
@@ -150,6 +149,7 @@ int main(int argc, char** argv) {
                     }
 
                     rows_processed += new_batch->num_rows();
+                    total_consumed_rows += new_batch->num_rows();
 
                     batches.push_back(new_batch);
                     batch_sizes.push_back(new_batch->num_rows());
