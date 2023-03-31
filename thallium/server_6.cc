@@ -112,7 +112,7 @@ int main(int argc, char** argv) {
     // create a new pool
     tl::managed<tl::pool> new_pool = tl::pool::create(tl::pool::access::spmc);
     tl::managed<tl::xstream> xstream = 
-        tl::xstream::create(tl::scheduler::predef::deflt, new_pool);
+        tl::xstream::create(tl::scheduler::predef::deflt, *new_pool);
     
     int64_t total_rows_read = 0;
     std::function<void(const tl::request&, const ScanReqRPCStub&)> scan = 
