@@ -52,6 +52,7 @@ class ConcurrentRecordBatchQueue {
         void push_back(std::shared_ptr<arrow::RecordBatch> batch) {
             std::unique_lock<std::mutex> lock(mutex);
             queue.push_back(batch);
+            lock.unlock();
             cv.notify_one();
         }
 
