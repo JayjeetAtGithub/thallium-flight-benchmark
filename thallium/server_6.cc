@@ -52,17 +52,17 @@ class ConcurrentRecordBatchQueue {
         void push_back(std::shared_ptr<arrow::RecordBatch> batch) {
             std::unique_lock<std::mutex> lock(mutex);
             queue.push_back(batch);
+            lock.unlock();
             cv.notify_one();
         }
 
-        std::shared_ptr<arrow::RecordBatch> pop() {
+        void wait_n_pop(std::shared_ptr<arrow::RecordBatch> &batch) {
             std::unique_lock<std::mutex> lock(mutex);
             while (queue.empty()) {
                 cv.wait(lock);
             }
-            std::shared_ptr<arrow::RecordBatch> batch = queue.front();
+            batch = queue.front();
             queue.pop_front();
-            return batch;
         }
 };
 
@@ -116,24 +116,23 @@ int main(int argc, char** argv) {
     tl::managed<tl::xstream> xstream = 
         tl::xstream::create(tl::scheduler::predef::deflt, engine.get_progress_pool());
     
-    int64_t total_rows_read = 0;
     std::function<void(const tl::request&, const ScanReqRPCStub&)> scan = 
-        [&xstream, &cq, &backend, &engine, &do_rdma, &selectivity, &total_consumed_rows, &total_rows_read, &segment_buffer, &segments, &arrow_bulk](const tl::request &req, const ScanReqRPCStub& stub) {
+        [&xstream, &cq, &backend, &engine, &do_rdma, &selectivity, &total_consumed_rows, &segment_buffer, &segments, &arrow_bulk](const tl::request &req, const ScanReqRPCStub& stub) {
             arrow::dataset::internal::Initialize();
             cp::ExecContext exec_ctx;
             std::shared_ptr<arrow::RecordBatchReader> reader = ScanDataset(exec_ctx, stub, backend, selectivity).ValueOrDie();
             bool finished = false;
             auto start = std::chrono::high_resolution_clock::now();
 
-            if (total_rows_read == 0) {
-                segments[0].first = (void*)segment_buffer;
-                segments[0].second = kTransferSize;
-                arrow_bulk = engine.expose(segments, tl::bulk_mode::read_write);
-            }
+            segments[0].first = (void*)segment_buffer;
+            segments[0].second = kTransferSize;
+            arrow_bulk = engine.expose(segments, tl::bulk_mode::read_write);
             
             xstream->make_thread([&]() {
                 scan_handler((void*)reader.get());
             }, tl::anonymous());
+
+            std::shared_ptr<arrow::RecordBatch> new_batch;
 
             while (1 && !finished) {
                 std::vector<std::shared_ptr<arrow::RecordBatch>> batches;
@@ -141,7 +140,7 @@ int main(int argc, char** argv) {
                 int64_t rows_processed = 0;
 
                 while (rows_processed < kBatchSize) {
-                    auto new_batch = cq.pop();
+                    cq.wait_n_pop(new_batch);
                     total_consumed_rows += new_batch->num_rows();
                     if (new_batch == nullptr) {
                         std::cout << "Finished reading" << std::endl;
