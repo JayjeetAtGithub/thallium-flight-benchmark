@@ -128,7 +128,7 @@ int main(int argc, char** argv) {
             
             auto t = xstream->make_thread([&]() {
                 scan_handler((void*)reader.get());
-            }, tl::anonymous());
+            });
 
             while (1 && !finished) {
                 std::vector<std::shared_ptr<arrow::RecordBatch>> batches;
