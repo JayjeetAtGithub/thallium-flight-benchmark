@@ -82,7 +82,7 @@ class RecordBatchQueue {
 };
 
 
-RecordBatchQueue cq;
+ConcurrentRecordBatchQueue cq;
 void scan_handler(void *arg) {
     arrow::RecordBatchReader *reader = (arrow::RecordBatchReader*)arg;
     std::shared_ptr<arrow::RecordBatch> batch;
