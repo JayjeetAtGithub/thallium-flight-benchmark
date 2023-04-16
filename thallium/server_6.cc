@@ -4,34 +4,11 @@
 #include <mutex>
 #include <condition_variable>
 
-#include <arrow/api.h>
-#include <arrow/compute/expression.h>
-#include <arrow/dataset/api.h>
-#include <arrow/dataset/plan.h>
-#include <arrow/filesystem/api.h>
-#include <arrow/io/api.h>
-#include <arrow/util/checked_cast.h>
-#include <arrow/util/iterator.h>
-
-#include <arrow/array/array_base.h>
-#include <arrow/array/array_nested.h>
-#include <arrow/array/data.h>
-#include <arrow/array/util.h>
-#include <arrow/testing/random.h>
-#include <arrow/util/key_value_metadata.h>
-
-#include <boost/uuid/uuid.hpp>
-#include <boost/uuid/uuid_generators.hpp>
-#include <boost/uuid/uuid_io.hpp>
-
-#include <parquet/arrow/reader.h>
-#include <parquet/arrow/writer.h>
-
 #include <thallium.hpp>
 
+#include "arrow_headers.h"
 #include "ace.h"
 
-// copy of 3
 
 namespace tl = thallium;
 namespace cp = arrow::compute;
@@ -40,8 +17,6 @@ namespace cp = arrow::compute;
 const int32_t kTransferSize = 19 * 1024 * 1024;
 const int32_t kBatchSize = 1 << 17;
 
-int64_t total_produced_rows = 0;
-int64_t total_consumed_rows = 0;
 
 class ConcurrentRecordBatchQueue {
     public:
@@ -90,7 +65,6 @@ void scan_handler(void *arg) {
     reader->ReadNext(&batch);
     while (batch != nullptr) {
         cq.push_back(batch);
-        total_produced_rows += batch->num_rows();
         reader->ReadNext(&batch);
     }
     
@@ -129,13 +103,13 @@ int main(int argc, char** argv) {
         tl::xstream::create(tl::scheduler::predef::deflt, *new_pool);
     
     std::function<void(const tl::request&, const ScanReqRPCStub&)> scan = 
-        [&xstream, &cq, &backend, &engine, &do_rdma, &selectivity, &total_consumed_rows, &segment_buffer, &segments, &arrow_bulk](const tl::request &req, const ScanReqRPCStub& stub) {
+        [&xstream, &cq, &backend, &engine, &do_rdma, &selectivity, &segment_buffer, &segments, &arrow_bulk](const tl::request &req, const ScanReqRPCStub& stub) {
             arrow::dataset::internal::Initialize();
             cp::ExecContext exec_ctx;
             std::shared_ptr<arrow::RecordBatchReader> reader = ScanDataset(exec_ctx, stub, backend, selectivity).ValueOrDie();
-            bool finished = false;
             auto start = std::chrono::high_resolution_clock::now();
-
+            
+            bool finished = false;
             segments[0].first = (void*)segment_buffer;
             segments[0].second = kTransferSize;
             arrow_bulk = engine.expose(segments, tl::bulk_mode::read_write);
@@ -160,7 +134,6 @@ int main(int argc, char** argv) {
                     }
 
                     rows_processed += new_batch->num_rows();
-                    total_consumed_rows += new_batch->num_rows();
 
                     batches.push_back(new_batch);
                     batch_sizes.push_back(new_batch->num_rows());
@@ -228,56 +201,19 @@ int main(int argc, char** argv) {
 
                     segments[0].second = total_size;
                     do_rdma.on(req.get_endpoint())(batch_sizes, data_offsets, data_sizes, off_offsets, off_sizes, total_size, arrow_bulk);
-                    std::cout << "Total produced rows: " << total_produced_rows << std::endl;
-                    std::cout << "Total consumed rows: " << total_consumed_rows << std::endl;
                 }
             }
 
             auto end = std::chrono::high_resolution_clock::now();
-            std::cout << "Server side logic took: " << std::to_string((double)std::chrono::duration_cast<std::chrono::microseconds>(end-start).count()/1000) << " ms" << std::endl;
+            std::cout << "Data transfer took : " << std::to_string((double)std::chrono::duration_cast<std::chrono::microseconds>(end-start).count()/1000) << " ms" << std::endl;
 
             return req.respond(0);
         };
-
-    // int32_t total_rows_written = 0;
-    // std::function<void(const tl::request&, const std::string&)> get_next_batch = 
-    //     [&mid, &svr_addr, &engine, &do_rdma, &reader_map, &total_rows_written, &segment_buffer, &segments, &arrow_bulk](const tl::request &req, const std::string& uuid) {
-    //         std::shared_ptr<arrow::RecordBatchReader> reader = reader_map[uuid];
-    //         std::shared_ptr<arrow::RecordBatch> batch;
-    //         std::vector<std::shared_ptr<arrow::RecordBatch>> batches;
-    //         std::vector<int32_t> batch_sizes;
-
-    //         if (total_rows_written == 0) {
-    //             segments[0].first = (void*)segment_buffer;
-    //             segments[0].second = kTransferSize;
-    //             arrow_bulk = engine.expose(segments, tl::bulk_mode::read_write);
-    //         }
-
-    //         // collect about 1<<17 batches for each transfer
-    //         int32_t total_rows_in_transfer_batch = 0;
-    //         while (total_rows_in_transfer_batch < 131072) {
-    //             reader->ReadNext(&batch);
-    //             if (batch == nullptr) {
-    //                 break;
-    //             }
-    //             batches.push_back(batch);
-    //             batch_sizes.push_back(batch->num_rows());
-    //             total_rows_in_transfer_batch += batch->num_rows();
-    //         }
-
-            
-    //             return req.respond(0);
-    //         } else {
-    //             reader_map.erase(uuid);
-    //             return req.respond(1);
-    //         }
-    //     };
     
     engine.define("scan", scan);
     std::ofstream file("/tmp/thallium_uri");
     file << engine.self();
     file.close();
     std::cout << "Server running at address " << engine.self() << std::endl;    
-
-    engine.wait_for_finalize();        
+    engine.wait_for_finalize();
 };

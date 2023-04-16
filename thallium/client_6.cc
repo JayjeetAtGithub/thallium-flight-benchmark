@@ -3,32 +3,14 @@
 #include <chrono>
 #include <fstream>
 
-#include <arrow/api.h>
-#include <arrow/compute/expression.h>
-#include <arrow/dataset/api.h>
-#include <arrow/filesystem/api.h>
-#include <arrow/io/api.h>
-#include <arrow/ipc/api.h>
-#include <arrow/util/checked_cast.h>
-#include <arrow/util/iterator.h>
-
-#include <arrow/array/array_base.h>
-#include <arrow/array/array_nested.h>
-#include <arrow/array/data.h>
-#include <arrow/array/util.h>
-#include <arrow/testing/random.h>
-#include <arrow/util/key_value_metadata.h>
-
-#include <parquet/arrow/reader.h>
-#include <parquet/arrow/writer.h>
 #include <thallium.hpp>
 
+#include "arrow_headers.h"
 #include "payload.h"
 
 
 namespace tl = thallium;
 namespace cp = arrow::compute;
-
 
 const int32_t kTransferSize = 19 * 1024 * 1024;
 
@@ -157,10 +139,7 @@ arrow::Status Main(int argc, char **argv) {
     std::string path = "/mnt/cephfs/dataset";
     ARROW_ASSIGN_OR_RAISE(auto scan_req, GetScanRequest(path, filter, schema, schema));
 
-    auto start = std::chrono::high_resolution_clock::now();
     Scan(conn_ctx, scan_req);
-    auto end = std::chrono::high_resolution_clock::now();
-    std::cout << "Scan took " << std::to_string((double)std::chrono::duration_cast<std::chrono::microseconds>(end-start).count()/1000) << " ms" << std::endl;
 
     conn_ctx.engine.finalize();
     return arrow::Status::OK();
