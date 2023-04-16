@@ -108,7 +108,8 @@ int main(int argc, char** argv) {
             
             bool finished = false;
             std::vector<std::pair<void*,std::size_t>> segments(1);
-            segments[0].first = (uint8_t*)malloc(kTransferSize);
+            uint8_t* segment_buffer = (uint8_t*)malloc(kTransferSize);
+            segments[0].first = (void*)segment_buffer;
             segments[0].second = kTransferSize;
             tl::bulk arrow_bulk = engine.expose(segments, tl::bulk_mode::read_write);
             cq.clear();
