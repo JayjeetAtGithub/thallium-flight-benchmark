@@ -18,7 +18,7 @@ class RandomAccessObject : public arrow::io::RandomAccessFile {
     file_size = size;
   }
 
-  ~RandomAccessObject() override { DCHECK_OK(Close()); }
+  ~RandomAccessObject() override { Close(); }
 
   arrow::Status CheckClosed() const {
     if (closed_) {
