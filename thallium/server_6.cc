@@ -63,6 +63,7 @@ void scan_handler(void *arg) {
     std::shared_ptr<arrow::RecordBatch> batch;
     reader->ReadNext(&batch);
     while (batch != nullptr) {
+        std::cout << "Read batch" << std::endl;
         cq.push_back(batch);
         reader->ReadNext(&batch);
     }    
@@ -113,7 +114,9 @@ int main(int argc, char** argv) {
             
             xstream->make_thread([&]() {
                 scan_handler((void*)reader.get());
-            }, tl::anonymous());
+            });
+
+            std::cout << "Start sending" << std::endl;
 
             std::shared_ptr<arrow::RecordBatch> new_batch;
 
