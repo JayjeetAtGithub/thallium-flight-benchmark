@@ -121,6 +121,7 @@ int main(int argc, char** argv) {
             std::shared_ptr<arrow::RecordBatch> new_batch;
 
             while (1 && !finished) {
+                std::cout << "Start processing" << std::endl;
                 std::vector<std::shared_ptr<arrow::RecordBatch>> batches;
                 std::vector<int32_t> batch_sizes;
                 int64_t rows_processed = 0;
