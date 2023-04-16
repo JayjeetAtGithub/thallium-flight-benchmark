@@ -114,7 +114,7 @@ int main(int argc, char** argv) {
             
             xstream->make_thread([&]() {
                 scan_handler((void*)reader.get());
-            }, tl::anonymous();
+            }, tl::anonymous());
 
             std::cout << "Start sending" << std::endl;
 
