@@ -14,6 +14,7 @@ if __name__ == "__main__":
         'flight',
         'thallium-1',
         'thallium-2',
+        'thallium-3'
     ]
     for filename in filelist:
         with open(filename, "r") as fd:
