@@ -39,6 +39,11 @@ class ConcurrentRecordBatchQueue {
             batch = queue.front();
             queue.pop_front();
         }
+
+        void clear() {
+            std::unique_lock<std::mutex> lock(mutex);
+            queue.clear();
+        }
 };
 
 class RecordBatchQueue {
@@ -89,28 +94,25 @@ int main(int argc, char** argv) {
         return -1;
     }
 
-    tl::remote_procedure do_rdma = engine.define("do_rdma");
-    uint8_t *segment_buffer = (uint8_t*)malloc(kTransferSize);
-    
-    std::vector<std::pair<void*,std::size_t>> segments(1);
-    tl::bulk arrow_bulk;
-    
+    tl::remote_procedure do_rdma = engine.define("do_rdma");    
     tl::managed<tl::pool> new_pool = tl::pool::create(tl::pool::access::spmc);
     tl::managed<tl::xstream> xstream = 
         tl::xstream::create(tl::scheduler::predef::deflt, *new_pool);
     
     std::function<void(const tl::request&, const ScanReqRPCStub&)> scan = 
-        [&xstream, &cq, &backend, &engine, &do_rdma, &selectivity, &segment_buffer, &segments, &arrow_bulk](const tl::request &req, const ScanReqRPCStub& stub) {
+        [&xstream, &cq, &backend, &engine, &do_rdma, &selectivity](const tl::request &req, const ScanReqRPCStub& stub) {
             arrow::dataset::internal::Initialize();
             cp::ExecContext exec_ctx;
             std::shared_ptr<arrow::RecordBatchReader> reader = ScanDataset(exec_ctx, stub, backend, selectivity).ValueOrDie();
             auto start = std::chrono::high_resolution_clock::now();
             
             bool finished = false;
-            segments[0].first = (void*)segment_buffer;
+            std::vector<std::pair<void*,std::size_t>> segments(1);
+            segments[0].first = (uint8_t*)malloc(kTransferSize);
             segments[0].second = kTransferSize;
-            arrow_bulk = engine.expose(segments, tl::bulk_mode::read_write);
-            
+            tl::bulk arrow_bulk = engine.expose(segments, tl::bulk_mode::read_write);
+            cq.clear();
+
             xstream->make_thread([&]() {
                 scan_handler((void*)reader.get());
             }, tl::anonymous());
