@@ -112,7 +112,6 @@ std::function<void(const tl::request&, std::vector<int32_t>&, std::vector<int32_
             }
             auto batch = arrow::RecordBatch::Make(schema, num_rows, columns);
             total_rows_read += batch->num_rows();
-            std::cout << "Read " << total_rows_read << " rows" << std::endl;
             batches.push_back(batch);
         }
         return req.respond(0);
@@ -140,6 +139,7 @@ arrow::Status Main(int argc, char **argv) {
     ARROW_ASSIGN_OR_RAISE(auto scan_req, GetScanRequest(path, filter, schema, schema));
 
     Scan(conn_ctx, scan_req);
+    std::cout << "Read " << total_rows_read << " rows" << std::endl;
 
     conn_ctx.engine.finalize();
     return arrow::Status::OK();

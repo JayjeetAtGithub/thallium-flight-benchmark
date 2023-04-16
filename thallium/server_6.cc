@@ -61,15 +61,12 @@ ConcurrentRecordBatchQueue cq;
 void scan_handler(void *arg) {
     arrow::RecordBatchReader *reader = (arrow::RecordBatchReader*)arg;
     std::shared_ptr<arrow::RecordBatch> batch;
-
     reader->ReadNext(&batch);
     while (batch != nullptr) {
         cq.push_back(batch);
         reader->ReadNext(&batch);
-    }
-    
+    }    
     cq.push_back(nullptr);
-    std::cout << "Finished producing" << std::endl;
 }
 
 
@@ -128,7 +125,6 @@ int main(int argc, char** argv) {
                 while (rows_processed < kBatchSize) {
                     cq.wait_n_pop(new_batch);
                     if (new_batch == nullptr) {
-                        std::cout << "Finished reading" << std::endl;
                         finished = true;
                         break;
                     }
