@@ -112,6 +112,7 @@ std::function<void(const tl::request&, std::vector<int32_t>&, std::vector<int32_
             }
             auto batch = arrow::RecordBatch::Make(schema, num_rows, columns);
             total_rows_read += batch->num_rows();
+            std::cout << batch->ToString() << std::endl;
             batches.push_back(batch);
         }
         return req.respond(0);
