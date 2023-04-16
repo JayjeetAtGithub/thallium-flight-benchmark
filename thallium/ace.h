@@ -9,6 +9,7 @@
 
 
 namespace cp = arrow::compute;
+namespace ac = arrow::acero;
 
 
 class RandomAccessObject : public arrow::io::RandomAccessFile {
@@ -151,8 +152,8 @@ arrow::Result<std::shared_ptr<arrow::RecordBatchReader>> ScanDataset(cp::ExecCon
     arrow::dataset::FinishOptions finish_options;
     ARROW_ASSIGN_OR_RAISE(auto dataset,factory->Finish(finish_options));
 
-    ARROW_ASSIGN_OR_RAISE(std::shared_ptr<cp::ExecPlan> plan,
-                          cp::ExecPlan::Make(&exec_context));
+    ARROW_ASSIGN_OR_RAISE(std::shared_ptr<ac::ExecPlan> plan,
+                          ac::ExecPlan::Make(&exec_context));
 
     ARROW_ASSIGN_OR_RAISE(auto scanner_builder, dataset->NewScan());
     ARROW_RETURN_NOT_OK(scanner_builder->Filter(GetFilter(selectivity)));
