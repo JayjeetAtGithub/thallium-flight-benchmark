@@ -1,0 +1,12 @@
+5000 parquet files of 16MB
+80GB total size
+
+for 1% selectivity
+transferring 800MB, 44130000 rows
+thallium: 8.173,  7.668, 7.587
+flight (tcp+grpc): 9.961, 9.832, 10.012
+
+for 10% selectivity
+transferring 8GB
+thallium:
+flight (tcp+grpc): 
