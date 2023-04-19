@@ -12,9 +12,9 @@ if __name__ == "__main__":
 
     filelist = [
         'flight',
-        'thallium-1',
-        'thallium-2',
-        'thallium-3'
+        'thallium-orig',
+        'thallium-reb',
+        'thallium-reb-pipe'
     ]
     for filename in filelist:
         with open(filename, "r") as fd:
@@ -42,3 +42,34 @@ if __name__ == "__main__":
     plt.savefig(f'plot.pdf')
     plt.cla()
     plt.clf()
+
+    data = {
+        "latency(s)": list(),
+        "mode": list(),
+        "selectivity": list()
+    }
+
+    for filename in filelist:
+        with open(filename, "r") as fd:
+            lines = fd.readlines()
+            lines = [float(l.rstrip()) for l in lines]
+
+            for l in lines[10:20]:
+                data['latency(s)'].append(l)
+                data['mode'].append(filename)
+                data['selectivity'].append("10")
+
+            for l in lines[20:30]:
+                data['latency(s)'].append(l)
+                data['mode'].append(filename)
+                data['selectivity'].append("1")
+
+    df = pd.DataFrame(data)
+    print(df)
+    sns_plot = sns.barplot(x="mode", y="latency(s)", hue="selectivity", data=df)
+    plt.title("Selectivity")
+    plt.savefig(f'plot_high_select.pdf')
+    plt.cla()
+    plt.clf()
+
+    
