@@ -54,6 +54,11 @@ if __name__ == "__main__":
             lines = fd.readlines()
             lines = [float(l.rstrip()) for l in lines]
 
+            for l in lines[0:10]:
+                data['latency(s)'].append(l)
+                data['mode'].append(filename)
+                data['selectivity'].append("100")
+
             for l in lines[10:20]:
                 data['latency(s)'].append(l)
                 data['mode'].append(filename)
@@ -68,8 +73,10 @@ if __name__ == "__main__":
     print(df)
     sns_plot = sns.barplot(x="mode", y="latency(s)", hue="selectivity", data=df)
     plt.title("Selectivity")
-    plt.savefig(f'plot_high_select.pdf')
-    plt.cla()
-    plt.clf()
+    plt.savefig(f'plot.pdf')
 
-    
+    # sns_plot = sns.barplot(x="selectivity", y="latency(s)", hue="mode", data=df)
+    # plt.title("Selectivity")
+    # plt.savefig(f'plot2_main.pdf')
+    # plt.cla()
+    # plt.clf()
